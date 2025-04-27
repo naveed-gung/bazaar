@@ -35,7 +35,7 @@ State Management: Context API | Local Storage for persistence
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/bazaar.git
+git clone https://github.com/naveed-gung/bazaar.git
 
 # Install dependencies for both frontend and backend
 cd bazaar
