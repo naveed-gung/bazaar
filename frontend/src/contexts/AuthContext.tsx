@@ -4,14 +4,14 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, si
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// Firebase configuration
+// Firebase configuration - using environment variables
 const firebaseConfig = {
-  apiKey: "***REMOVED***",
-  authDomain: "bazaar-3c0af.firebaseapp.com",
-  projectId: "bazaar-3c0af",
-  storageBucket: "bazaar-3c0af.firebasestorage.app",
-  messagingSenderId: "***REMOVED***",
-  appId: "1:***REMOVED***:web:8ee3a02125dbe9c9e0a835"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
 };
 
 // Initialize Firebase
@@ -225,7 +225,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
