@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Force reading environment variables on load with a timestamp to prevent caching
+const timestamp = new Date().getTime();
+console.log(`Loading API configuration at ${timestamp}`);
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`;
+console.log(`API URL: ${API_URL}`);
 
 // Interfaces
 interface Product {
