@@ -17,11 +17,8 @@ dotenv.config();
 
 const app = express();
 
-// Use a CORS configuration that allows Netlify domain
-app.use(cors({
-  origin: ['https://bazaa1.netlify.app', 'http://localhost:5173'],
-  credentials: true
-}));
+// Use a simpler CORS configuration that allows all origins
+app.use(cors());
 
 // Configure express middleware
 app.use(express.json({ limit: '20mb' }));
@@ -50,21 +47,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // Serve static assets in production
-// Only do this for local development with frontend files, not on Render
-if (process.env.NODE_ENV === 'production' && !process.env.RENDER) {
+if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
   
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-  });
-} else {
-  // For Render deployment - catch all unmatched routes
-  app.get('*', (req, res) => {
-    res.status(200).json({
-      message: 'Bazaar API Server',
-      status: 'running',
-      endpoints: ['/api/products', '/api/categories', '/api/auth', '/api/orders']
-    });
   });
 }
 
