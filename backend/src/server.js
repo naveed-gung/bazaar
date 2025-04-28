@@ -13,7 +13,14 @@ const userRoutes = require('./routes/user.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const chatRoutes = require('./routes/chat.routes');
 
+// Load environment variables
 dotenv.config();
+
+// Log all environment variables for debugging
+console.log('Environment variables:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Set (value hidden)' : 'Not set');
 
 const app = express();
 
