@@ -13,19 +13,15 @@ const userRoutes = require('./routes/user.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const chatRoutes = require('./routes/chat.routes');
 
-// Load environment variables
 dotenv.config();
-
-// Log all environment variables for debugging
-console.log('Environment variables:');
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('PORT:', process.env.PORT);
-console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Set (value hidden)' : 'Not set');
 
 const app = express();
 
-// Use a simpler CORS configuration that allows all origins
-app.use(cors());
+// Use a CORS configuration that allows Netlify domain
+app.use(cors({
+  origin: ['https://bazaa1.netlify.app', 'http://localhost:5173'],
+  credentials: true
+}));
 
 // Configure express middleware
 app.use(express.json({ limit: '20mb' }));
