@@ -60,3 +60,5 @@ lerna-debug.log*
 # Frontend specific
 /frontend/dist
 /frontend/build 
+# Local Netlify folder
+.netlify

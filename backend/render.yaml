@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: bazaar-api
+    env: node
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false # This will prompt to set the value during deployment
+      - key: JWT_SECRET
+        generateValue: true # This will automatically generate a random value
+      - key: JWT_EXPIRY
+        value: 7d 
