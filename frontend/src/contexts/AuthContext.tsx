@@ -20,7 +20,7 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 // API URL
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 type User = {
   _id: string;
