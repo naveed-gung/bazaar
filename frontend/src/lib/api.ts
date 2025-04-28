@@ -3,8 +3,16 @@ import axios from 'axios';
 // Force reading environment variables on load with a timestamp to prevent caching
 const timestamp = new Date().getTime();
 console.log(`Loading API configuration at ${timestamp}`);
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`;
-console.log(`API URL: ${API_URL}`);
+
+// Ensure the API URL always includes /api
+let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Fix API URL if it doesn't include /api
+if (!API_URL.endsWith('/api')) {
+  API_URL = API_URL + '/api';
+}
+
+console.log(`API URL (corrected): ${API_URL}`);
 
 // Interfaces
 interface Product {
@@ -101,6 +109,14 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
+
+// Log the requests to help debug
+const originalRequest = api.request;
+api.request = function (config) {
+  const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+  console.log(`Making API request to: ${fullUrl}`);
+  return originalRequest.apply(this, arguments);
+};
 
 // Add authentication interceptor
 api.interceptors.request.use((config) => {
