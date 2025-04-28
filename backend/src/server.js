@@ -50,11 +50,21 @@ app.get('/api/health', (req, res) => {
 });
 
 // Serve static assets in production
-if (process.env.NODE_ENV === 'production') {
+// Only do this for local development with frontend files, not on Render
+if (process.env.NODE_ENV === 'production' && !process.env.RENDER) {
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
   
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+  });
+} else {
+  // For Render deployment - catch all unmatched routes
+  app.get('*', (req, res) => {
+    res.status(200).json({
+      message: 'Bazaar API Server',
+      status: 'running',
+      endpoints: ['/api/products', '/api/categories', '/api/auth', '/api/orders']
+    });
   });
 }
 
