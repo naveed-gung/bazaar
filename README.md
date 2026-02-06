@@ -1,15 +1,32 @@
-# 🌐 BAZAAR | Next-Gen E-Commerce Platform
-
 <div align="center">
   <img src="frontend/public/image.png" alt="Bazaar Logo" width="250px"/>
-  <h3>Where Shopping Meets Innovation</h3>
+  
+  # BAZAAR
+  ### Next-Gen E-Commerce Platform
+  
+  <p>Where Shopping Meets Innovation</p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React"/>
+    <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
+    <img src="https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js"/>
+    <img src="https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
+  </p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"/>
+    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome"/>
+    <img src="https://img.shields.io/badge/contributions-welcome-orange?style=flat-square" alt="Contributions"/>
+  </p>
 </div>
 
-## 🚀 Vision
+---
+
+## <img src="https://img.shields.io/badge/-Vision-8B5CF6?style=flat-square" alt="Vision"/> Vision
 
 **Bazaar** is redefining the e-commerce experience for the modern digital age. Our platform combines cutting-edge technology with intuitive design to create a seamless shopping journey.
 
-## ✨ Core Features
+## <img src="https://img.shields.io/badge/-Features-10B981?style=flat-square" alt="Features"/> Core Features
 
 - **AI-Powered Recommendations** - Personalized suggestions based on browsing patterns
 - **Immersive Product Exploration** - Interactive 3D models and AR product visualization
@@ -22,7 +39,7 @@
 - **Interactive Product Filtering** - Dynamic category and price filters
 - **Favorites System** - Save and manage favorite products
 
-## 🛠️ Tech Stack
+## <img src="https://img.shields.io/badge/-Tech_Stack-3B82F6?style=flat-square" alt="Tech Stack"/> Tech Stack
 
 ```
 Frontend: React + TypeScript + Vite | Tailwind CSS + Shadcn UI | Framer Motion
@@ -31,7 +48,7 @@ Payments: Stripe API | PayPal SDK | Apple Pay integration
 State Management: Context API | Local Storage for persistence
 ```
 
-## 🔍 Quick Start
+## <img src="https://img.shields.io/badge/-Quick_Start-F59E0B?style=flat-square" alt="Quick Start"/> Quick Start
 
 ```bash
 # Clone the repository
@@ -45,13 +62,13 @@ npm run setup
 npm run dev
 ```
 
-## 📱 App Preview
+## <img src="https://img.shields.io/badge/-App_Preview-EC4899?style=flat-square" alt="App Preview"/> App Preview
 
 | Home Page | Product Details | Shopping Cart |
 |-----------|-----------------|---------------|
 | Modern UI with trending items | Interactive product view | Smart checkout process |
 
-## 🔧 Environment Setup
+## <img src="https://img.shields.io/badge/-Environment_Setup-6366F1?style=flat-square" alt="Environment Setup"/> Environment Setup
 
 Both frontend and backend include environment templates. Copy and configure them for your setup:
 
@@ -76,7 +93,7 @@ cp backend/.env.example backend/.env
 - `FIREBASE_CLIENT_EMAIL` - Firebase service account email
 - `FIREBASE_PRIVATE_KEY` - Firebase private key
 
-## 💳 Payment Processing
+## <img src="https://img.shields.io/badge/-Payment_Processing-22C55E?style=flat-square" alt="Payment Processing"/> Payment Processing
 
 ### Stripe Integration
 The platform uses Stripe for credit card processing with a custom checkout form that supports:
@@ -91,14 +108,14 @@ Alternative payment option with:
 - PayPal account payments
 - Credit card processing through PayPal
 
-## 🔐 Authentication System
+## <img src="https://img.shields.io/badge/-Authentication-EF4444?style=flat-square" alt="Authentication"/> Authentication System
 
 - Firebase Authentication for frontend
 - JWT-based session management
 - Role-based access control
 - Secure API routes with middleware
 
-## 🌟 Future Roadmap
+## <img src="https://img.shields.io/badge/-Future_Roadmap-A855F7?style=flat-square" alt="Future Roadmap"/> Future Roadmap
 
 - Voice-assisted shopping experience
 - Blockchain-based payment system
@@ -108,7 +125,7 @@ Alternative payment option with:
 - Subscription-based product offerings
 - AI chatbot for customer service
 
-## 📦 Project Structure
+## <img src="https://img.shields.io/badge/-Project_Structure-14B8A6?style=flat-square" alt="Project Structure"/> Project Structure
 
 ```
 /frontend            - React frontend application
@@ -131,5 +148,17 @@ Alternative payment option with:
 ---
 
 <div align="center">
-  <strong>BAZAAR</strong> - Shopping Reimagined for the Digital Future
-</div> 
+  <p>
+    <img src="https://img.shields.io/badge/Made_with-❤️-red?style=flat-square" alt="Made with love"/>
+  </p>
+  <strong>BAZAAR</strong> — Shopping Reimagined for the Digital Future
+  <p>
+    <a href="./CONTRIBUTING.md">
+      <img src="https://img.shields.io/badge/Contribute-Guide-blue?style=flat-square" alt="Contributing Guide"/>
+    </a>
+    <a href="./LICENSE">
+      <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License"/>
+    </a>
+  </p>
+</div>
+ 
