@@ -7,26 +7,26 @@
   <p>Where Shopping Meets Innovation</p>
   
   <p>
-    <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React"/>
-    <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
-    <img src="https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js"/>
-    <img src="https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
+    <a href="https://react.dev"><img src="https://img.shields.io/badge/React-18.x-20232A?logo=react&logoColor=61DAFB" alt="React"/></a>
+    <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/></a>
+    <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-20.x-5FA04E?logo=nodedotjs&logoColor=white" alt="Node.js"/></a>
+    <a href="https://www.mongodb.com"><img src="https://img.shields.io/badge/MongoDB-7.x-47A248?logo=mongodb&logoColor=white" alt="MongoDB"/></a>
   </p>
   
   <p>
-    <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"/>
-    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome"/>
-    <img src="https://img.shields.io/badge/contributions-welcome-orange?style=flat-square" alt="Contributions"/>
+    <a href="./LICENSE"><img src="https://img.shields.io/github/license/naveed-gung/bazaar?color=blue" alt="License"/></a>
+    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs Welcome"/>
+    <a href="./CONTRIBUTING.md"><img src="https://img.shields.io/badge/contributions-welcome-orange" alt="Contributions"/></a>
   </p>
 </div>
 
 ---
 
-## <img src="https://img.shields.io/badge/-Vision-8B5CF6?style=flat-square" alt="Vision"/> Vision
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Telescope.png" width="25" /></picture> Vision
 
 **Bazaar** is redefining the e-commerce experience for the modern digital age. Our platform combines cutting-edge technology with intuitive design to create a seamless shopping journey.
 
-## <img src="https://img.shields.io/badge/-Features-10B981?style=flat-square" alt="Features"/> Core Features
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" width="25" /></picture> Core Features
 
 - **AI-Powered Recommendations** - Personalized suggestions based on browsing patterns
 - **Immersive Product Exploration** - Interactive 3D models and AR product visualization
@@ -39,7 +39,7 @@
 - **Interactive Product Filtering** - Dynamic category and price filters
 - **Favorites System** - Save and manage favorite products
 
-## <img src="https://img.shields.io/badge/-Tech_Stack-3B82F6?style=flat-square" alt="Tech Stack"/> Tech Stack
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="25" /></picture> Tech Stack
 
 ```
 Frontend: React + TypeScript + Vite | Tailwind CSS + Shadcn UI | Framer Motion
@@ -48,7 +48,7 @@ Payments: Stripe API | PayPal SDK | Apple Pay integration
 State Management: Context API | Local Storage for persistence
 ```
 
-## <img src="https://img.shields.io/badge/-Quick_Start-F59E0B?style=flat-square" alt="Quick Start"/> Quick Start
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="25" /></picture> Quick Start
 
 ```bash
 # Clone the repository
@@ -62,13 +62,13 @@ npm run setup
 npm run dev
 ```
 
-## <img src="https://img.shields.io/badge/-App_Preview-EC4899?style=flat-square" alt="App Preview"/> App Preview
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="25" /></picture> App Preview
 
 | Home Page | Product Details | Shopping Cart |
 |-----------|-----------------|---------------|
 | Modern UI with trending items | Interactive product view | Smart checkout process |
 
-## <img src="https://img.shields.io/badge/-Environment_Setup-6366F1?style=flat-square" alt="Environment Setup"/> Environment Setup
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" width="25" /></picture> Environment Setup
 
 Both frontend and backend include environment templates. Copy and configure them for your setup:
 
@@ -93,7 +93,7 @@ cp backend/.env.example backend/.env
 - `FIREBASE_CLIENT_EMAIL` - Firebase service account email
 - `FIREBASE_PRIVATE_KEY` - Firebase private key
 
-## <img src="https://img.shields.io/badge/-Payment_Processing-22C55E?style=flat-square" alt="Payment Processing"/> Payment Processing
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Credit%20Card.png" width="25" /></picture> Payment Processing
 
 ### Stripe Integration
 The platform uses Stripe for credit card processing with a custom checkout form that supports:
@@ -108,14 +108,14 @@ Alternative payment option with:
 - PayPal account payments
 - Credit card processing through PayPal
 
-## <img src="https://img.shields.io/badge/-Authentication-EF4444?style=flat-square" alt="Authentication"/> Authentication System
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked%20with%20Key.png" width="25" /></picture> Authentication System
 
 - Firebase Authentication for frontend
 - JWT-based session management
 - Role-based access control
 - Secure API routes with middleware
 
-## <img src="https://img.shields.io/badge/-Future_Roadmap-A855F7?style=flat-square" alt="Future Roadmap"/> Future Roadmap
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Milky%20Way.png" width="25" /></picture> Future Roadmap
 
 - Voice-assisted shopping experience
 - Blockchain-based payment system
@@ -125,7 +125,7 @@ Alternative payment option with:
 - Subscription-based product offerings
 - AI chatbot for customer service
 
-## <img src="https://img.shields.io/badge/-Project_Structure-14B8A6?style=flat-square" alt="Project Structure"/> Project Structure
+## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Package.png" width="25" /></picture> Project Structure
 
 ```
 /frontend            - React frontend application
@@ -149,15 +149,15 @@ Alternative payment option with:
 
 <div align="center">
   <p>
-    <img src="https://img.shields.io/badge/Made_with-❤️-red?style=flat-square" alt="Made with love"/>
+    <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Sparkling%20Heart.png" width="20" /></picture> Made with love
   </p>
   <strong>BAZAAR</strong> — Shopping Reimagined for the Digital Future
   <p>
     <a href="./CONTRIBUTING.md">
-      <img src="https://img.shields.io/badge/Contribute-Guide-blue?style=flat-square" alt="Contributing Guide"/>
+      <img src="https://img.shields.io/badge/Contribute-Guide-5865F2?logo=github" alt="Contributing Guide"/>
     </a>
     <a href="./LICENSE">
-      <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License"/>
+      <img src="https://img.shields.io/badge/License-MIT-97CA00?logo=opensourceinitiative&logoColor=white" alt="MIT License"/>
     </a>
   </p>
 </div>
