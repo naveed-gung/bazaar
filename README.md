@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/public/image.png" alt="Bazaar Logo" width="250px"/>
+  <img src="logo.svg" alt="Bazaar Logo" width="200px"/>
   
   # BAZAAR
   ### Next-Gen E-Commerce Platform
@@ -22,11 +22,11 @@
 
 ---
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Telescope.png" width="25" /></picture> Vision
+## <img src="icon-vision.svg" width="25" alt="Vision" /> Vision
 
 **Bazaar** is redefining the e-commerce experience for the modern digital age. Our platform combines cutting-edge technology with intuitive design to create a seamless shopping journey.
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" width="25" /></picture> Core Features
+## <img src="icon-features.svg" width="25" alt="Features" /> Core Features
 
 - **AI-Powered Recommendations** - Personalized suggestions based on browsing patterns
 - **Immersive Product Exploration** - Interactive 3D models and AR product visualization
@@ -39,7 +39,7 @@
 - **Interactive Product Filtering** - Dynamic category and price filters
 - **Favorites System** - Save and manage favorite products
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="25" /></picture> Tech Stack
+## <img src="icon-tech.svg" width="25" alt="Tech Stack" /> Tech Stack
 
 ```
 Frontend: React + TypeScript + Vite | Tailwind CSS + Shadcn UI | Framer Motion
@@ -48,7 +48,7 @@ Payments: Stripe API | PayPal SDK | Apple Pay integration
 State Management: Context API | Local Storage for persistence
 ```
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="25" /></picture> Quick Start
+## <img src="icon-quickstart.svg" width="25" alt="Quick Start" /> Quick Start
 
 ```bash
 # Clone the repository
@@ -62,13 +62,13 @@ npm run setup
 npm run dev
 ```
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="25" /></picture> App Preview
+## <img src="icon-mobile.svg" width="25" alt="App Preview" /> App Preview
 
 | Home Page | Product Details | Shopping Cart |
 |-----------|-----------------|---------------|
 | Modern UI with trending items | Interactive product view | Smart checkout process |
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" width="25" /></picture> Environment Setup
+## <img src="icon-gear.svg" width="25" alt="Environment Setup" /> Environment Setup
 
 Both frontend and backend include environment templates. Copy and configure them for your setup:
 
@@ -93,7 +93,7 @@ cp backend/.env.example backend/.env
 - `FIREBASE_CLIENT_EMAIL` - Firebase service account email
 - `FIREBASE_PRIVATE_KEY` - Firebase private key
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Credit%20Card.png" width="25" /></picture> Payment Processing
+## <img src="icon-payment.svg" width="25" alt="Payment Processing" /> Payment Processing
 
 ### Stripe Integration
 The platform uses Stripe for credit card processing with a custom checkout form that supports:
@@ -108,14 +108,14 @@ Alternative payment option with:
 - PayPal account payments
 - Credit card processing through PayPal
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked%20with%20Key.png" width="25" /></picture> Authentication System
+## <img src="icon-security.svg" width="25" alt="Authentication System" /> Authentication System
 
 - Firebase Authentication for frontend
 - JWT-based session management
 - Role-based access control
 - Secure API routes with middleware
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Milky%20Way.png" width="25" /></picture> Future Roadmap
+## <img src="icon-roadmap.svg" width="25" alt="Future Roadmap" /> Future Roadmap
 
 - Voice-assisted shopping experience
 - Blockchain-based payment system
@@ -125,7 +125,7 @@ Alternative payment option with:
 - Subscription-based product offerings
 - AI chatbot for customer service
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Package.png" width="25" /></picture> Project Structure
+## <img src="icon-structure.svg" width="25" alt="Project Structure" /> Project Structure
 
 ```
 /frontend            - React frontend application
@@ -149,7 +149,7 @@ Alternative payment option with:
 
 <div align="center">
   <p>
-    <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Sparkling%20Heart.png" width="20" /></picture> Made with love
+    <img src="icon-heart.svg" width="20" alt="Made with love" /> Made with love
   </p>
   <strong>BAZAAR</strong> — Shopping Reimagined for the Digital Future
   <p>

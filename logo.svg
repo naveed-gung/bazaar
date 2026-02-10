@@ -1,0 +1,23 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="url(#gradient1)" opacity="0.1"/>
+  
+  <!-- Shopping Bag -->
+  <path d="M 60 80 L 60 160 Q 60 170 70 170 L 130 170 Q 140 170 140 160 L 140 80 Z" 
+        fill="url(#gradient1)" stroke="#6366f1" stroke-width="2"/>
+  
+  <!-- Bag Handle Left -->
+  <path d="M 70 80 Q 70 50 100 50 Q 130 50 130 80" 
+        fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Letter B -->
+  <text x="100" y="130" font-family="Arial, sans-serif" font-size="50" font-weight="bold" 
+        fill="white" text-anchor="middle">B</text>
+</svg>
