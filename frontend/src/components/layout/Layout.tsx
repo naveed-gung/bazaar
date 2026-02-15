@@ -19,9 +19,17 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* Skip to content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none"
+      >
+        Skip to content
+      </a>
       <Navbar />
       <AnimatePresence mode="wait">
         <motion.main 
+          id="main-content"
           key={location.pathname}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}

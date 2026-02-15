@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { CategoryAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import SEO from "@/components/SEO";
+import LazyImage from "@/components/ui/lazy-image";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -33,6 +36,7 @@ export default function CategoriesPage() {
 
   return (
     <Layout>
+      <SEO title="Categories" description="Browse all product categories at Bazaar. Find electronics, fashion, home decor and more." />
       <div className="container py-12">
         <h1 className="text-3xl font-bold mb-8">Browse Categories</h1>
         
@@ -59,14 +63,15 @@ export default function CategoriesPage() {
               <Link
                 key={category._id}
                 to={`/category/${category._id}`}
-                className="group block overflow-hidden rounded-lg border shadow-sm transition-all hover:shadow-md"
+                className="group block overflow-hidden rounded-lg border shadow-sm transition-shadow duration-300 hover:shadow-lg hover:shadow-black/10 dark:hover:shadow-white/5"
               >
                 <div className="aspect-[4/3] w-full overflow-hidden bg-muted">
                   {category.image ? (
-                    <img
+                    <LazyImage
                       src={category.image}
                       alt={category.name}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      wrapperClassName="w-full h-full"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-secondary/20">
@@ -75,9 +80,12 @@ export default function CategoriesPage() {
                   )}
                 </div>
                 <div className="p-5">
-                  <h3 className="font-medium mb-1 group-hover:text-primary">
-                    {category.name}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium mb-1 group-hover:text-primary transition-colors duration-200">
+                      {category.name}
+                    </h3>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  </div>
                   {category.description && (
                     <p className="text-sm text-muted-foreground">
                       {category.description.substring(0, 100)}

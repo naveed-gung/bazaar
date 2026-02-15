@@ -21,6 +21,14 @@
     --accent-foreground: 24 9.8% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 210 20% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 224 71.4% 4.1%;
+    --info: 198 100% 49%;
+    --info-foreground: 210 20% 98%;
+    --star: 45 93% 47%;
+    --star-muted: 220 8.9% 46.1%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 198 100% 49%;
@@ -53,6 +61,14 @@
     --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 210 20% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 224 71.4% 4.1%;
+    --info: 206 90% 60%;
+    --info-foreground: 210 20% 98%;
+    --star: 45 93% 47%;
+    --star-muted: 215 27.9% 30%;
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 206 90% 60%;
@@ -80,6 +96,31 @@
     @apply bg-background text-foreground overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background rounded-sm;
+  }
+
+  /* Smooth scrollbar for dark mode */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
 }
 
 @layer utilities {
@@ -105,6 +146,44 @@
   
   .glass-card {
     @apply bg-background/50 backdrop-blur-lg border border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300;
+  }
+
+  /* Card lift effect on hover */
+  .card-hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/5;
+  }
+
+  /* Underline grow effect for nav links */
+  .nav-link-underline {
+    @apply relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full;
+  }
+
+  /* Button press effect */
+  .btn-press {
+    @apply transition-all duration-150 active:scale-[0.97] active:shadow-inner;
+  }
+
+  /* Image zoom on hover */
+  .img-zoom {
+    @apply overflow-hidden;
+  }
+  .img-zoom img {
+    @apply transition-transform duration-500 ease-out;
+  }
+  .img-zoom:hover img {
+    @apply scale-110;
+  }
+
+  /* Shine sweep effect on hover */
+  .shine-hover {
+    @apply relative overflow-hidden;
+  }
+  .shine-hover::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700;
+  }
+  .shine-hover:hover::after {
+    @apply translate-x-full;
   }
   
   /* Scroll animation classes */
@@ -188,5 +267,17 @@
   }
   50% {
     background-position: 100% 50%;
+  }
+}
+
+/* Accessibility: respect user's reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

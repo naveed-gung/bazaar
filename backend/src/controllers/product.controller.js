@@ -2,6 +2,15 @@ const Product = require('../models/product.model');
 const Category = require('../models/category.model');
 const mongoose = require('mongoose');
 
+// Helper: escape regex special characters to prevent ReDoS
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Whitelist of allowed sort fields
+const ALLOWED_SORT_FIELDS = ['createdAt', 'price', 'rating', 'name', 'numReviews'];
+const MAX_PAGE_LIMIT = 100;
+
 // Get all products with filtering, sorting, and pagination
 exports.getAllProducts = async (req, res, next) => {
   try {
@@ -20,10 +29,10 @@ exports.getAllProducts = async (req, res, next) => {
     } = req.query;
     
     // Build filter object
-    const filter = {};
+    const filter = { isActive: true };
     
     if (category) {
-      const categoryObj = await Category.findOne({ name: { $regex: new RegExp(category, 'i') } });
+      const categoryObj = await Category.findOne({ name: { $regex: new RegExp(escapeRegex(category), 'i') } });
       if (categoryObj) {
         filter.category = categoryObj._id;
       }
@@ -44,30 +53,36 @@ exports.getAllProducts = async (req, res, next) => {
     }
     
     if (search) {
+      const escapedSearch = escapeRegex(search);
       filter.$or = [
-        { name: { $regex: new RegExp(search, 'i') } },
-        { description: { $regex: new RegExp(search, 'i') } }
+        { name: { $regex: new RegExp(escapedSearch, 'i') } },
+        { description: { $regex: new RegExp(escapedSearch, 'i') } }
       ];
     }
     
-    // Set up pagination
-    const skip = (Number(page) - 1) * Number(limit);
+    // Set up pagination with caps
+    const sanitizedLimit = Math.min(Math.max(1, Number(limit) || 10), MAX_PAGE_LIMIT);
+    const sanitizedPage = Math.max(1, Number(page) || 1);
+    const skip = (sanitizedPage - 1) * sanitizedLimit;
     
-    // Set up sorting
+    // Set up sorting with whitelist
+    const sortField = ALLOWED_SORT_FIELDS.includes(sort) ? sort : 'createdAt';
     const sortOption = {};
-    sortOption[sort] = order === 'asc' ? 1 : -1;
+    sortOption[sortField] = order === 'asc' ? 1 : -1;
     
     // Execute query
     let query = Product.find(filter)
       .populate('category', 'name description')
       .sort(sortOption);
       
-    // Apply pagination only if not requesting all products
+    // Apply pagination only if not requesting all products (capped at 1000)
     if (all !== 'true') {
-      query = query.skip(skip).limit(Number(limit));
+      query = query.skip(skip).limit(sanitizedLimit);
+    } else {
+      query = query.limit(1000); // Cap 'all' queries
     }
     
-    const products = await query;
+    const products = await query.lean();
     
     // Get total count for pagination
     const totalProducts = await Product.countDocuments(filter);
@@ -75,8 +90,8 @@ exports.getAllProducts = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: products.length,
-      totalPages: all === 'true' ? 1 : Math.ceil(totalProducts / Number(limit)),
-      currentPage: Number(page),
+      totalPages: all === 'true' ? 1 : Math.ceil(totalProducts / sanitizedLimit),
+      currentPage: sanitizedPage,
       totalProducts,
       products
     });
@@ -108,7 +123,13 @@ exports.getProductById = async (req, res, next) => {
 // Create a new product (admin only)
 exports.createProduct = async (req, res, next) => {
   try {
-    const product = await Product.create(req.body);
+    const { name, description, price, images, category, stock, featured, features, specifications, sku, discountPercentage, tags } = req.body;
+    
+    const product = await Product.create({
+      name, description, price, images, category, stock,
+      featured: featured || false,
+      features, specifications, sku, discountPercentage, tags
+    });
     
     res.status(201).json({
       success: true,
@@ -122,9 +143,18 @@ exports.createProduct = async (req, res, next) => {
 // Update a product (admin only)
 exports.updateProduct = async (req, res, next) => {
   try {
+    // Whitelist allowed fields for update
+    const allowedFields = ['name', 'description', 'price', 'images', 'category', 'stock', 'featured', 'isActive', 'features', 'specifications', 'sku', 'discountPercentage', 'tags'];
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+    
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
     
@@ -195,6 +225,11 @@ exports.createProductReview = async (req, res, next) => {
       return res.status(400).json({ message: 'Rating is required' });
     }
     
+    const numRating = Number(rating);
+    if (isNaN(numRating) || numRating < 1 || numRating > 5) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+    
     const product = await Product.findById(req.params.id);
     
     if (!product) {
@@ -213,8 +248,8 @@ exports.createProductReview = async (req, res, next) => {
     const review = {
       user: req.user.id,
       name: req.user.name,
-      rating: Number(rating),
-      comment
+      rating: numRating,
+      comment: comment ? String(comment).slice(0, 2000) : ''
     };
     
     product.reviews.push(review);
@@ -234,9 +269,10 @@ exports.createProductReview = async (req, res, next) => {
 // Get top rated products
 exports.getTopProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({})
+    const products = await Product.find({ isActive: true })
       .sort({ rating: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
     
     res.status(200).json({
       success: true,
@@ -252,7 +288,8 @@ exports.getFeaturedProducts = async (req, res, next) => {
   try {
     const products = await Product.find({ featured: true })
       .populate('category', 'name')
-      .limit(8);
+      .limit(8)
+      .lean();
     
     res.status(200).json({
       success: true,
@@ -274,9 +311,11 @@ exports.getRelatedProducts = async (req, res, next) => {
     
     const relatedProducts = await Product.find({
       _id: { $ne: product._id },
-      category: product.category
+      category: product.category,
+      isActive: true
     })
-      .limit(4);
+      .limit(4)
+      .lean();
     
     res.status(200).json({
       success: true,
@@ -300,20 +339,22 @@ exports.searchProducts = async (req, res, next) => {
     }
 
     // Search in name and description
+    const escapedQ = escapeRegex(q);
     const products = await Product.find({
       $and: [
         { isActive: true },
         {
           $or: [
-            { name: { $regex: new RegExp(q, 'i') } },
-            { description: { $regex: new RegExp(q, 'i') } }
+            { name: { $regex: new RegExp(escapedQ, 'i') } },
+            { description: { $regex: new RegExp(escapedQ, 'i') } }
           ]
         }
       ]
     })
     .select('name price images') // Only select fields we need for search results
     .limit(5) // Limit to 5 results
-    .sort({ featured: -1, createdAt: -1 }); // Prioritize featured products
+    .sort({ featured: -1, createdAt: -1 }) // Prioritize featured products
+    .lean();
 
     res.status(200).json({
       success: true,

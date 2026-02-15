@@ -22,33 +22,52 @@
 
 ---
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Telescope.png" width="25" /></picture> Vision
+## Vision
 
-**Bazaar** is redefining the e-commerce experience for the modern digital age. Our platform combines cutting-edge technology with intuitive design to create a seamless shopping journey.
+**Bazaar** is a modern e-commerce platform that combines cutting-edge technology with intuitive design to deliver a seamless shopping experience — from browsing to checkout to order tracking.
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" width="25" /></picture> Core Features
+## Core Features
 
-- **AI-Powered Recommendations** - Personalized suggestions based on browsing patterns
-- **Immersive Product Exploration** - Interactive 3D models and AR product visualization
-- **Seamless Checkout Process** - Frictionless payments with multiple options
-- **Real-time Inventory Management** - Always accurate product availability
-- **Responsive Design** - Perfect experience on any device
-- **Multi-Payment Support** - Integrated Stripe, PayPal, and Apple Pay
-- **Smart Shopping Cart** - Persistent cart with local storage
-- **User Authentication** - Secure login with Firebase and JWT
-- **Interactive Product Filtering** - Dynamic category and price filters
-- **Favorites System** - Save and manage favorite products
+### Shopping Experience
+- **AI-Powered Chatbot** — Ultra-friendly shopping assistant with 30+ intent handlers, product search, stock checks, personalized recommendations, order tracking, and role-based quick-action chips
+- **Multi-Step Checkout** — 3-step flow (Shipping → Payment → Review) with visual step indicator, inline validation, animated transitions, and empty-cart guard
+- **Toast Notifications** — Stacked notification queue with auto-dismiss, undo actions, and smooth animations
+- **Image Lazy Loading** — Blur-up placeholder effect with intersection observer for performant image loading
+- **Dual-Handle Price Slider** — Interactive price range filter with manual min/max inputs and visual active track
+- **Smart Search** — Debounced autocomplete on desktop and mobile with product thumbnails, names, and prices
+- **Favorites System** — Save and manage favorite products with persistent local storage
+- **Order Tracking** — Real-time order status with timeline view, carrier info, and estimated delivery dates
+- **Responsive Design** — Fully responsive across all devices with mobile-optimized navigation and search
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="25" /></picture> Tech Stack
+### Product Management
+- **Real-Time Inventory** — Accurate stock levels with low-stock warnings and quantity caps (max 99)
+- **Dynamic Filtering** — Category, price range, rating, and sort filters with clear-all functionality
+- **Product Detail Pages** — Full product info with prose-styled descriptions, image galleries, reviews, and related products
 
-```
-Frontend: React + TypeScript + Vite | Tailwind CSS + Shadcn UI | Framer Motion
-Backend: Node.js + Express | MongoDB | JWT Authentication | Firebase Admin SDK
-Payments: Stripe API | PayPal SDK | Apple Pay integration
-State Management: Context API | Local Storage for persistence
-```
+### Authentication & Security
+- **Firebase Authentication** — Frontend auth with Google/Email providers and graceful SDK initialization
+- **JWT Session Management** — Secure token-based auth with httpOnly cookies and refresh tokens
+- **Login Redirect-Back** — Users return to their original page after logging in
+- **Password Strength Meter** — 5-criteria checklist with visual progress bar (min 8 characters)
+- **Role-Based Access Control** — Admin and customer roles with protected routes and middleware
+- **50+ Security Hardening Fixes** — Input sanitization, rate limiting, CORS protection, XSS prevention, Helmet headers, mongoSanitize, and more
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="25" /></picture> Quick Start
+### Admin Features
+- **Admin Dashboard** — Product CRUD, order management, user management
+- **Chatbot Admin Mode** — Real-time inventory status, recent orders, low stock alerts, customer accounts, and unavailable product request tracking
+- **Product Form** — Full-featured product creation/editing with image upload and validation
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | React 18 · TypeScript · Vite · Tailwind CSS 3.4 · @tailwindcss/typography · Shadcn/Radix UI · Framer Motion · Lucide Icons · TanStack React Query |
+| **Backend** | Node.js · Express · MongoDB Atlas (Mongoose) · JWT Authentication · Firebase Admin SDK · Helmet · express-rate-limit · Joi validation |
+| **Payments** | Simulation mode — simple card form with mock payment IDs (`pi_sim_*`) |
+| **State** | React Context API (Auth, Cart, Favorites, Theme) · Local Storage persistence |
+| **Deployment** | Frontend: Netlify · Backend: Render |
+
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -62,17 +81,22 @@ npm run setup
 npm run dev
 ```
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="25" /></picture> App Preview
+The frontend runs on `http://localhost:8080` and the backend on `http://localhost:5000`.
 
-| Home Page | Product Details | Shopping Cart |
-|-----------|-----------------|---------------|
-| Modern UI with trending items | Interactive product view | Smart checkout process |
+### Seeding the Database
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" width="25" /></picture> Environment Setup
-
-Both frontend and backend include environment templates. Copy and configure them for your setup:
-
+```bash
+cd backend
+node src/config/seed.js
 ```
+
+This creates 1 admin account (`admin@bazaar.com` / `admin123`), 10 categories, and 220 products.
+
+## Environment Setup
+
+Both frontend and backend require `.env` files. Copy the templates:
+
+```bash
 cp frontend/.env.example frontend/.env
 cp backend/.env.example backend/.env
 ```
@@ -80,77 +104,110 @@ cp backend/.env.example backend/.env
 ### Required Environment Variables
 
 #### Frontend
-- `VITE_API_URL` - Backend API URL
-- `VITE_FIREBASE_CONFIG` - Firebase credentials for authentication
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Backend API URL (default: `http://localhost:5000/api`) |
+| `VITE_FIREBASE_API_KEY` | Firebase API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase auth domain |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase storage bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
+| `VITE_FIREBASE_APP_ID` | Firebase app ID |
 
 #### Backend
-- `MONGODB_URI` - MongoDB connection string
-- `JWT_SECRET` - Secret key for JWT authentication
-- `STRIPE_SECRET_KEY` - Stripe payment processing API key
-- `PAYPAL_CLIENT_ID` - PayPal client ID
-- `PAYPAL_CLIENT_SECRET` - PayPal client secret
-- `FIREBASE_PROJECT_ID` - Firebase project ID for admin SDK
-- `FIREBASE_CLIENT_EMAIL` - Firebase service account email
-- `FIREBASE_PRIVATE_KEY` - Firebase private key
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `JWT_SECRET` | Secret key for JWT token signing |
+| `JWT_REFRESH_SECRET` | Secret key for refresh tokens |
+| `FIREBASE_PROJECT_ID` | Firebase project ID |
+| `FIREBASE_CLIENT_EMAIL` | Firebase service account email |
+| `FIREBASE_PRIVATE_KEY` | Firebase service account private key |
+| `ALLOWED_ORIGINS` | Comma-separated allowed CORS origins |
+| `PORT` | Server port (default: `5000`) |
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Credit%20Card.png" width="25" /></picture> Payment Processing
+## Payment Processing
 
-### Stripe Integration
-The platform uses Stripe for credit card processing with a custom checkout form that supports:
-- Credit/Debit cards
-- Apple Pay
-- Dark mode compatible UI
-- Secure token-based transactions
+The platform uses a **simulation-only** payment system for development and demonstration:
 
-### PayPal Integration
-Alternative payment option with:
-- Express checkout
-- PayPal account payments
-- Credit card processing through PayPal
+- Simple credit card form (name, number, expiry, CVC)
+- Simulated payment processing with mock payment IDs (`pi_sim_*`)
+- Amber "Simulation Mode" banner displayed at checkout
+- No real payment SDKs — all transactions are simulated
+- Full checkout flow: Shipping Address → Payment → Order Review → Confirmation
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked%20with%20Key.png" width="25" /></picture> Authentication System
+## Authentication System
 
-- Firebase Authentication for frontend
-- JWT-based session management
-- Role-based access control
-- Secure API routes with middleware
+- **Firebase Authentication** — Frontend sign-up/sign-in with email/password and Google OAuth
+- **JWT Tokens** — Backend issues access + refresh tokens stored in httpOnly cookies
+- **Firebase Admin SDK** — Backend verifies Firebase tokens for SSO flow
+- **Graceful Initialization** — Firebase Admin SDK initializes safely with missing credentials
+- **Protected Routes** — Auth middleware validates tokens on every protected API call
+- **Redirect-Back** — Login preserves the user's intended destination via location state
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Milky%20Way.png" width="25" /></picture> Future Roadmap
+## Chatbot Intelligence
 
-- Voice-assisted shopping experience
-- Blockchain-based payment system
-- Customer loyalty NFT program
-- Global CDN for faster content delivery
-- AR/VR shopping environment
-- Subscription-based product offerings
-- AI chatbot for customer service
+The AI shopping assistant supports **30+ intents** with an ultra-friendly personality:
 
-## <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Package.png" width="25" /></picture> Project Structure
+**For Customers:**
+- Product search, price checks, stock availability, and comparisons
+- Personalized recommendations, deal highlights, and new arrival notifications
+- Category browsing, order tracking, return/refund policy, and shipping info
+- Payment help, account assistance, size guides, and gift suggestions
+- Quick-action chips: "Show deals", "Popular products", "Track my order", "New arrivals", "Browse categories"
+
+**For Admins:**
+- Real-time inventory overview with critical stock alerts
+- Recent order summaries with revenue totals
+- Customer account listings with activity status
+- Unavailable product request tracking (missed search analytics)
+- Quick-action chips: "Inventory status", "Recent orders", "Low stock alerts", "Customer accounts"
+
+## Project Structure
 
 ```
-/frontend            - React frontend application
-  /src
-    /components      - Reusable UI components
-    /contexts        - Context API providers
-    /hooks           - Custom React hooks
-    /pages           - Page components
-    /lib             - Utility functions
-
-/backend             - Node.js Express API
-  /src
-    /controllers     - Request handlers
-    /models          - MongoDB schemas
-    /routes          - API endpoints
-    /middleware      - Express middleware
-    /services        - Business logic
+bazaar/
+├── frontend/                React + TypeScript + Vite
+│   └── src/
+│       ├── components/
+│       │   ├── admin/       Admin dashboard components
+│       │   ├── animation/   Animation wrappers (ScrollReveal, AnimatedPage)
+│       │   ├── chatbot/     AI chatbot assistant
+│       │   ├── home/        Home page sections (Hero, Featured, Categories)
+│       │   ├── layout/      Navbar, Footer
+│       │   ├── product/     Product cards, detail views, filters
+│       │   └── ui/          Shadcn/Radix primitives (35 components)
+│       ├── contexts/        Auth, Cart, Favorites, Theme providers
+│       ├── hooks/           useAuth, useCart, useFavorites, useScrollAnimation
+│       ├── lib/             API client, utilities, animations
+│       └── pages/           20+ pages including admin panel
+│           └── admin/       Admin management pages
+├── backend/                 Node.js + Express API
+│   └── src/
+│       ├── config/          Firebase config, database seeding
+│       ├── controllers/     Auth, Product, Order, Chat, Payment, etc.
+│       ├── middleware/      Auth middleware, rate limiters
+│       ├── models/          User, Product, Order, Category schemas
+│       └── routes/          RESTful API endpoints
+├── .gitignore
+├── CONTRIBUTING.md
+├── LICENSE
+└── package.json             Root scripts (setup, dev)
 ```
+
+## Future Roadmap
+
+- Wishlist sharing and social features
+- Product review images and video uploads
+- Email notification system (order confirmation, shipping updates)
+- Advanced search with fuzzy matching and filters
+- Customer loyalty points program
+- Multi-language support (i18n)
 
 ---
 
 <div align="center">
-  <p>
-    <picture><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Sparkling%20Heart.png" width="20" /></picture> Made with love
-  </p>
+  <p>Made with care</p>
   <strong>BAZAAR</strong> — Shopping Reimagined for the Digital Future
   <p>
     <a href="./CONTRIBUTING.md">
@@ -161,4 +218,3 @@ Alternative payment option with:
     </a>
   </p>
 </div>
- 

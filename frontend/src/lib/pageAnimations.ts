@@ -80,39 +80,6 @@ export const aboutAnimations = {
   } as AnimationPreset
 };
 
-// Admin dashboard animations
-export const adminAnimations = {
-  header: {
-    direction: "down",
-    duration: 0.5,
-    delay: 0,
-    distance: 30
-  } as AnimationPreset,
-  
-  stats: {
-    direction: "up",
-    duration: 0.6,
-    delay: 0.1,
-    distance: 40,
-    staggerChildren: true,
-    staggerDelay: 0.1
-  } as AnimationPreset,
-  
-  table: {
-    direction: "translateUp",
-    duration: 0.7,
-    delay: 0.2,
-    distance: 30
-  } as AnimationPreset,
-  
-  sidebar: {
-    direction: "left",
-    duration: 0.5,
-    delay: 0,
-    distance: 40
-  } as AnimationPreset
-};
-
 // Authentication page animations
 export const authAnimations = {
   card: {
@@ -141,58 +108,3 @@ export const authAnimations = {
     staggerDelay: 0.1
   } as AnimationPreset
 };
-
-// Profile page animations
-export const profileAnimations = {
-  header: {
-    direction: "scale",
-    duration: 0.6,
-    delay: 0,
-    distance: 0
-  } as AnimationPreset,
-  
-  details: {
-    direction: "left",
-    duration: 0.6,
-    delay: 0.2,
-    distance: 50
-  } as AnimationPreset,
-  
-  orders: {
-    direction: "right",
-    duration: 0.6,
-    delay: 0.3,
-    distance: 50
-  } as AnimationPreset,
-  
-  settings: {
-    direction: "up",
-    duration: 0.6,
-    delay: 0.4,
-    distance: 40
-  } as AnimationPreset
-};
-
-// Settings page animations
-export const settingsAnimations = {
-  menu: {
-    direction: "left",
-    duration: 0.5,
-    delay: 0.1,
-    distance: 40
-  } as AnimationPreset,
-  
-  form: {
-    direction: "right",
-    duration: 0.6,
-    delay: 0.2,
-    distance: 50
-  } as AnimationPreset,
-  
-  buttons: {
-    direction: "up",
-    duration: 0.5,
-    delay: 0.3,
-    distance: 30
-  } as AnimationPreset
-}; 

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/product/ProductCard";
+import SEO from "@/components/SEO";
 
 export default function NewArrivalsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -40,6 +41,7 @@ export default function NewArrivalsPage() {
 
   return (
     <Layout>
+      <SEO title="New Arrivals" description="Discover the latest products and fresh designs at Bazaar. Shop our newest collection now." />
       <div className="container py-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div>

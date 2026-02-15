@@ -8,25 +8,29 @@ exports.getAllUsers = async (req, res, next) => {
     
     // Build filter
     const filter = {};
-    if (role) {
+    if (role && ['customer', 'admin'].includes(role)) {
       filter.role = role;
     }
     
-    // Set up pagination
-    const skip = (Number(page) - 1) * Number(limit);
+    // Set up pagination with caps
+    const MAX_LIMIT = 100;
+    const sanitizedLimit = Math.min(Math.max(1, Number(limit) || 10), MAX_LIMIT);
+    const sanitizedPage = Math.max(1, Number(page) || 1);
+    const skip = (sanitizedPage - 1) * sanitizedLimit;
     
     const users = await User.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit));
+      .limit(sanitizedLimit)
+      .lean();
     
     const totalUsers = await User.countDocuments(filter);
     
     res.status(200).json({
       success: true,
       count: users.length,
-      totalPages: Math.ceil(totalUsers / Number(limit)),
-      currentPage: Number(page),
+      totalPages: Math.ceil(totalUsers / sanitizedLimit),
+      currentPage: sanitizedPage,
       users
     });
   } catch (error) {
@@ -64,8 +68,22 @@ exports.updateUser = async (req, res, next) => {
     }
     
     if (name) user.name = name;
-    if (email) user.email = email;
-    if (role) user.role = role;
+    if (email) {
+      // Check email uniqueness
+      const existingUser = await User.findOne({ email, _id: { $ne: user._id } });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email is already in use by another account' });
+      }
+      user.email = email;
+    }
+    if (role) {
+      // Validate role against enum
+      const validRoles = ['customer', 'admin'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: `Invalid role. Allowed: ${validRoles.join(', ')}` });
+      }
+      user.role = role;
+    }
     if (isActive !== undefined) user.isActive = isActive;
     
     const updatedUser = await user.save();
@@ -181,7 +199,14 @@ exports.updateUserProfile = async (req, res, next) => {
     }
     
     if (name) user.name = name;
-    if (email) user.email = email;
+    if (email) {
+      // Check email uniqueness before updating
+      const existingUser = await User.findOne({ email, _id: { $ne: user._id } });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email is already in use by another account' });
+      }
+      user.email = email;
+    }
     if (phone) user.phone = phone;
     if (avatar) user.avatar = avatar;
     
@@ -203,6 +228,17 @@ exports.changePassword = async (req, res, next) => {
     
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: 'Current password and new password are required' });
+    }
+    
+    // Password strength validation
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters long' });
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      return res.status(400).json({ message: 'New password must contain at least one uppercase letter' });
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      return res.status(400).json({ message: 'New password must contain at least one number' });
     }
     
     const user = await User.findById(req.user.id).select('+password');

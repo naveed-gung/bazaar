@@ -1,9 +1,5 @@
 import axios from 'axios';
 
-// Force reading environment variables on load with a timestamp to prevent caching
-const timestamp = new Date().getTime();
-console.log(`Loading API configuration at ${timestamp}`);
-
 // Ensure the API URL always includes /api
 let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -11,8 +7,6 @@ let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 if (!API_URL.endsWith('/api')) {
   API_URL = API_URL + '/api';
 }
-
-console.log(`API URL (corrected): ${API_URL}`);
 
 // Interfaces
 interface Product {
@@ -110,14 +104,6 @@ const api = axios.create({
   }
 });
 
-// Log the requests to help debug
-const originalRequest = api.request;
-api.request = function (config) {
-  const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
-  console.log(`Making API request to: ${fullUrl}`);
-  return originalRequest.apply(this, arguments);
-};
-
 // Add authentication interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -131,7 +117,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
       // Clear invalid token
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -191,7 +177,6 @@ export const ProductAPI = {
         : productData.category
     };
     
-    console.log('Sending product data to API:', formattedData);
     const response = await api.post('/products', formattedData);
     return response.data;
   },
@@ -264,43 +249,8 @@ export const OrderAPI = {
   },
 
   getMyOrders: async (): Promise<{ orders: Order[] }> => {
-    try {
-      // In development/demo mode, we can implement this for testing
-      const mockUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      
-      // Format the stored orders to match our Order interface
-      const formattedOrders = allOrders.map(order => ({
-        _id: order.id,
-        user: mockUser,
-        orderItems: order.items.map(item => ({
-          product: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          image: item.image
-        })),
-        shippingAddress: order.shippingAddress,
-        paymentMethod: order.paymentMethod || 'card',
-        itemsPrice: order.total,
-        taxPrice: order.total * 0.08,
-        shippingPrice: 5.99,
-        totalPrice: order.total,
-        isPaid: true,
-        paidAt: new Date().toISOString(),
-        status: order.status || 'processing',
-        createdAt: order.createdAt
-      }));
-
-      // Remove console logging for debugging
-      
-      return { orders: formattedOrders };
-    } catch (error) {
-      console.error('Error fetching mock orders:', error);
-      // Return API response if available
-      const response = await api.get('/orders/myorders');
-      return response.data;
-    }
+    const response = await api.get('/orders/myorders');
+    return response.data;
   },
 
   getOrderById: async (id: string): Promise<{ order: Order }> => {
@@ -320,55 +270,8 @@ export const OrderAPI = {
 
   // Admin methods
   getAllOrders: async (params = {}): Promise<{ orders: Order[]; totalOrders: number }> => {
-    try {
-      // In development/demo mode, fetch from localStorage for admin
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
-      const mockUser = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      if (!adminOrders.length) {
-        throw new Error('No admin orders found in localStorage');
-      }
-      
-      // Format the stored orders to match our Order interface
-      const formattedOrders = adminOrders.map(order => ({
-        _id: order.id,
-        user: mockUser,
-        orderItems: order.items ? order.items.map(item => ({
-          product: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          image: item.image
-        })) : [],
-        shippingAddress: order.shippingAddress || {
-          name: 'Default Customer',
-          address: '123 Main St',
-          city: 'Anytown',
-          state: 'CA',
-          postalCode: '12345',
-          country: 'USA'
-        },
-        paymentMethod: order.paymentMethod || 'card',
-        itemsPrice: order.total,
-        taxPrice: order.total ? order.total * 0.08 : 0,
-        shippingPrice: 5.99,
-        totalPrice: order.total || 0,
-        isPaid: true,
-        paidAt: new Date().toISOString(),
-        status: order.status || 'processing',
-        createdAt: order.createdAt || new Date().toISOString()
-      }));
-      
-      return { 
-        orders: formattedOrders, 
-        totalOrders: formattedOrders.length 
-      };
-    } catch (error) {
-      console.error('Error fetching mock admin orders:', error);
-      // Fall back to the API if available
-      const response = await api.get('/orders', { params });
-      return response.data;
-    }
+    const response = await api.get('/orders/all', { params });
+    return response.data;
   },
 
   updateOrderStatus: async (id: string, status: Order['status']) => {

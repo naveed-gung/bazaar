@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import SEO from "@/components/SEO";
 
 interface ContactForm {
   name: string;
@@ -41,6 +42,10 @@ export default function ContactPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Contact Us"
+        description="Have questions or need assistance? Contact the Bazaar team."
+      />
       <div className="container py-12">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold text-center mb-2">Contact Us</h1>

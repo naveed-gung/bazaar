@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/layout/Layout";
 import ScrollAnimation from "@/components/animation/ScrollAnimation";
 import { authAnimations } from "@/lib/pageAnimations";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Check, X } from "lucide-react";
+import SEO from "@/components/SEO";
+import { cn } from "@/lib/utils";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -22,6 +24,22 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { register, loginWithGoogle } = useAuth();
+
+  // Password strength calculation
+  const passwordStrength = useMemo(() => {
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[^A-Za-z0-9]/.test(password),
+    };
+    const score = Object.values(checks).filter(Boolean).length;
+    const label = score <= 1 ? 'Weak' : score <= 3 ? 'Fair' : score <= 4 ? 'Strong' : 'Very Strong';
+    const color = score <= 1 ? 'bg-destructive' : score <= 3 ? 'bg-amber-500' : score <= 4 ? 'bg-green-500' : 'bg-emerald-500';
+    const textColor = score <= 1 ? 'text-destructive' : score <= 3 ? 'text-amber-500' : 'text-green-500';
+    return { checks, score, label, color, textColor };
+  }, [password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +58,16 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     
     try {
-      await register(name, email, password);
+      const user = await register(name, email, password);
       toast({
         title: "Success!",
-        description: "Your account has been created. Please sign in.",
+        description: "Welcome to Bazaar! Your account is ready.",
       });
-      navigate("/login");
+      if (user?.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -83,13 +105,21 @@ export default function RegisterPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Create Account"
+        description="Create a Bazaar account to start shopping, track orders, and save your favorites."
+      />
       <div className="container max-w-md mx-auto py-16">
+        <ScrollAnimation direction="down">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Create an Account</h1>
           <p className="text-muted-foreground mt-2">Join us for a better shopping experience</p>
         </div>
+        </ScrollAnimation>
         
+        <ScrollAnimation {...authAnimations.card}>
         <div className="bg-card border rounded-lg p-6 shadow-sm">
+          <ScrollAnimation {...authAnimations.form}>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
@@ -130,7 +160,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
                 <Button
                   type="button"
@@ -138,6 +168,7 @@ export default function RegisterPage() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -146,6 +177,51 @@ export default function RegisterPage() {
                   )}
                 </Button>
               </div>
+              {/* Password strength meter */}
+              {password.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  <div className="flex gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          'h-1.5 flex-1 rounded-full transition-colors duration-300',
+                          i < passwordStrength.score ? passwordStrength.color : 'bg-muted'
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <p className={cn('text-xs font-medium', passwordStrength.textColor)}>
+                    {passwordStrength.label}
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                    {[
+                      { key: 'length', label: '8+ characters' },
+                      { key: 'uppercase', label: 'Uppercase letter' },
+                      { key: 'lowercase', label: 'Lowercase letter' },
+                      { key: 'number', label: 'Number' },
+                      { key: 'special', label: 'Special character' },
+                    ].map(({ key, label }) => (
+                      <span
+                        key={key}
+                        className={cn(
+                          'flex items-center gap-1',
+                          passwordStrength.checks[key as keyof typeof passwordStrength.checks]
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-muted-foreground'
+                        )}
+                      >
+                        {passwordStrength.checks[key as keyof typeof passwordStrength.checks] ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          <X className="h-3 w-3" />
+                        )}
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -160,7 +236,7 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
                 <Button
                   type="button"
@@ -168,6 +244,7 @@ export default function RegisterPage() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -208,6 +285,7 @@ export default function RegisterPage() {
               {isSubmitting ? "Creating account..." : "Create account"}
             </Button>
           </form>
+          </ScrollAnimation>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
@@ -253,6 +331,7 @@ export default function RegisterPage() {
             </div>
           </div>
         </div>
+        </ScrollAnimation>
       </div>
     </Layout>
   );

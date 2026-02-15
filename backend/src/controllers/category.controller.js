@@ -5,7 +5,8 @@ const Product = require('../models/product.model');
 exports.getAllCategories = async (req, res, next) => {
   try {
     const categories = await Category.find({})
-      .sort({ order: 'asc', name: 'asc' });
+      .sort({ order: 'asc', name: 'asc' })
+      .lean();
     
     res.status(200).json({
       success: true,
@@ -22,7 +23,8 @@ exports.getFeaturedCategories = async (req, res, next) => {
   try {
     const categories = await Category.find({ featured: true })
       .sort({ order: 'asc' })
-      .limit(6);
+      .limit(6)
+      .lean();
     
     res.status(200).json({
       success: true,
@@ -54,13 +56,13 @@ exports.getCategoryById = async (req, res, next) => {
 // Get a category with its products
 exports.getCategoryWithProducts = async (req, res, next) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const category = await Category.findById(req.params.id).lean();
     
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
     
-    const products = await Product.find({ category: category._id });
+    const products = await Product.find({ category: category._id }).lean();
     
     res.status(200).json({
       success: true,
@@ -75,7 +77,18 @@ exports.getCategoryWithProducts = async (req, res, next) => {
 // Create a new category (admin only)
 exports.createCategory = async (req, res, next) => {
   try {
-    const category = await Category.create(req.body);
+    const { name, description, image, featured, order, parentCategory } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ message: 'Category name is required' });
+    }
+    
+    const category = await Category.create({
+      name, description, image,
+      featured: featured || false,
+      order: order || 0,
+      parentCategory
+    });
     
     res.status(201).json({
       success: true,
@@ -89,9 +102,18 @@ exports.createCategory = async (req, res, next) => {
 // Update a category (admin only)
 exports.updateCategory = async (req, res, next) => {
   try {
+    // Whitelist allowed fields
+    const allowedFields = ['name', 'description', 'image', 'featured', 'order', 'parentCategory'];
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+    
     const category = await Category.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
     

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, User, Menu, Sun, Moon, Search, LogOut, Settings, ShoppingBag, UserCircle, Heart } from "lucide-react";
+import { ShoppingCart, Menu, Sun, Moon, Search, LogOut, Settings, ShoppingBag, UserCircle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +26,8 @@ export default function Navbar() {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -33,6 +35,13 @@ export default function Navbar() {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
   const toggleUserDropdown = () => setIsUserDropdownOpen(!isUserDropdownOpen);
+
+  // Auto-focus mobile search input when opened
+  useEffect(() => {
+    if (isMobileSearchOpen && mobileSearchInputRef.current) {
+      mobileSearchInputRef.current.focus();
+    }
+  }, [isMobileSearchOpen]);
 
   // Close search results when clicking outside
   useEffect(() => {
@@ -54,27 +63,37 @@ export default function Navbar() {
     }
   };
 
-  // Debounced search function
+  // Debounced search function with AbortController to prevent race conditions
   useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const controller = new AbortController();
     const debounceTimer = setTimeout(async () => {
-      if (searchQuery.trim().length >= 2) {
-        setIsSearching(true);
-        try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/products/search?q=${searchQuery}`);
-          const data = await response.json();
-          setSearchResults(data.products || []);
-        } catch (error) {
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/products/search?q=${encodeURIComponent(searchQuery.trim())}`,
+          { signal: controller.signal }
+        );
+        const data = await response.json();
+        setSearchResults(data.products || []);
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
           console.error('Search error:', error);
           setSearchResults([]);
-        } finally {
-          setIsSearching(false);
         }
-      } else {
-        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
       }
     }, 300);
 
-    return () => clearTimeout(debounceTimer);
+    return () => {
+      clearTimeout(debounceTimer);
+      controller.abort();
+    };
   }, [searchQuery]);
 
   // Check if user is admin
@@ -100,19 +119,22 @@ export default function Navbar() {
         <div className="flex items-center gap-6">
           <Link 
             to="/" 
-            className="flex items-center space-x-2 transition-transform hover:scale-105"
+            className="flex items-center space-x-2 group"
           >
-            <span className="text-xl font-bold text-gradient animate-pulse">Bazaar</span>
+            <span className="text-xl font-bold text-gradient transition-all duration-300 group-hover:tracking-wider">Bazaar</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-sm font-medium transition-all hover:text-primary hover:scale-105">
-              Home
-            </Link>
-            <Link to="/products" className="text-sm font-medium transition-all hover:text-primary hover:scale-105">
+            <Link to="/products" className="text-sm font-medium relative transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">
               Shop
             </Link>
-            <Link to="/about" className="text-sm font-medium transition-all hover:text-primary hover:scale-105">
+            <Link to="/categories" className="text-sm font-medium relative transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">
+              Categories
+            </Link>
+            <Link to="/new-arrivals" className="text-sm font-medium relative transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">
+              New Arrivals
+            </Link>
+            <Link to="/about" className="text-sm font-medium relative transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">
               About
             </Link>
           </nav>
@@ -127,6 +149,7 @@ export default function Navbar() {
                 placeholder="Search products..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search products"
                 className="w-[200px] rounded-md border border-input bg-background pl-8 pr-4 py-2 text-sm transition-all focus:w-[300px] focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </form>
@@ -151,14 +174,20 @@ export default function Navbar() {
                         }}
                       >
                         <div className="h-10 w-10 rounded-md overflow-hidden bg-muted">
-                          <img
-                            src={product.images[0]}
-                            alt={product.name}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder-product.png';
-                            }}
-                          />
+                          {product.images?.[0] ? (
+                            <img
+                              src={product.images[0]}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder-product.png';
+                              }}
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                              <Search className="h-4 w-4" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium">{product.name}</p>
@@ -171,12 +200,24 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Mobile Search Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:hidden rounded-full"
+            onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
+            aria-label="Search products"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
           
           <Button
             variant="ghost"
             size="icon"
             className="rounded-full hover:scale-110 transition-transform"
             onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
             {theme === "dark" ? (
               <Sun className="h-5 w-5 animate-spin-slow" />
@@ -193,6 +234,7 @@ export default function Navbar() {
                   variant="ghost" 
                   size="icon" 
                   className="rounded-full relative hover:scale-110 transition-transform"
+                  aria-label={`Favorites${favoritesCount > 0 ? ` (${favoritesCount} items)` : ''}`}
                 >
                   <Heart className="h-5 w-5" />
                   {favoritesCount > 0 && (
@@ -208,6 +250,7 @@ export default function Navbar() {
                   variant="ghost" 
                   size="icon" 
                   className="rounded-full relative hover:scale-110 transition-transform"
+                  aria-label={`Shopping cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   {cartCount > 0 && (
@@ -227,6 +270,8 @@ export default function Navbar() {
                 size="icon"
                 className="rounded-full hover:scale-110 transition-transform"
                 onClick={toggleUserDropdown}
+                aria-label="User menu"
+                aria-expanded={isUserDropdownOpen}
               >
                 {user.avatar ? (
                   <img 
@@ -243,7 +288,7 @@ export default function Navbar() {
               </Button>
               
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-background border border-border overflow-hidden animate-scale-in z-50">
+                <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-background border border-border overflow-hidden animate-scale-in z-50 origin-top-right">
                   <div className="p-3 border-b border-border bg-muted/30">
                     <p className="font-medium">{user.name}</p>
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
@@ -251,7 +296,7 @@ export default function Navbar() {
                   <div className="py-1">
                     <Link 
                       to="/profile" 
-                      className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 transition-colors"
+                      className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 hover:pl-5 transition-all duration-200"
                       onClick={() => setIsUserDropdownOpen(false)}
                     >
                       <UserCircle className="mr-2 h-4 w-4" />
@@ -260,7 +305,7 @@ export default function Navbar() {
                     {!isAdmin && (
                       <Link 
                         to="/orders" 
-                        className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 transition-colors"
+                        className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 hover:pl-5 transition-all duration-200"
                         onClick={() => setIsUserDropdownOpen(false)}
                       >
                         <ShoppingBag className="mr-2 h-4 w-4" />
@@ -271,7 +316,7 @@ export default function Navbar() {
                       <>
                         <Link 
                           to="/admin" 
-                          className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 transition-colors"
+                          className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 hover:pl-5 transition-all duration-200"
                           onClick={() => setIsUserDropdownOpen(false)}
                         >
                           <Settings className="mr-2 h-4 w-4" />
@@ -279,7 +324,7 @@ export default function Navbar() {
                         </Link>
                         <Link 
                           to="/admin/products/new" 
-                          className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 transition-colors"
+                          className="flex items-center px-4 py-2 text-sm hover:bg-muted/50 hover:pl-5 transition-all duration-200"
                           onClick={() => setIsUserDropdownOpen(false)}
                         >
                           <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -294,7 +339,7 @@ export default function Navbar() {
                         logout();
                         setIsUserDropdownOpen(false);
                       }} 
-                      className="flex items-center w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors text-destructive"
+                      className="flex items-center w-full text-left px-4 py-2 text-sm hover:bg-destructive/10 hover:pl-5 transition-all duration-200 text-destructive"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout
@@ -319,9 +364,80 @@ export default function Navbar() {
             size="icon" 
             className="md:hidden hover:scale-110 transition-transform" 
             onClick={toggleMenu}
+            aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
+        </div>
+      </div>
+
+      {/* Mobile Search Bar */}
+      <div
+        className={cn(
+          "sm:hidden overflow-visible transition-all duration-300 border-b bg-background relative",
+          isMobileSearchOpen ? "max-h-20 py-3" : "max-h-0 py-0 border-b-0"
+        )}
+      >
+        <div className="container relative">
+          <form onSubmit={(e) => { handleSearch(e); setIsMobileSearchOpen(false); }} className="relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              ref={mobileSearchInputRef}
+              type="search"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search products"
+              className="w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </form>
+
+          {/* Mobile Search Results Dropdown */}
+          {isMobileSearchOpen && (searchResults.length > 0 || isSearching) && (
+            <div className="absolute left-0 right-0 top-full mt-1 mx-4 max-h-[260px] overflow-y-auto rounded-md border bg-background shadow-lg z-50">
+              {isSearching ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Searching...
+                </div>
+              ) : (
+                <div className="py-2">
+                  {searchResults.map((product) => (
+                    <Link
+                      key={product._id}
+                      to={`/products/${product._id}`}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSearchResults([]);
+                        setIsMobileSearchOpen(false);
+                      }}
+                    >
+                      <div className="h-10 w-10 rounded-md overflow-hidden bg-muted shrink-0">
+                        {product.images?.[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder-product.png';
+                            }}
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                            <Search className="h-4 w-4" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">${product.price.toFixed(2)}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -329,8 +445,12 @@ export default function Navbar() {
       <div 
         className={cn(
           "fixed inset-0 bg-background/80 backdrop-blur-lg z-50 transform transition-all duration-500 md:hidden",
-          isMenuOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+          isMenuOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
         )}
+        aria-hidden={!isMenuOpen}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
       >
         <div className="container pt-20 pb-6 flex flex-col h-full">
           <Button 
@@ -338,6 +458,7 @@ export default function Navbar() {
             size="icon" 
             className="absolute right-4 top-4" 
             onClick={toggleMenu}
+            aria-label="Close menu"
           >
             <span className="sr-only">Close</span>
             <svg
@@ -357,13 +478,16 @@ export default function Navbar() {
             </svg>
           </Button>
           <nav className="flex flex-col gap-4">
-            <Link to="/" className="text-lg font-medium px-2 py-2" onClick={toggleMenu}>
-              Home
-            </Link>
-            <Link to="/products" className="text-lg font-medium px-2 py-2" onClick={toggleMenu}>
+            <Link to="/products" className="text-lg font-medium px-2 py-2 transition-colors hover:text-primary hover:translate-x-2 transform duration-200" onClick={toggleMenu}>
               Shop
             </Link>
-            <Link to="/about" className="text-lg font-medium px-2 py-2" onClick={toggleMenu}>
+            <Link to="/categories" className="text-lg font-medium px-2 py-2 transition-colors hover:text-primary hover:translate-x-2 transform duration-200" onClick={toggleMenu}>
+              Categories
+            </Link>
+            <Link to="/new-arrivals" className="text-lg font-medium px-2 py-2 transition-colors hover:text-primary hover:translate-x-2 transform duration-200" onClick={toggleMenu}>
+              New Arrivals
+            </Link>
+            <Link to="/about" className="text-lg font-medium px-2 py-2 transition-colors hover:text-primary hover:translate-x-2 transform duration-200" onClick={toggleMenu}>
               About
             </Link>
             

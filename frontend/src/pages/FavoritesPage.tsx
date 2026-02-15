@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useFavorites } from "@/hooks/use-favorites";
 import { ProductAPI } from "@/lib/api";
 import Layout from "@/components/layout/Layout";
+import SEO from "@/components/SEO";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -31,20 +32,31 @@ export default function FavoritesPage() {
   const { favorites, removeFromFavorites } = useFavorites();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevFavoritesRef = useRef<string>('');
 
   useEffect(() => {
+    // Only refetch if the favorites list actually changed (by comparing sorted IDs)
+    const favKey = [...favorites].sort().join(',');
+    if (favKey === prevFavoritesRef.current) return;
+    prevFavoritesRef.current = favKey;
+
+    if (favorites.length === 0) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchFavoriteProducts = async () => {
       setLoading(true);
       try {
-        const favoriteProducts = await Promise.all(
-          favorites.map(id => ProductAPI.getProductById(id))
+        const results = await Promise.all(
+          favorites.map(id => ProductAPI.getProductById(id).catch(() => null))
         );
-        setProducts(favoriteProducts.map((data: Product | APIResponse) => {
-          if ('product' in data) {
-            return data.product;
-          }
-          return data;
-        }));
+        setProducts(
+          results
+            .filter((data): data is Product | APIResponse => data !== null)
+            .map((data) => ('product' in data ? data.product : data))
+        );
       } catch (error) {
         console.error('Error fetching favorite products:', error);
       }
@@ -71,6 +83,7 @@ export default function FavoritesPage() {
 
   return (
     <Layout>
+      <SEO title="My Favorites" description="View and manage your favorite products." />
       <div className="container py-8">
         <h1 className="text-3xl font-bold mb-6">My Favorites</h1>
         

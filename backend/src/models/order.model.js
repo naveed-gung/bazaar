@@ -140,4 +140,10 @@ orderSchema.methods.calculateTotals = function() {
 
 const Order = mongoose.model('Order', orderSchema);
 
+// Indexes for common queries
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ status: 1 });
+orderSchema.index({ isPaid: 1 });
+orderSchema.index({ createdAt: -1 });
+
 module.exports = Order; 

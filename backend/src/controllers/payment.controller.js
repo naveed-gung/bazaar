@@ -1,273 +1,162 @@
+const config = require('../config');
+const logger = require('../utils/logger');
 
-const stripe = {
-  paymentIntents: {
-    create: async (options) => {
-      const { amount, currency, payment_method_types } = options;
-      
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+// ─── SIMULATION MODE ─────────────────────────────────────────────────────────
+// All payment processing is simulated. No real charges are ever made.
+// Stripe / PayPal SDKs are NOT loaded.
+logger.info('Payment controller running in SIMULATION mode — no real charges will be made');
 
-      return {
-        id: `pi_${Math.random().toString(36).substr(2, 9)}`,
-        amount,
-        currency,
-        payment_method_types,
-        client_secret: `sk_test_${Math.random().toString(36).substr(2, 24)}`,
-        status: 'requires_payment_method'
-      };
-    },
-    confirm: async (paymentIntentId) => {
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simulate a successful payment or failed payment
-      const success = Math.random() > 0.1; // 90% success rate
-      
-      if (!success) {
-        throw new Error('Payment failed');
-      }
-      
-      return {
-        id: paymentIntentId,
-        status: 'succeeded',
-        next_action: null
-      };
-    }
-  }
-};
+const ALLOWED_CURRENCIES = ['usd', 'eur', 'gbp', 'cad', 'aud'];
 
-// Create Stripe payment intent
+// Simulated Stripe payment intent
 exports.createPaymentIntent = async (req, res, next) => {
   try {
     const { amount, currency = 'usd' } = req.body;
-    
-    if (!amount) {
-      return res.status(400).json({ message: 'Amount is required' });
+
+    if (!amount || typeof amount !== 'number' || amount <= 0 || amount > 999999) {
+      return res.status(400).json({ message: 'Amount must be a positive number (max 999999)' });
     }
-    
-    // Create payment intent with Stripe
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency,
-      payment_method_types: ['card']
-    });
-    
+
+    if (!ALLOWED_CURRENCIES.includes(currency.toLowerCase())) {
+      return res.status(400).json({ message: `Invalid currency. Allowed: ${ALLOWED_CURRENCIES.join(', ')}` });
+    }
+
+    const mockId = `pi_sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
     res.status(200).json({
       success: true,
-      clientSecret: paymentIntent.client_secret
+      clientSecret: `${mockId}_secret`,
+      paymentIntentId: mockId,
+      simulation: true,
     });
   } catch (error) {
+    logger.error('Simulated createPaymentIntent error', { error: error.message });
     next(error);
   }
 };
 
-// Confirm Stripe payment
+// Simulated Stripe payment confirmation — always succeeds
 exports.confirmPayment = async (req, res, next) => {
   try {
     const { paymentIntentId } = req.body;
-    
-    if (!paymentIntentId) {
+
+    if (!paymentIntentId || typeof paymentIntentId !== 'string') {
       return res.status(400).json({ message: 'Payment intent ID is required' });
     }
-    
-    // Confirm payment with Stripe
-    const paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId);
-    
+
     res.status(200).json({
       success: true,
-      paymentIntent
+      simulation: true,
+      paymentIntent: {
+        id: paymentIntentId,
+        status: 'succeeded',
+      },
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    logger.error('Simulated confirmPayment error', { error: error.message });
+    next(error);
   }
 };
 
-const paypalService = require('../services/paypal.service');
 const Order = require('../models/order.model');
+const Product = require('../models/product.model');
+const mongoose = require('mongoose');
 
-// Create a PayPal order
+// Simulated PayPal order creation
 exports.createPayPalOrder = async (req, res, next) => {
   try {
-    const { items, shipping, tax, returnUrl, cancelUrl } = req.body;
-    
-    // Validate the request data
+    const { items } = req.body;
+
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Order must include at least one item' 
-      });
+      return res.status(400).json({ success: false, message: 'Order must include at least one item' });
     }
-    
-    if (!returnUrl || !cancelUrl) {
-      return res.status(400).json({
-        success: false,
-        message: 'Return URL and cancel URL are required'
-      });
-    }
-    
-    // Create order in PayPal
-    const paypalOrder = await paypalService.createOrder({
-      items,
-      shipping: shipping || 0,
-      tax: tax || 0,
-      customer: req.user,
-      returnUrl,
-      cancelUrl
-    });
-    
-    // Return the PayPal order details
+
+    const mockOrderId = `PAYPAL_SIM_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
     res.status(200).json({
       success: true,
-      order: paypalOrder
+      simulation: true,
+      order: {
+        id: mockOrderId,
+        status: 'APPROVED',
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Capture payment for an approved PayPal order
+// Simulated PayPal payment capture — always succeeds
 exports.capturePayPalPayment = async (req, res, next) => {
   try {
-    const { orderId } = req.body;
-    
+    const { orderId, items } = req.body;
+
     if (!orderId) {
-      return res.status(400).json({
-        success: false,
-        message: 'PayPal order ID is required'
-      });
+      return res.status(400).json({ success: false, message: 'PayPal order ID is required' });
     }
-    
-    // Capture the payment
-    const captureData = await paypalService.capturePayment(orderId);
-    
-    // Create or update our internal order
-    const paypalOrderId = captureData.id;
-    const paypalStatus = captureData.status;
-    
-    // Check if this is a completed payment
-    if (paypalStatus === 'COMPLETED') {
-      // Get payment details
-      const payer = captureData.payer;
-      const purchaseUnit = captureData.purchase_units[0];
-      const paymentCapture = purchaseUnit.payments.captures[0];
-      
-      // Create or update the order in our database
-      let order = await Order.findOne({ paymentId: paypalOrderId });
-      
-      if (!order) {
-        // Create a new order
-        order = new Order({
-          user: req.user ? req.user._id : null,
-          email: payer.email_address,
-          orderItems: req.body.items, // We need the original items from the create order request
-          shippingAddress: {
-            name: purchaseUnit.shipping?.name?.full_name,
-            address: purchaseUnit.shipping?.address?.address_line_1,
-            city: purchaseUnit.shipping?.address?.admin_area_2,
-            state: purchaseUnit.shipping?.address?.admin_area_1,
-            postalCode: purchaseUnit.shipping?.address?.postal_code,
-            country: purchaseUnit.shipping?.address?.country_code
-          },
-          paymentMethod: 'PayPal',
-          paymentId: paypalOrderId,
-          itemsPrice: Number(purchaseUnit.amount.breakdown.item_total.value),
-          taxPrice: Number(purchaseUnit.amount.breakdown.tax_total?.value || 0),
-          shippingPrice: Number(purchaseUnit.amount.breakdown.shipping.value),
-          totalPrice: Number(purchaseUnit.amount.value),
-          isPaid: true,
-          paidAt: new Date(),
-          status: 'processing'
+
+    // Create an order record in our database with verified prices
+    if (items && Array.isArray(items) && items.length > 0) {
+      const verifiedItems = [];
+      for (const item of items) {
+        if (!item.product || !mongoose.Types.ObjectId.isValid(item.product)) {
+          return res.status(400).json({ success: false, message: `Invalid product ID: ${item.product}` });
+        }
+        const product = await Product.findById(item.product);
+        if (!product) {
+          return res.status(400).json({ success: false, message: `Product not found: ${item.product}` });
+        }
+        const qty = Number(item.quantity) || 1;
+        verifiedItems.push({
+          product: product._id,
+          name: product.name,
+          quantity: qty,
+          price: product.discountPercentage > 0 ? product.discountedPrice : product.price,
+          image: product.images[0] || '',
         });
-        
-        await order.save();
-      } else {
-        // Update existing order
-        order.isPaid = true;
-        order.paidAt = new Date();
-        order.status = 'processing';
-        await order.save();
       }
-      
-      // Return the capture data and our order
-      res.status(200).json({
+
+      const order = new Order({
+        user: req.user ? req.user._id : null,
+        email: req.user?.email || 'simulation@bazaar.dev',
+        orderItems: verifiedItems,
+        paymentMethod: 'PayPal (Simulated)',
+        paymentId: orderId,
+        isPaid: true,
+        paidAt: new Date(),
+        status: 'processing',
+      });
+      order.calculateTotals();
+      await order.save();
+
+      return res.status(200).json({
         success: true,
-        capture: captureData,
-        order
-      });
-    } else {
-      // Payment was not completed
-      res.status(400).json({
-        success: false,
-        message: `Payment not completed: ${paypalStatus}`
+        simulation: true,
+        order,
       });
     }
-  } catch (error) {
-    next(error);
-  }
-};
 
-
-exports.processApplePay = async (req, res, next) => {
-  try {
-    const { amount, token } = req.body;
-    
-    if (!amount || !token) {
-      return res.status(400).json({ message: 'Amount and token are required' });
-    }
-    
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Simulate payment result
-    const success = Math.random() > 0.1; // 90% success rate
-    
-    if (!success) {
-      return res.status(400).json({
-        success: false,
-        message: 'Payment processing failed'
-      });
-    }
-    
     res.status(200).json({
       success: true,
-      transactionId: `apay_${Math.random().toString(36).substr(2, 9)}`,
-      status: 'COMPLETED'
+      simulation: true,
+      capture: { id: orderId, status: 'COMPLETED' },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Payment webhook handler (for Stripe, PayPal, etc.)
-exports.handleWebhook = async (req, res, next) => {
-  try {
-    const { type, data } = req.body;
-    
-    // Log the webhook event
-    console.log(`Received webhook: ${type}`);
-    
-    // Process different webhook events
-    switch (type) {
-      case 'payment_intent.succeeded':
-        // Handle successful payment
-        console.log(`Payment succeeded: ${data.id}`);
-        break;
-        
-      case 'payment_intent.payment_failed':
-        // Handle failed payment
-        console.log(`Payment failed: ${data.id}`);
-        break;
-        
-      default:
-        console.log(`Unhandled webhook event: ${type}`);
-    }
-    
-    res.status(200).json({ received: true });
-  } catch (error) {
-    next(error);
-  }
+
+// Apple Pay — not available (simulation only)
+exports.processApplePay = async (req, res, _next) => {
+  return res.status(501).json({
+    success: false,
+    message: 'Apple Pay is not available. Payments are simulation-only.',
+  });
+};
+
+// Webhook handler — simulation mode, just acknowledge
+exports.handleWebhook = async (req, res, _next) => {
+  logger.info('Webhook received in simulation mode — no real processing');
+  res.status(200).json({ received: true, simulation: true });
 }; 

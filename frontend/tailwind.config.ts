@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import typography from "@tailwindcss/typography";
 
 export default {
   darkMode: ["class"],
@@ -39,6 +40,22 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
+        star: {
+          DEFAULT: "hsl(var(--star))",
+          muted: "hsl(var(--star-muted))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -163,5 +180,6 @@ export default {
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite"
       }
     }
-  }
+  },
+  plugins: [typography],
 } satisfies Config;

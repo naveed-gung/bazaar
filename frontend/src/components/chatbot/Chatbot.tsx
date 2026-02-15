@@ -1,11 +1,87 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useToast } from "@/hooks/use-toast";
 import { ChatAPI } from "@/lib/api";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+
+/**
+ * Persistent auth banner that re-renders itself if removed from the DOM.
+ * Uses a MutationObserver on the parent to detect removal and re-insert.
+ */
+function AuthBanner() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const parent = node.parentElement;
+    if (!parent) return;
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const removed of Array.from(mutation.removedNodes)) {
+          // If our banner (or its wrapper) was removed, re-attach it
+          if (removed === node || (removed instanceof Element && removed.querySelector('[data-auth-banner]'))) {
+            // Re-insert at the same position (before the quick-action chips border-t div)
+            const anchor = parent.querySelector('.border-t');
+            if (anchor) {
+              parent.insertBefore(node, anchor);
+            } else {
+              parent.appendChild(node);
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe(parent, { childList: true, subtree: true });
+
+    // Also prevent hiding via style manipulation
+    const styleObserver = new MutationObserver(() => {
+      if (node.style.display === 'none' || node.style.visibility === 'hidden' || node.style.opacity === '0') {
+        node.style.display = '';
+        node.style.visibility = '';
+        node.style.opacity = '';
+      }
+    });
+    styleObserver.observe(node, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    return () => {
+      observer.disconnect();
+      styleObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      data-auth-banner="true"
+      className="mx-3 mb-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-center select-none"
+      style={{ pointerEvents: 'auto' }}
+    >
+      <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+        Please sign in to use the assistant
+      </p>
+      <div className="flex items-center justify-center gap-2">
+        <Link
+          to="/login"
+          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          Log In
+        </Link>
+        <Link
+          to="/register"
+          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md border border-input bg-background hover:bg-muted transition-colors"
+        >
+          Sign Up
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 interface Message {
   id: string;
@@ -140,6 +216,72 @@ export default function Chatbot() {
       setIsLoading(false);
     }
   };
+
+  // Send a quick action chip message
+  const sendQuickAction = (text: string) => {
+    setInputValue(text);
+    // Programmatically trigger submit
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: text,
+      sender: "user",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    const isAdmin = user?.role === 'admin';
+    ChatAPI.sendMessage(text, isAdmin)
+      .then((response) => {
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: response.response,
+          sender: "bot",
+          timestamp: new Date(),
+          products: response.data?.products,
+          intent: response.intent,
+          adminData: response.data?.adminData,
+        };
+        setMessages((prev) => [...prev, botMessage]);
+      })
+      .catch((error) => {
+        console.error('Chat API error:', error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "I'm sorry, I couldn't process your request right now. Please try again later.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setInputValue("");
+      });
+  };
+
+  // Quick action chips based on user role
+  const quickActions = useMemo(() => {
+    if (user?.role === 'admin') {
+      return [
+        { label: "Inventory status" },
+        { label: "Recent orders" },
+        { label: "Low stock alerts" },
+        { label: "Customer accounts" },
+        { label: "Unavailable alerts" },
+      ];
+    }
+    return [
+      { label: "Show deals" },
+      { label: "Popular products" },
+      { label: "New arrivals" },
+      { label: "Track my order" },
+      { label: "Shipping info" },
+      { label: "Return policy" },
+      { label: "Browse categories" },
+      { label: "Help" },
+    ];
+  }, [user?.role]);
 
   // Render product cards for product search results
   const renderProductResults = (message: Message) => {
@@ -534,6 +676,24 @@ export default function Chatbot() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Auth Banner — persistent for unauthenticated users */}
+        {!user && <AuthBanner />}
+
+        {/* Quick Action Chips */}
+        <div className="border-t px-3 pt-2 pb-1 flex flex-wrap gap-1.5">
+          {quickActions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={() => sendQuickAction(action.label)}
+              disabled={isLoading || !user}
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              <span>{action.label}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Chat Input */}
         <form onSubmit={handleSubmit} className="border-t p-3 flex gap-2">
           <input
@@ -541,11 +701,11 @@ export default function Chatbot() {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={user?.role === 'admin' ? "Ask about inventory, orders, customers..." : "Ask about products, shipping, etc..."}
+            placeholder={!user ? "Sign in to chat..." : user?.role === 'admin' ? "Ask about inventory, orders, customers..." : "Ask about products, shipping, etc..."}
             className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            disabled={isLoading}
+            disabled={isLoading || !user}
           />
-          <Button type="submit" size="sm" disabled={isLoading}>
+          <Button type="submit" size="sm" disabled={isLoading || !user}>
             Send
           </Button>
         </form>

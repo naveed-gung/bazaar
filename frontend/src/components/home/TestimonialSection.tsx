@@ -28,7 +28,7 @@ const TESTIMONIALS: Testimonial[] = [
     id: "2",
     name: "Michael Rodriguez",
     role: "Verified Customer",
-    content: "This is my third time ordering from ZenithStore and I'm never disappointed. The products are always as described and the website makes it so easy to find what I'm looking for.",
+    content: "This is my third time ordering from Bazaar and I'm never disappointed. The products are always as described and the website makes it so easy to find what I'm looking for.",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face&auto=format&q=80",
     rating: 5
   },
@@ -44,7 +44,7 @@ const TESTIMONIALS: Testimonial[] = [
     id: "4",
     name: "David Chen",
     role: "Verified Customer",
-    content: "The attention to detail on every product is remarkable. I've recommended ZenithStore to all my friends and family. My new favorite online shopping destination!",
+    content: "The attention to detail on every product is remarkable. I've recommended Bazaar to all my friends and family. My new favorite online shopping destination!",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face&auto=format&q=80",
     rating: 5
   }

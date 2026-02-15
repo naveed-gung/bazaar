@@ -23,6 +23,7 @@ interface Product {
   images: string[];
   category: { _id: string; name: string } | string;
   rating: number;
+  numReviews: number;
   stock: number;
   discountPercentage: number;
   discountedPrice?: number;
@@ -88,8 +89,8 @@ export default function CategoryPage() {
             onClick={() => setCurrentPage(i)}
             className={`px-4 py-2 mx-1 rounded ${
               currentPage === i
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted hover:bg-muted/80 text-foreground'
             }`}
           >
             {i}
@@ -308,7 +309,7 @@ export default function CategoryPage() {
                         </svg>
                       ))}
                       <span className="text-xs text-muted-foreground ml-1">
-                        ({Math.floor(Math.random() * 100) + 1})
+                        ({product.numReviews ?? 0})
                       </span>
                     </div>
                     
@@ -336,7 +337,8 @@ export default function CategoryPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50"
+                className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded disabled:opacity-50"
+                aria-label="Previous page"
               >
                 Previous
               </button>
@@ -344,7 +346,8 @@ export default function CategoryPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50"
+                className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded disabled:opacity-50"
+                aria-label="Next page"
               >
                 Next
               </button>

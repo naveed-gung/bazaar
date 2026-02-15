@@ -9,6 +9,8 @@ import { useFavorites } from "@/hooks/use-favorites";
 import { useCart } from "@/contexts/CartContext";
 import Layout from "@/components/layout/Layout";
 import ProductViewer3D from "@/components/product/ProductViewer3D";
+import StarRating from "@/components/ui/StarRating";
+import LazyImage from "@/components/ui/lazy-image";
 
 interface ProductData {
   _id: string;
@@ -110,8 +112,23 @@ export default function ProductDetailPage() {
     }
   };
 
-  if (loading) return <Layout><div className="container py-16 text-center">Loading product…</div></Layout>;
-  if (error || !product) return <Layout><div className="container py-16 text-center text-red-500">{error || "Product not found."}</div></Layout>;
+  if (loading) return (
+    <Layout>
+      <div className="container py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="aspect-square rounded-lg bg-muted animate-pulse" />
+          <div className="space-y-4">
+            <div className="h-8 bg-muted rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-muted rounded animate-pulse w-1/4" />
+            <div className="h-6 bg-muted rounded animate-pulse w-1/3" />
+            <div className="h-20 bg-muted rounded animate-pulse" />
+            <div className="h-12 bg-muted rounded animate-pulse w-1/2" />
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+  if (error || !product) return <Layout><div className="container py-16 text-center text-destructive">{error || "Product not found."}</div></Layout>;
 
   return (
     <Layout>
@@ -120,18 +137,18 @@ export default function ProductDetailPage() {
         <nav className="flex mb-8 text-sm" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
             <li className="inline-flex items-center">
-              <Link to="/" className="text-gray-700 hover:text-primary">Home</Link>
+              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
             </li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2.5">/</span>
-                <Link to="/products" className="text-gray-700 hover:text-primary">Products</Link>
+                <span className="mx-2.5 text-muted-foreground">/</span>
+                <Link to="/products" className="text-muted-foreground hover:text-primary transition-colors">Products</Link>
               </div>
             </li>
             <li>
               <div className="flex items-center">
-                <span className="mx-2.5">/</span>
-                <span className="text-gray-500">{product?.name || 'Loading...'}</span>
+                <span className="mx-2.5 text-muted-foreground">/</span>
+                <span className="text-foreground font-medium">{product?.name || 'Loading...'}</span>
               </div>
             </li>
           </ol>
@@ -182,6 +199,7 @@ export default function ProductDetailPage() {
                       }
                       alt={`${product.name} ${index + 1}`}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder-product.png';
@@ -199,25 +217,7 @@ export default function ProductDetailPage() {
               <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.name}</h1>
               
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <svg
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(product.rating)
-                          ? "text-yellow-400"
-                          : i < product.rating
-                          ? "text-yellow-400/50"
-                          : "text-gray-300"
-                      }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
+                <StarRating rating={product.rating} size="lg" />
                 
                 <span className="text-sm text-muted-foreground">
                   {product.rating} ({product.reviews} reviews)
@@ -225,7 +225,7 @@ export default function ProductDetailPage() {
                 
                 <span className="text-sm text-muted-foreground">|</span>
                 
-                <span className={product.stock > 0 ? "text-green-600 text-sm" : "text-red-600 text-sm"}>
+                <span className={product.stock > 0 ? "text-success text-sm font-medium" : "text-destructive text-sm font-medium"}>
                   {product.stock > 0 ? "In Stock" : "Out of Stock"}
                 </span>
               </div>
@@ -270,7 +270,7 @@ export default function ProductDetailPage() {
                         <SelectValue placeholder="Quantity" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                        {Array.from({ length: Math.min(product?.stock || 10, 10) }, (_, i) => i + 1).map((num) => (
                           <SelectItem key={num} value={num.toString()}>
                             {num}
                           </SelectItem>
@@ -342,24 +342,17 @@ export default function ProductDetailPage() {
             <TabsContent value="description" className="space-y-4">
               <div className="prose dark:prose-invert max-w-4xl">
                 <h3>Product Description</h3>
-                <p>
-                  Experience audio like never before with our Premium Wireless Headphones. Designed to deliver exceptional sound quality, these headphones feature advanced noise cancellation technology that blocks out ambient sound, allowing you to focus on what you're listening to.
-                </p>
-                <p>
-                  With a sleek, modern design and premium materials, these headphones aren't just functional—they're a statement. The soft, cushioned ear cups provide comfort for hours of listening, while the adjustable headband ensures a perfect fit for any user.
-                </p>
-                <h4>Superior Audio Performance</h4>
-                <p>
-                  Our headphones are equipped with high-definition drivers that deliver crystal-clear highs, rich mids, and deep, powerful bass. Whether you're listening to music, podcasts, or taking calls, you'll hear every detail with stunning clarity.
-                </p>
-                <h4>Long-lasting Battery</h4>
-                <p>
-                  Enjoy up to 40 hours of playtime on a single charge. A quick 10-minute charge provides up to 4 hours of listening time, perfect for when you're in a hurry.
-                </p>
-                <h4>Smart Features</h4>
-                <p>
-                  With built-in voice assistant compatibility, you can control your music, make calls, and get information—all without reaching for your device. The intuitive touch controls allow you to adjust volume, skip tracks, and answer calls with simple gestures.
-                </p>
+                <p>{product?.description || 'No description available.'}</p>
+                {product?.features && product.features.length > 0 && (
+                  <>
+                    <h4>Features</h4>
+                    <ul>
+                      {product.features.map((feature, idx) => (
+                        <li key={idx}>{feature}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </div>
             </TabsContent>
             
@@ -390,23 +383,7 @@ export default function ProductDetailPage() {
       <div className="text-center">
         <div className="text-5xl font-bold">{product.rating}</div>
         <div className="flex items-center justify-center gap-1 my-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <svg
-              key={i}
-              className={`w-5 h-5 ${
-                i < Math.floor(product.rating)
-                  ? "text-yellow-400"
-                  : i < product.rating
-                  ? "text-yellow-400/50"
-                  : "text-gray-300"
-              }`}
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          ))}
+          <StarRating rating={product.rating} size="lg" />
         </div>
         <div className="text-sm text-muted-foreground">
           {product.reviews} reviews
@@ -432,10 +409,11 @@ export default function ProductDetailPage() {
           className="group rounded-lg overflow-hidden border bg-card hover-float animated-border"
         >
           <div className="aspect-square overflow-hidden bg-muted">
-            <img
+            <LazyImage
               src={`${rp.images?.[0]}?w=400&h=400&fit=crop&crop=entropy&auto=format&q=80`}
               alt={rp.name}
               className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+              wrapperClassName="w-full h-full"
             />
           </div>
           <div className="p-4">

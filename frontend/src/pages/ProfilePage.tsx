@@ -1,4 +1,4 @@
-import { useState, useEffect, MutableRefObject } from "react";
+import { useState, useEffect, useRef, MutableRefObject } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/layout/Layout";
@@ -19,9 +19,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
-import { auth } from "@/lib/firebase";
-import { createRoot } from 'react-dom/client'
-import { getAuth } from "firebase/auth";
 
 interface UserPreferences {
   emailNotifications: boolean;
@@ -70,7 +67,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -96,6 +93,16 @@ export default function ProfilePage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
+  const prevAvatarPreviewRef = useRef<string>("");
+
+  // Revoke old object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   // Profile section animations with proper ref typing
   const headerRef = useScrollAnimation({ type: 'right', animateOut: true }) as MutableRefObject<HTMLDivElement>;
@@ -168,6 +175,10 @@ export default function ProfilePage() {
         return;
       }
       
+      // Revoke previous preview URL to prevent memory leak
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
       setAvatarFile(file);
       setAvatarPreview(URL.createObjectURL(file));
       
@@ -339,22 +350,20 @@ export default function ProfilePage() {
     try {
       setIsDeleting(true);
       
-      // Get the current Firebase user and token
-      const firebaseUser = getAuth().currentUser;
-      
-      if (!firebaseUser) {
-        throw new Error("No user is currently logged in");
-      }
-      
       // Delete from our backend first (which will handle MongoDB deletion)
       await UserAPI.deleteUserAccount();
       
-      // Then delete the Firebase account
-      await firebaseUser.delete();
+      // Then delete the Firebase account if available
+      try {
+        const { getAuth } = await import("firebase/auth");
+        const firebaseUser = getAuth().currentUser;
+        if (firebaseUser) await firebaseUser.delete();
+      } catch {
+        // Firebase deletion is best-effort; backend already handled
+      }
       
       // Clear local state and storage
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      await logout();
       
       toast({
         title: "Account Deleted",

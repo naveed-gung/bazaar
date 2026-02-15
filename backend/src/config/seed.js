@@ -5,12 +5,8 @@ const Product = require('../models/product.model');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 
-// Debug: print resolved .env path and raw contents
 const path = require('path');
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-// Debug: print all env variables starting with MONGODB
-Object.keys(process.env).filter(k => k.startsWith('MONGODB')).forEach(k => console.log(k + ':', process.env[k]));
-console.log('MONGODB_URI:', process.env.MONGODB_URI);
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected for seeding'))

@@ -12,7 +12,9 @@ const {
   updateStock,
   searchProducts
 } = require('../controllers/product.controller');
-const { protect, admin } = require('../middleware/auth.middleware');
+const { protect, admin, validateObjectId } = require('../middleware/auth.middleware');
+const { validate } = require('../validators');
+const schemas = require('../validators/schemas');
 
 const router = express.Router();
 
@@ -21,16 +23,16 @@ router.get('/search', searchProducts);
 router.get('/', getAllProducts);
 router.get('/top', getTopProducts);
 router.get('/featured', getFeaturedProducts);
-router.get('/:id', getProductById);
-router.get('/:id/related', getRelatedProducts);
+router.get('/:id', validateObjectId('id'), getProductById);
+router.get('/:id/related', validateObjectId('id'), getRelatedProducts);
 
 // Protected routes
-router.post('/:id/reviews', protect, createProductReview);
+router.post('/:id/reviews', protect, validateObjectId('id'), validate(schemas.product.addReview), createProductReview);
 
 // Admin only routes
-router.post('/', protect, admin, createProduct);
-router.put('/:id', protect, admin, updateProduct);
-router.delete('/:id', protect, admin, deleteProduct);
-router.put('/:id/stock', protect, admin, updateStock);
+router.post('/', protect, admin, validate(schemas.product.createProduct), createProduct);
+router.put('/:id', protect, admin, validateObjectId('id'), validate(schemas.product.updateProduct), updateProduct);
+router.delete('/:id', protect, admin, validateObjectId('id'), deleteProduct);
+router.put('/:id/stock', protect, admin, validateObjectId('id'), updateStock);
 
 module.exports = router;

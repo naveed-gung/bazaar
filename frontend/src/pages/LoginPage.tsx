@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import Layout from "@/components/layout/Layout";
 import ScrollAnimation from "@/components/animation/ScrollAnimation";
 import { authAnimations } from "@/lib/pageAnimations";
 import { Eye, EyeOff } from "lucide-react";
+import SEO from "@/components/SEO";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,7 +17,9 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const redirectTo = (location.state as any)?.from || null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +34,9 @@ export default function LoginPage() {
         title: "Success!",
         description: "You've been logged in successfully.",
       });
-      if (user && user.role === "admin") {
+      if (redirectTo) {
+        navigate(redirectTo);
+      } else if (user && user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/");
@@ -55,7 +60,9 @@ export default function LoginPage() {
         title: "Success!",
         description: "You've been logged in successfully with Google.",
       });
-      if (user && user.role === "admin") {
+      if (redirectTo) {
+        navigate(redirectTo);
+      } else if (user && user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/");
@@ -73,6 +80,10 @@ export default function LoginPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Sign In"
+        description="Sign in to your Bazaar account to access your orders, favorites, and more."
+      />
       <div className="container max-w-md mx-auto py-16">
         <ScrollAnimation direction="down" duration={0.6}>
           <div className="text-center mb-8">
@@ -104,12 +115,16 @@ export default function LoginPage() {
                     <label htmlFor="password" className="text-sm font-medium">
                       Password
                     </label>
-                    <Link
-                      to="/forgot-password"
+                    <button
+                      type="button"
+                      onClick={() => toast({
+                        title: "Reset Password",
+                        description: "Please use Google login or contact support to reset your password.",
+                      })}
                       className="text-sm text-primary hover:underline"
                     >
                       Forgot password?
-                    </Link>
+                    </button>
                   </div>
                   <div className="relative">
                     <Input
@@ -126,6 +141,7 @@ export default function LoginPage() {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -194,13 +210,15 @@ export default function LoginPage() {
           </div>
         </ScrollAnimation>
 
+        {import.meta.env.DEV && (
         <ScrollAnimation direction="up" delay={0.5} duration={0.4}>
           <div className="mt-8 text-center text-sm text-muted-foreground">
             <p>
-               admin@bazaar.com/ admin123 to access admin account.<br />
+               Demo credentials: admin@bazaar.com / admin123<br />
             </p>
           </div>
         </ScrollAnimation>
+        )}
       </div>
     </Layout>
   );

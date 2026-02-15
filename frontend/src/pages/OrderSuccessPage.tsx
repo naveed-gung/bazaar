@@ -1,23 +1,72 @@
-import { Link, useLocation, Navigate } from "react-router-dom";
+import { Link, useLocation, useParams, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { OrderAPI } from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 export default function OrderSuccessPage() {
   const location = useLocation();
-  const order = location.state?.order;
+  const { orderId: paramOrderId } = useParams<{ orderId: string }>();
+  const stateOrder = location.state?.order;
   
+  const [order, setOrder] = useState<any>(stateOrder || null);
+  const [loading, setLoading] = useState(!stateOrder && !!paramOrderId);
+  const [error, setError] = useState(false);
+
   useEffect(() => {
-    // Scroll to top when component mounts
     window.scrollTo(0, 0);
   }, []);
-  
-  // If no order was passed, redirect to homepage
-  if (!order) {
+
+  // If no state order but we have an orderId param, fetch from API
+  useEffect(() => {
+    if (!stateOrder && paramOrderId) {
+      setLoading(true);
+      OrderAPI.getOrderById(paramOrderId)
+        .then((data) => {
+          setOrder(data.order || data);
+        })
+        .catch(() => {
+          setError(true);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [stateOrder, paramOrderId]);
+
+  // No order in state and no orderId in URL → redirect home
+  if (!stateOrder && !paramOrderId) {
     return <Navigate to="/" replace />;
   }
-  
-  const orderNumber = order.id.substring(6).toUpperCase();
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container max-w-3xl mx-auto py-16 px-4 flex flex-col items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading order details...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <Layout>
+        <div className="container max-w-3xl mx-auto py-16 px-4 text-center">
+          <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            We couldn't find this order. It may have been removed or the link is invalid.
+          </p>
+          <Button asChild>
+            <Link to="/orders">View My Orders</Link>
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const orderId = order._id || order.id || '';
+  const orderNumber = orderId.length > 6 ? orderId.substring(orderId.length - 6).toUpperCase() : orderId.toUpperCase();
   const formattedDate = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
@@ -63,7 +112,7 @@ export default function OrderSuccessPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Payment Method:</span>
-                <span>{order.paymentMethod === 'paypal' ? 'PayPal' : 'Credit Card'}</span>
+                <span>{order.paymentMethod === 'paypal' ? 'PayPal' : order.paymentMethod === 'apple-pay' ? 'Apple Pay' : order.paymentMethod === 'stripe' ? 'Stripe' : 'Credit Card'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status:</span>
@@ -76,8 +125,8 @@ export default function OrderSuccessPage() {
             <div className="mt-6 pt-6 border-t">
               <h3 className="font-medium mb-3">Items</h3>
               <div className="space-y-3">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex justify-between">
+                {(order.orderItems || order.items || []).map((item: { product?: string; id?: string; name: string; quantity: number; price: number }, idx: number) => (
+                  <div key={item.product || item.id || idx} className="flex justify-between">
                     <div>
                       <span>{item.name}</span>
                       <span className="text-muted-foreground ml-2">× {item.quantity}</span>
@@ -90,7 +139,7 @@ export default function OrderSuccessPage() {
               <div className="mt-4 pt-4 border-t">
                 <div className="flex justify-between font-bold">
                   <span>Total</span>
-                  <span>${order.total.toFixed(2)}</span>
+                  <span>${(order.totalPrice ?? order.total ?? 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -99,6 +148,9 @@ export default function OrderSuccessPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild>
               <Link to="/orders">View My Orders</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={`/track-order`} state={{ orderId }}>Track This Order</Link>
             </Button>
             <Button asChild variant="outline">
               <Link to="/products">Continue Shopping</Link>

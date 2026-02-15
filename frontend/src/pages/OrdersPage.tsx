@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrderAPI } from "@/lib/api";
@@ -54,15 +55,18 @@ export default function OrdersPage() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
+        setFetchError(false);
         const response = await OrderAPI.getMyOrders();
         setOrders(response.orders);
       } catch (error) {
         console.error("Error fetching orders:", error);
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -101,6 +105,7 @@ export default function OrdersPage() {
 
   return (
     <Layout>
+      <SEO title="My Orders" description="Track and manage your orders." />
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -133,6 +138,17 @@ export default function OrdersPage() {
               <Package2 className="w-8 h-8" />
             </div>
           </div>
+        ) : fetchError ? (
+          <Card className="p-8 text-center">
+            <Package2 className="w-12 h-12 mx-auto mb-4 text-destructive" />
+            <h3 className="text-xl font-semibold mb-2">Failed to load orders</h3>
+            <p className="text-muted-foreground mb-4">
+              Something went wrong while fetching your orders. Please try again.
+            </p>
+            <Button onClick={() => { setLoading(true); setFetchError(false); window.location.reload(); }}>
+              Retry
+            </Button>
+          </Card>
         ) : filteredOrders.length === 0 ? (
           <Card className="p-8 text-center">
             <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -228,7 +244,7 @@ export default function OrdersPage() {
                         className="w-full"
                         asChild
                       >
-                        <Link to={`/order-success?orderId=${order._id}`}>
+                        <Link to={`/track-order`} state={{ orderId: order._id }}>
                           Track Order
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Link>

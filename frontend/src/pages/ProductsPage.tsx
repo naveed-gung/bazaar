@@ -13,9 +13,12 @@ import { cn } from "@/lib/utils";
 import { Grid2X2, List, SlidersHorizontal } from "lucide-react";
 import ScrollAnimation from "@/components/animation/ScrollAnimation";
 import { shopAnimations } from "@/lib/pageAnimations";
+import LazyImage from "@/components/ui/lazy-image";
 import { ProductAPI, CategoryAPI } from '../lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
+import SEO from "@/components/SEO";
+import StarRating from "@/components/ui/StarRating";
 
 interface Product {
   _id: string;
@@ -44,7 +47,7 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState("featured");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +115,11 @@ export default function ProductsPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Shop All Products"
+        description="Browse our entire collection of high-quality products. Filter by category, price, and more."
+        keywords="shop, products, deals, categories, online store"
+      />
       <div className="container py-16">
         <ScrollAnimation {...shopAnimations.header}>
           <div className="mb-8">
@@ -131,10 +139,13 @@ export default function ProductsPage() {
             )}>
               <div className="border rounded-lg p-5 bg-card">
                 <h3 className="font-medium mb-4">Categories</h3>
-                <div className="space-y-2">
-                  <div 
+                <div className="space-y-2" role="listbox" aria-label="Product categories">
+                  <button 
+                    type="button"
+                    role="option"
+                    aria-selected={selectedCategory === null}
                     className={cn(
-                      "cursor-pointer px-2 py-1 rounded-md hover:bg-accent",
+                      "w-full text-left cursor-pointer px-2 py-1 rounded-md hover:bg-accent",
                       selectedCategory === null && "bg-accent text-accent-foreground"
                     )}
                     onClick={() => {
@@ -143,12 +154,15 @@ export default function ProductsPage() {
                     }}
                   >
                     All Categories
-                  </div>
+                  </button>
                   {categories.map(category => (
-                    <div 
+                    <button 
+                      type="button"
                       key={category._id}
+                      role="option"
+                      aria-selected={selectedCategory === category.name}
                       className={cn(
-                        "cursor-pointer px-2 py-1 rounded-md hover:bg-accent",
+                        "w-full text-left cursor-pointer px-2 py-1 rounded-md hover:bg-accent",
                         selectedCategory === category.name && "bg-accent text-accent-foreground"
                       )}
                       onClick={() => {
@@ -157,7 +171,7 @@ export default function ProductsPage() {
                       }}
                     >
                       {category.name}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -165,18 +179,79 @@ export default function ProductsPage() {
               <div className="border rounded-lg p-5 bg-card">
                 <h3 className="font-medium mb-4">Price Range</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>${priceRange[0].toLocaleString()}</span>
+                    <span>${priceRange[1].toLocaleString()}</span>
                   </div>
-                  <input 
-                    type="range"
-                    min="0"
-                    max="1000000"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                    className="w-full"
-                  />
+                  {/* Dual-handle range slider */}
+                  <div className="relative h-6 flex items-center">
+                    {/* Track background */}
+                    <div className="absolute w-full h-1.5 bg-muted rounded-full" />
+                    {/* Active track */}
+                    <div
+                      className="absolute h-1.5 bg-primary rounded-full"
+                      style={{
+                        left: `${(priceRange[0] / 10000) * 100}%`,
+                        right: `${100 - (priceRange[1] / 10000) * 100}%`,
+                      }}
+                    />
+                    {/* Min handle */}
+                    <input
+                      type="range"
+                      min="0"
+                      max="10000"
+                      step="10"
+                      value={priceRange[0]}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (val < priceRange[1]) setPriceRange([val, priceRange[1]]);
+                      }}
+                      className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:cursor-pointer"
+                      aria-label="Minimum price"
+                    />
+                    {/* Max handle */}
+                    <input
+                      type="range"
+                      min="0"
+                      max="10000"
+                      step="10"
+                      value={priceRange[1]}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (val > priceRange[0]) setPriceRange([priceRange[0], val]);
+                      }}
+                      className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-background [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:cursor-pointer"
+                      aria-label="Maximum price"
+                    />
+                  </div>
+                  {/* Manual inputs */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <input
+                      type="number"
+                      min="0"
+                      max={priceRange[1]}
+                      value={priceRange[0]}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(parseInt(e.target.value) || 0, priceRange[1] - 10));
+                        setPriceRange([val, priceRange[1]]);
+                      }}
+                      className="w-full rounded-md border bg-background px-2 py-1.5 text-center text-sm"
+                      aria-label="Minimum price input"
+                    />
+                    <span className="text-muted-foreground shrink-0">to</span>
+                    <input
+                      type="number"
+                      min={priceRange[0]}
+                      max="10000"
+                      value={priceRange[1]}
+                      onChange={(e) => {
+                        const val = Math.min(10000, Math.max(parseInt(e.target.value) || 0, priceRange[0] + 10));
+                        setPriceRange([priceRange[0], val]);
+                      }}
+                      className="w-full rounded-md border bg-background px-2 py-1.5 text-center text-sm"
+                      aria-label="Maximum price input"
+                    />
+                  </div>
                   <Button onClick={applyPriceFilter} className="w-full">
                     Apply Filter
                   </Button>
@@ -195,6 +270,8 @@ export default function ProductsPage() {
                   size="icon"
                   className="sm:hidden"
                   onClick={() => setFilterOpen(!filterOpen)}
+                  aria-label="Toggle filters"
+                  aria-expanded={filterOpen}
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
@@ -227,6 +304,8 @@ export default function ProductsPage() {
                       displayMode === "grid" && "bg-accent"
                     )}
                     onClick={() => setDisplayMode("grid")}
+                    aria-label="Grid view"
+                    aria-pressed={displayMode === "grid"}
                   >
                     <Grid2X2 className="h-4 w-4" />
                   </Button>
@@ -238,6 +317,8 @@ export default function ProductsPage() {
                       displayMode === "list" && "bg-accent"
                     )}
                     onClick={() => setDisplayMode("list")}
+                    aria-label="List view"
+                    aria-pressed={displayMode === "list"}
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -247,8 +328,21 @@ export default function ProductsPage() {
             
             {/* Products Display */}
             {loading ? (
-              <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="border rounded-lg overflow-hidden bg-card">
+                    <div className="aspect-square bg-muted animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                      <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                      <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                      <div className="flex justify-between items-center">
+                        <div className="h-5 w-16 bg-muted animate-pulse rounded" />
+                        <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : products.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -256,7 +350,7 @@ export default function ProductsPage() {
                 <p className="text-muted-foreground mb-6">Try changing your filters or search for something else.</p>
                 <Button onClick={() => {
                   setSelectedCategory(null);
-                  setPriceRange([0, 1000000]);
+                  setPriceRange([0, 10000]);
                   setCurrentPage(1);
                 }}>Clear All Filters</Button>
               </div>
@@ -277,17 +371,15 @@ export default function ProductsPage() {
                           "relative aspect-square overflow-hidden bg-muted",
                           displayMode === "list" && "md:col-span-1"
                         )}>
-                          <img
+                          <LazyImage
                             src={product.images[0] || '/placeholder-product.png'}
                             alt={product.name}
                             className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = '/placeholder-product.png';
-                            }}
+                            wrapperClassName="w-full h-full"
+                            fallback="/placeholder-product.png"
                           />
                           {product.discountPercentage > 0 && (
-                            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+                            <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium">
                               {product.discountPercentage}% OFF
                             </div>
                           )}
@@ -307,20 +399,7 @@ export default function ProductsPage() {
                           </h3>
                           
                           <div className="flex items-center gap-1 mb-2">
-                            {Array.from({ length: 5 }).map((_, index) => (
-                              <svg
-                                key={index}
-                                className={`w-4 h-4 ${
-                                  index < Math.floor(product.rating)
-                                    ? "text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            ))}
+                            <StarRating rating={product.rating} size="sm" />
                             <span className="text-xs text-muted-foreground">
                               ({product.rating.toFixed(1)})
                             </span>

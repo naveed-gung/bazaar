@@ -101,9 +101,19 @@ export default function HeroBanner({ className }: HeroBannerProps) {
             className="relative aspect-square rounded-full overflow-hidden bg-muted"
           >
             <img
-              src="https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac"
-              alt="Featured product"
+              src="https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=800&q=80"
+              alt="Featured product showcase"
               className="w-full h-full object-cover"
+              loading="eager"
+              // @ts-expect-error -- React 18 doesn't type fetchpriority yet
+              fetchpriority="high"
+              width={800}
+              height={800}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = 'https://placehold.co/800x800/png?text=Bazaar';
+              }}
             />
             
             <motion.div

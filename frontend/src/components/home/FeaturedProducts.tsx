@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerContainer, scaleInHover, glowHover } from "@/lib/animations";
 import { ProductAPI } from "@/lib/api";
+import LazyImage from "@/components/ui/lazy-image";
 
 interface Product {
   _id: string;
@@ -67,8 +68,16 @@ export default function FeaturedProducts({ className }: FeaturedProductsProps) {
       <section className={cn("py-16", className)}>
         <div className="container">
           <h2 className="text-3xl font-bold mb-4">Featured Products</h2>
-          <div className="flex justify-center items-center min-h-[300px]">
-            <p className="text-muted-foreground">Loading featured products...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-lg overflow-hidden border bg-card animate-pulse">
+                <div className="aspect-square bg-muted" />
+                <div className="p-4 space-y-3">
+                  <div className="h-5 bg-muted rounded w-3/4" />
+                  <div className="h-4 bg-muted rounded w-1/2" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -77,12 +86,30 @@ export default function FeaturedProducts({ className }: FeaturedProductsProps) {
 
   // Show error state
   if (error) {
+    const handleRetry = () => {
+      setError(null);
+      setLoading(true);
+      ProductAPI.getFeaturedProducts()
+        .then((response) => {
+          setProducts(response.products);
+          setVisibleProducts(response.products);
+        })
+        .catch((err) => {
+          console.error("Error fetching featured products:", err);
+          setError("Failed to load featured products");
+        })
+        .finally(() => setLoading(false));
+    };
+
     return (
       <section className={cn("py-16", className)}>
         <div className="container">
           <h2 className="text-3xl font-bold mb-4">Featured Products</h2>
-          <div className="flex justify-center items-center min-h-[300px]">
+          <div className="flex flex-col justify-center items-center min-h-[300px] gap-4">
             <p className="text-destructive">{error}</p>
+            <Button variant="outline" onClick={handleRetry}>
+              Try Again
+            </Button>
           </div>
         </div>
       </section>
@@ -162,10 +189,11 @@ export default function FeaturedProducts({ className }: FeaturedProductsProps) {
                   className="aspect-square overflow-hidden bg-muted"
                   variants={scaleInHover}
                 >
-                  <img
-                    src={product.images[0]}
+                  <LazyImage
+                    src={product.images[0] || 'https://placehold.co/400x400/png?text=No+Image'}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                    wrapperClassName="w-full h-full"
                   />
                 </motion.div>
                 

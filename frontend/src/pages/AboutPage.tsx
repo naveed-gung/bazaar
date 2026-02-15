@@ -1,10 +1,17 @@
 import Layout from "@/components/layout/Layout";
 import ScrollAnimation from "@/components/animation/ScrollAnimation";
 import { aboutAnimations } from "@/lib/pageAnimations";
+import SEO from "@/components/SEO";
+import { Target, Truck, MessageCircle } from "lucide-react";
 
 export default function AboutPage() {
   return (
     <Layout>
+      <SEO
+        title="About Us"
+        description="Learn about Bazaar — your premier destination for unique and quality products."
+        keywords="about, bazaar, ecommerce, online store"
+      />
       <div className="container py-16 space-y-16">
         <ScrollAnimation {...aboutAnimations.hero}>
           <div className="text-center">
@@ -20,28 +27,33 @@ export default function AboutPage() {
             {
               title: "Quality Products",
               description: "Curated selection of premium items from trusted sources",
-              icon: "🎯"
+              icon: Target
             },
             {
               title: "Fast Shipping",
               description: "Quick and reliable delivery to your doorstep",
-              icon: "🚚"
+              icon: Truck
             },
             {
               title: "24/7 Support",
               description: "Always here to help with your shopping needs",
-              icon: "💬"
+              icon: MessageCircle
             }
-          ].map((feature, index) => (
-            <div
-              key={feature.title}
-              className="p-6 rounded-lg glass-card hover:scale-105 transition-transform"
-            >
-              <div className="text-4xl mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </div>
-          ))}
+          ].map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={feature.title}
+                className="p-6 rounded-lg glass-card hover:scale-105 transition-transform"
+              >
+                <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
+                  <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </div>
+            );
+          })}
         </ScrollAnimation>
 
         <ScrollAnimation {...aboutAnimations.values}>

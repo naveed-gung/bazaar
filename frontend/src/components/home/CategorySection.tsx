@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import LazyImage from "@/components/ui/lazy-image";
 
 interface CategorySectionProps {
   className?: string;
@@ -53,6 +54,44 @@ const CATEGORIES: Category[] = [
   }
 ];
 
+// Individual category card component to safely use hooks
+function CategoryCard({ category, index }: { category: Category; index: number }) {
+  const animationType = index % 3 === 0 ? 'slide-right' : (index % 3 === 1 ? 'slide-left' : 'scale-up');
+  
+  const cardRef = useScrollAnimation({
+    type: animationType as any,
+    threshold: 0.1,
+    rootMargin: '-20px',
+    animateOut: true,
+    delay: index * 100,
+  });
+
+  return (
+    <Link 
+      to={`/category/${category.id}`} 
+      ref={cardRef as any}
+      className="group flex flex-col items-center text-center hover-float transparent-border"
+    >
+      <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted mb-3">
+        <LazyImage
+          src={`${category.image}?w=400&h=400&fit=crop&crop=entropy&auto=format&q=80`}
+          alt={category.name}
+          className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+          wrapperClassName="w-full h-full"
+        />
+      </div>
+      
+      <h3 className="font-medium group-hover:text-primary transition-colors">
+        {category.name}
+      </h3>
+      
+      <p className="text-sm text-muted-foreground">
+        {category.count} products
+      </p>
+    </Link>
+  );
+}
+
 export default function CategorySection({ className }: CategorySectionProps) {
   const titleRef = useScrollAnimation({ type: 'slide-right', animateOut: true, threshold: 0.4 });
   const descriptionRef = useScrollAnimation({ type: 'slide-left', animateOut: true, threshold: 0.4 });
@@ -68,44 +107,9 @@ export default function CategorySection({ className }: CategorySectionProps) {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {CATEGORIES.map((category, index) => {
-            // Alternate between sliding from left and right
-            const isEven = index % 2 === 0;
-            const animationType = index % 3 === 0 ? 'slide-right' : (index % 3 === 1 ? 'slide-left' : 'scale-up');
-            
-            const cardRef = useScrollAnimation({
-              type: animationType as any,
-              threshold: 0.1,
-              rootMargin: '-20px',
-              animateOut: true,
-              delay: index * 100,
-            });
-            
-            return (
-              <Link 
-                to={`/category/${category.id}`} 
-                key={category.id}
-                ref={cardRef as any}
-                className="group flex flex-col items-center text-center hover-float transparent-border"
-              >
-                <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted mb-3">
-                  <img
-                    src={`${category.image}?w=400&h=400&fit=crop&crop=entropy&auto=format&q=80`}
-                    alt={category.name}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
-                  />
-                </div>
-                
-                <h3 className="font-medium group-hover:text-primary transition-colors">
-                  {category.name}
-                </h3>
-                
-                <p className="text-sm text-muted-foreground">
-                  {category.count} products
-                </p>
-              </Link>
-            );
-          })}
+          {CATEGORIES.map((category, index) => (
+            <CategoryCard key={category.id} category={category} index={index} />
+          ))}
         </div>
       </div>
     </section>

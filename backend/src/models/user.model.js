@@ -64,6 +64,16 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: Date.now
+  },
+  refreshToken: {
+    type: String,
+    select: false
+  },
+  preferences: {
+    notifications: { type: Boolean, default: true },
+    newsletter: { type: Boolean, default: false },
+    language: { type: String, default: 'en' },
+    currency: { type: String, default: 'USD' },
   }
 }, {
   timestamps: true
@@ -91,6 +101,8 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 userSchema.methods.toJSON = function() {
   const userObject = this.toObject();
   delete userObject.password;
+  delete userObject.__v;
+  delete userObject.refreshToken;
   return userObject;
 };
 

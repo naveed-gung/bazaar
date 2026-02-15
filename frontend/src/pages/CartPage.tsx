@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import Layout from "@/components/layout/Layout";
+import SEO from "@/components/SEO";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -14,7 +16,7 @@ export default function CartPage() {
 
   // Calculate cart totals
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 0 ? 12.99 : 0;
+  const shipping = subtotal > 0 ? 5.99 : 0;
   const discount = promoCode === "SAVE20" ? subtotal * 0.2 : 0;
   const total = subtotal + shipping - discount;
 
@@ -42,6 +44,7 @@ export default function CartPage() {
 
   return (
     <Layout>
+      <SEO title="Your Cart" description="Review and manage items in your shopping cart." />
       <div className="container py-16">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Your Cart</h1>
@@ -65,8 +68,17 @@ export default function CartPage() {
                 </div>
                 
                 <div className="divide-y">
+                  <AnimatePresence mode="popLayout">
                   {cart.map((item) => (
-                    <div key={item.id} className="flex p-6">
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 40, height: 0, paddingTop: 0, paddingBottom: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex p-6"
+                    >
                       <div className="w-20 h-20 rounded overflow-hidden bg-muted">
                         <img
                           src={item.image}
@@ -102,6 +114,7 @@ export default function CartPage() {
                               className="w-8 h-8 flex items-center justify-center rounded-md bg-muted transition-colors hover:bg-muted/80"
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
                               disabled={item.quantity <= 1}
+                              aria-label="Decrease quantity"
                             >
                               -
                             </button>
@@ -109,6 +122,7 @@ export default function CartPage() {
                             <button
                               className="w-8 h-8 flex items-center justify-center rounded-md bg-muted transition-colors hover:bg-muted/80"
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              aria-label="Increase quantity"
                             >
                               +
                             </button>
@@ -122,8 +136,9 @@ export default function CartPage() {
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
+                  </AnimatePresence>
                 </div>
                 
                 <div className="p-6 border-t bg-muted/30 flex justify-between items-center">
@@ -164,7 +179,7 @@ export default function CartPage() {
                   </div>
                   
                   {discount > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-success">
                       <span>Discount (20%)</span>
                       <span>-${discount.toFixed(2)}</span>
                     </div>
@@ -192,7 +207,7 @@ export default function CartPage() {
                       </Button>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Try "SAVE20" for 20% off
+                      Enter a promo code to get a discount
                     </div>
                   </div>
                   
@@ -263,7 +278,7 @@ export default function CartPage() {
               Browse our products and find something you'll love!
             </p>
             <Link to="/products">
-              <Button size="lg" className="animate-pulse">Start Shopping</Button>
+              <Button size="lg">Start Shopping</Button>
             </Link>
           </div>
         )}

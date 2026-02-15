@@ -113,4 +113,12 @@ productSchema.methods.updateRating = function() {
 
 const Product = mongoose.model('Product', productSchema);
 
+// Indexes for common queries
+productSchema.index({ category: 1, isActive: 1 });
+productSchema.index({ featured: 1, isActive: 1 });
+productSchema.index({ tags: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ name: 'text', description: 'text', tags: 'text' });
+
 module.exports = Product; 

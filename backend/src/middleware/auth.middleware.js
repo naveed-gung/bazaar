@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
-const { admin } = require('../config/firebase.config');
+const { admin: firebaseAdmin, firebaseInitialized } = require('../config/firebase.config');
+const config = require('../config');
+const logger = require('../utils/logger');
 
 // Middleware to authenticate user with JWT
 exports.protect = async (req, res, next) => {
@@ -17,10 +19,10 @@ exports.protect = async (req, res, next) => {
     }
     
     try {
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Verify token using centralized config
+      const decoded = jwt.verify(token, config.jwtSecret);
       
-      // Get user from database
+      // Get user from database (use .lean() for read-only)
       const user = await User.findById(decoded.id);
       
       if (!user) {
@@ -35,7 +37,7 @@ exports.protect = async (req, res, next) => {
       req.user = user;
       next();
     } catch (error) {
-      console.error('JWT verification error:', error.message);
+      logger.warn('JWT verification failed', { error: error.message, ip: req.ip });
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } catch (error) {
@@ -45,6 +47,10 @@ exports.protect = async (req, res, next) => {
 
 // Middleware to validate Firebase ID token
 exports.validateFirebaseToken = async (req, res, next) => {
+  if (!firebaseInitialized) {
+    return res.status(503).json({ message: 'Firebase authentication is not configured on this server' });
+  }
+
   try {
     let idToken;
     
@@ -59,7 +65,7 @@ exports.validateFirebaseToken = async (req, res, next) => {
     
     try {
       // Verify Firebase token
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
       
       // Find user by Firebase UID
       const user = await User.findOne({ firebaseUid: decodedToken.uid });
@@ -76,7 +82,7 @@ exports.validateFirebaseToken = async (req, res, next) => {
       req.user = user;
       next();
     } catch (error) {
-      console.error('Firebase token verification error:', error.message);
+      logger.warn('Firebase token verification failed', { error: error.message, ip: req.ip });
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } catch (error) {
@@ -94,12 +100,26 @@ exports.admin = (req, res, next) => {
 };
 
 // Middleware to check if authenticated user is the owner of a resource
-exports.isOwner = (resourceId) => {
+exports.isOwner = (paramName = 'id') => {
   return (req, res, next) => {
+    const resourceId = req.params[paramName];
     if (req.user && (req.user.id === resourceId || req.user.role === 'admin')) {
       next();
     } else {
       res.status(403).json({ message: 'Not authorized, resource ownership required' });
     }
+  };
+};
+
+// Middleware to validate MongoDB ObjectId params
+exports.validateObjectId = (...paramNames) => {
+  const mongoose = require('mongoose');
+  return (req, res, next) => {
+    for (const param of paramNames) {
+      if (req.params[param] && !mongoose.Types.ObjectId.isValid(req.params[param])) {
+        return res.status(400).json({ message: `Invalid ID: ${req.params[param]}` });
+      }
+    }
+    next();
   };
 }; 

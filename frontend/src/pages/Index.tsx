@@ -6,10 +6,16 @@ import PromoBanner from "@/components/home/PromoBanner";
 import TestimonialSection from "@/components/home/TestimonialSection";
 import NewsletterSection from "@/components/home/NewsletterSection";
 import ScrollAnimation from "@/components/animation/ScrollAnimation";
+import SEO from "@/components/SEO";
 
 const Index = () => {
   return (
     <Layout>
+      <SEO
+        title="Home"
+        description="Discover premium products at Bazaar — your modern online shopping destination for electronics, fashion, home & garden, and more."
+        keywords="online shopping, e-commerce, electronics, fashion, home decor"
+      />
       {/* Hero Banner with fade down animation */}
       <ScrollAnimation 
         direction="down" 
