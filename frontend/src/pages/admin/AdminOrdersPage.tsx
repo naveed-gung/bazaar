@@ -63,7 +63,7 @@ export default function AdminOrdersPage() {
         const storedOrders = JSON.parse(localStorage.getItem('adminOrders') || '[]');
         
         // If we have stored orders, use them, otherwise create sample data
-        let ordersData = storedOrders.length > 0 ? storedOrders : [
+        const ordersData = storedOrders.length > 0 ? storedOrders : [
           {
             id: 'order_12345',
             paymentIntentId: 'pi_123456789',

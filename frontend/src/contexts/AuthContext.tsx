@@ -70,26 +70,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Show a helpful message if Firebase is not configured
-  if (!FIREBASE_CONFIGURED) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem', fontFamily: 'system-ui, sans-serif', textAlign: 'center', background: '#0f172a', color: '#e2e8f0' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem', color: '#f87171' }}>Firebase Configuration Missing</h1>
-        <p style={{ maxWidth: '480px', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-          Create a <code style={{ background: '#1e293b', padding: '2px 6px', borderRadius: '4px' }}>.env</code> file in the <code style={{ background: '#1e293b', padding: '2px 6px', borderRadius: '4px' }}>frontend/</code> directory with your Firebase credentials.
-        </p>
-        <pre style={{ background: '#1e293b', padding: '1rem 1.5rem', borderRadius: '8px', textAlign: 'left', fontSize: '0.85rem', lineHeight: 1.7, overflowX: 'auto', maxWidth: '100%' }}>{`VITE_API_URL=http://localhost:5000/api
-VITE_FIREBASE_API_KEY=your_key
-VITE_FIREBASE_AUTH_DOMAIN=your_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id`}</pre>
-        <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#94a3b8' }}>Then restart the dev server.</p>
-      </div>
-    );
-  }
-
   useEffect(() => {
     // Check for stored token on initial load
     const storedToken = localStorage.getItem("token");
@@ -112,6 +92,26 @@ VITE_FIREBASE_APP_ID=your_app_id`}</pre>
     
     setLoading(false);
   }, []);
+
+  // Show a helpful message if Firebase is not configured
+  if (!FIREBASE_CONFIGURED) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem', fontFamily: 'system-ui, sans-serif', textAlign: 'center', background: '#0f172a', color: '#e2e8f0' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem', color: '#f87171' }}>Firebase Configuration Missing</h1>
+        <p style={{ maxWidth: '480px', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+          Create a <code style={{ background: '#1e293b', padding: '2px 6px', borderRadius: '4px' }}>.env</code> file in the <code style={{ background: '#1e293b', padding: '2px 6px', borderRadius: '4px' }}>frontend/</code> directory with your Firebase credentials.
+        </p>
+        <pre style={{ background: '#1e293b', padding: '1rem 1.5rem', borderRadius: '8px', textAlign: 'left', fontSize: '0.85rem', lineHeight: 1.7, overflowX: 'auto', maxWidth: '100%' }}>{`VITE_API_URL=http://localhost:5000/api
+VITE_FIREBASE_API_KEY=your_key
+VITE_FIREBASE_AUTH_DOMAIN=your_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id`}</pre>
+        <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#94a3b8' }}>Then restart the dev server.</p>
+      </div>
+    );
+  }
 
   // Register with email and password
   const register = async (name: string, email: string, password: string) => {
