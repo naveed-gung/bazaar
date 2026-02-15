@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/public/image.png" alt="Bazaar Logo" width="250px"/>
+  <img src="logo.svg" alt="Bazaar Logo" width="200px"/>
   
   # BAZAAR
   ### Next-Gen E-Commerce Platform
@@ -22,11 +22,19 @@
 
 ---
 
+<<<<<<< HEAD
 ## Vision
+=======
+## <img src="icon-vision.svg" width="25" alt="Vision" /> Vision
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 **Bazaar** is a modern e-commerce platform that combines cutting-edge technology with intuitive design to deliver a seamless shopping experience — from browsing to checkout to order tracking.
 
+<<<<<<< HEAD
 ## Core Features
+=======
+## <img src="icon-features.svg" width="25" alt="Features" /> Core Features
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 ### Shopping Experience
 - **AI-Powered Chatbot** — Ultra-friendly shopping assistant with 30+ intent handlers, product search, stock checks, personalized recommendations, order tracking, and role-based quick-action chips
@@ -39,10 +47,14 @@
 - **Order Tracking** — Real-time order status with timeline view, carrier info, and estimated delivery dates
 - **Responsive Design** — Fully responsive across all devices with mobile-optimized navigation and search
 
+<<<<<<< HEAD
 ### Product Management
 - **Real-Time Inventory** — Accurate stock levels with low-stock warnings and quantity caps (max 99)
 - **Dynamic Filtering** — Category, price range, rating, and sort filters with clear-all functionality
 - **Product Detail Pages** — Full product info with prose-styled descriptions, image galleries, reviews, and related products
+=======
+## <img src="icon-tech.svg" width="25" alt="Tech Stack" /> Tech Stack
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 ### Authentication & Security
 - **Firebase Authentication** — Frontend auth with Google/Email providers and graceful SDK initialization
@@ -52,6 +64,7 @@
 - **Role-Based Access Control** — Admin and customer roles with protected routes and middleware
 - **50+ Security Hardening Fixes** — Input sanitization, rate limiting, CORS protection, XSS prevention, Helmet headers, mongoSanitize, and more
 
+<<<<<<< HEAD
 ### Admin Features
 - **Admin Dashboard** — Product CRUD, order management, user management
 - **Chatbot Admin Mode** — Real-time inventory status, recent orders, low stock alerts, customer accounts, and unavailable product request tracking
@@ -68,6 +81,9 @@
 | **Deployment** | Frontend: Netlify · Backend: Render |
 
 ## Quick Start
+=======
+## <img src="icon-quickstart.svg" width="25" alt="Quick Start" /> Quick Start
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 ```bash
 # Clone the repository
@@ -81,9 +97,21 @@ npm run setup
 npm run dev
 ```
 
+<<<<<<< HEAD
 The frontend runs on `http://localhost:8080` and the backend on `http://localhost:5000`.
 
 ### Seeding the Database
+=======
+## <img src="icon-mobile.svg" width="25" alt="App Preview" /> App Preview
+
+| Home Page | Product Details | Shopping Cart |
+|-----------|-----------------|---------------|
+| Modern UI with trending items | Interactive product view | Smart checkout process |
+
+## <img src="icon-gear.svg" width="25" alt="Environment Setup" /> Environment Setup
+
+Both frontend and backend include environment templates. Copy and configure them for your setup:
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 ```bash
 cd backend
@@ -126,7 +154,11 @@ cp backend/.env.example backend/.env
 | `ALLOWED_ORIGINS` | Comma-separated allowed CORS origins |
 | `PORT` | Server port (default: `5000`) |
 
+<<<<<<< HEAD
 ## Payment Processing
+=======
+## <img src="icon-payment.svg" width="25" alt="Payment Processing" /> Payment Processing
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 The platform uses a **simulation-only** payment system for development and demonstration:
 
@@ -136,7 +168,11 @@ The platform uses a **simulation-only** payment system for development and demon
 - No real payment SDKs — all transactions are simulated
 - Full checkout flow: Shipping Address → Payment → Order Review → Confirmation
 
+<<<<<<< HEAD
 ## Authentication System
+=======
+## <img src="icon-security.svg" width="25" alt="Authentication System" /> Authentication System
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 - **Firebase Authentication** — Frontend sign-up/sign-in with email/password and Google OAuth
 - **JWT Tokens** — Backend issues access + refresh tokens stored in httpOnly cookies
@@ -145,10 +181,15 @@ The platform uses a **simulation-only** payment system for development and demon
 - **Protected Routes** — Auth middleware validates tokens on every protected API call
 - **Redirect-Back** — Login preserves the user's intended destination via location state
 
+<<<<<<< HEAD
 ## Chatbot Intelligence
+=======
+## <img src="icon-roadmap.svg" width="25" alt="Future Roadmap" /> Future Roadmap
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 The AI shopping assistant supports **30+ intents** with an ultra-friendly personality:
 
+<<<<<<< HEAD
 **For Customers:**
 - Product search, price checks, stock availability, and comparisons
 - Personalized recommendations, deal highlights, and new arrival notifications
@@ -164,6 +205,9 @@ The AI shopping assistant supports **30+ intents** with an ultra-friendly person
 - Quick-action chips: "Inventory status", "Recent orders", "Low stock alerts", "Customer accounts"
 
 ## Project Structure
+=======
+## <img src="icon-structure.svg" width="25" alt="Project Structure" /> Project Structure
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
 
 ```
 bazaar/
@@ -207,7 +251,13 @@ bazaar/
 ---
 
 <div align="center">
+<<<<<<< HEAD
   <p>Made with care</p>
+=======
+  <p>
+    <img src="icon-heart.svg" width="20" alt="Made with love" /> Made with love
+  </p>
+>>>>>>> 55fa5e826a1d6736862cfd4676f2f957fccc6c2e
   <strong>BAZAAR</strong> — Shopping Reimagined for the Digital Future
   <p>
     <a href="./CONTRIBUTING.md">
