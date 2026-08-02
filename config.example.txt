@@ -1,0 +1,23 @@
+# Copy names into your local secret manager or an ignored environment file.
+# Never place real values in this file.
+NODE_ENV=development
+PORT=8787
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/?appName=bazaar
+MONGODB_DB_NAME=bazaar
+MONGODB_DNS_SERVERS=
+WEB_ORIGIN=http://localhost:3000
+GOOGLE_APPLICATION_CREDENTIALS=C:/absolute/path/to/firebase-adminsdk.json
+FIREBASE_ADMIN_CREDENTIALS=C:/absolute/path/to/firebase-adminsdk.json
+FIREBASE_PROJECT_ID=<firebase-project-id>
+FIREBASE_CLIENT_EMAIL=<service-account-email>
+FIREBASE_PRIVATE_KEY=<service-account-private-key>
+FIREBASE_PRIVATE_KEY_BASE64=<base64-service-account-private-key-for-serverless>
+BOOTSTRAP_ADMIN_EMAIL=<admin-email>
+BOOTSTRAP_ADMIN_UID=<firebase-admin-user-uid>
+BOOTSTRAP_CLIENT_EMAIL=<client-email>
+BOOTSTRAP_CLIENT_UID=<firebase-client-user-uid>
+RESEND_API_KEY=<optional-email-provider-key>
+VITE_FIREBASE_API_KEY=<public-browser-api-key>
+VITE_FIREBASE_AUTH_DOMAIN=<project>.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=<firebase-project-id>
+VITE_FIREBASE_APP_ID=<public-browser-app-id>

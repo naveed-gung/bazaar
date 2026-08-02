@@ -1,0 +1,46 @@
+{
+  "name": "@bazaar/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "test": "vitest run",
+    "db:bootstrap": "tsx src/database/bootstrap.ts",
+    "db:seed": "tsx src/database/seed.ts"
+  },
+  "dependencies": {
+    "@bazaar/shared": "0.1.0",
+    "@netlify/blobs": "^10.7.11",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase-admin": "^14.2.0",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.1",
+    "mongodb": "^6.20.0",
+    "pino": "^9.9.5",
+    "pino-http": "^10.5.0",
+    "serverless-http": "^4.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.16.5",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^9.32.0",
+    "globals": "^15.15.0",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^3.2.4"
+  }
+}

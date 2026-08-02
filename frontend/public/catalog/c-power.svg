@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-labelledby="title">
+  <title id="title">Compact charger product illustration</title>
+  <rect width="800" height="800" fill="#f1f5f9"/>
+  <circle cx="400" cy="400" r="265" fill="#dbeafe"/>
+  <rect x="250" y="170" width="300" height="390" rx="58" fill="#172033"/>
+  <rect x="285" y="207" width="230" height="316" rx="38" fill="#334155"/>
+  <rect x="329" y="250" width="142" height="54" rx="18" fill="#0f172a"/>
+  <rect x="329" y="328" width="142" height="54" rx="18" fill="#0f172a"/>
+  <path d="M430 405l-75 97h63l-48 107 96-132h-64z" fill="#60a5fa"/>
+  <rect x="315" y="560" width="42" height="100" rx="12" fill="#64748b"/>
+  <rect x="443" y="560" width="42" height="100" rx="12" fill="#64748b"/>
+</svg>

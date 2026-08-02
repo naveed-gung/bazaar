@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-labelledby="title">
+  <title id="title">Tablet and stylus product illustration</title>
+  <rect width="800" height="800" fill="#eff6ff"/>
+  <rect x="130" y="90" width="490" height="620" rx="42" fill="#1e293b"/>
+  <rect x="153" y="116" width="444" height="568" rx="24" fill="#f8fafc"/>
+  <circle cx="375" cy="132" r="6" fill="#64748b"/>
+  <path d="M235 505c50-128 110-211 180-250 58-33 109-16 152 49-78-10-138 9-181 55-40 43-66 92-78 146z" fill="#3b82f6"/>
+  <path d="M650 168l28 11-177 450-34 32-5-47z" fill="#64748b"/>
+  <path d="M650 168l28 11-13 32-28-11z" fill="#172033"/>
+</svg>

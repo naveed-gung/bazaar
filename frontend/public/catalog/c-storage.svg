@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-labelledby="title">
+  <title id="title">Portable solid-state storage product illustration</title>
+  <rect width="800" height="800" fill="#eff6ff"/>
+  <rect x="190" y="115" width="420" height="570" rx="72" fill="#172033"/>
+  <rect x="224" y="149" width="352" height="502" rx="48" fill="#334155"/>
+  <rect x="280" y="242" width="240" height="170" rx="26" fill="#2563eb"/>
+  <path d="M330 320h140M400 270v100" stroke="#dbeafe" stroke-width="24" stroke-linecap="round"/>
+  <rect x="338" y="585" width="124" height="20" rx="10" fill="#94a3b8"/>
+  <circle cx="542" cy="606" r="9" fill="#60a5fa"/>
+</svg>
