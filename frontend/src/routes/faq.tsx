@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     q: "Is shipping really free?",
-    a: "Free on every order over $50. Below that, standard shipping is a flat $9.",
+    a: "Free on every order of $50 or more. Below that, standard shipping is a flat $7.99, calculated server-side at checkout.",
   },
   {
     q: "What is the return window?",
@@ -38,7 +38,7 @@ const faqs = [
   },
   {
     q: "Which payment methods work?",
-    a: "All major cards, Apple Pay, Google Pay and PayPal. Card details are never stored on our side.",
+    a: "Checkout currently runs a clearly labeled payment simulator: no card numbers are collected and no real charge is made. Live card, wallet and PayPal support arrives with the production payment provider.",
   },
   {
     q: "Can I change an order after placing it?",
@@ -57,26 +57,50 @@ function Faq() {
         copy="The things people ask us most, answered plainly."
       />
       <section className="mx-auto max-w-3xl px-6 py-16 lg:py-24">
-        <div className="divide-y divide-border rounded-3xl border border-border bg-surface">
-          {faqs.map((item, i) => (
-            <div key={item.q}>
-              <button
-                type="button"
-                onClick={() => setOpen(open === i ? null : i)}
-                className="flex w-full items-center justify-between gap-6 px-8 py-6 text-left"
-              >
-                <span className="min-w-0 font-bold">{item.q}</span>
-                {open === i ? (
-                  <Minus className="h-4 w-4 shrink-0 text-glow" />
-                ) : (
-                  <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
-                )}
-              </button>
-              {open === i && (
-                <p className="px-8 pb-7 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
-              )}
-            </div>
-          ))}
+        <div className="divide-y divide-border overflow-hidden rounded-3xl border border-border bg-surface">
+          {faqs.map((item, index) => {
+            const expanded = open === index;
+            return (
+              <div key={item.q}>
+                <h2>
+                  <button
+                    type="button"
+                    id={`faq-trigger-${index}`}
+                    aria-expanded={expanded}
+                    aria-controls={`faq-panel-${index}`}
+                    onClick={() => setOpen(expanded ? null : index)}
+                    className="flex w-full cursor-pointer items-center justify-between gap-6 px-6 py-6 text-left transition-colors hover:bg-surface-2 sm:px-8"
+                  >
+                    <span className="min-w-0 font-bold">{item.q}</span>
+                    <span
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-background"
+                      aria-hidden="true"
+                    >
+                      {expanded ? (
+                        <Minus className="h-4 w-4 text-glow" />
+                      ) : (
+                        <Plus className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </span>
+                  </button>
+                </h2>
+                {/* Grid-rows trick animates height without measuring the panel. */}
+                <div
+                  id={`faq-panel-${index}`}
+                  role="region"
+                  aria-labelledby={`faq-trigger-${index}`}
+                  aria-hidden={!expanded}
+                  className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                    expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                  }`}
+                >
+                  <p className="overflow-hidden px-6 text-sm leading-relaxed text-muted-foreground sm:px-8">
+                    <span className="block pb-7">{item.a}</span>
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
     </>

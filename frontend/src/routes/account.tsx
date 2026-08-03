@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LoaderCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
+import { Pill, Skeleton } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatPrice } from "@/lib/products";
 import { useStore } from "@/lib/store";
@@ -51,23 +52,43 @@ function Account() {
           <Link
             key={card.label}
             to={card.to}
-            className="rounded-2xl border border-border bg-surface p-9 transition-colors hover:border-signal"
+            className="panel group p-9 transition-colors hover:border-signal/50"
           >
-            <p className="text-4xl font-extrabold text-foreground">{card.value}</p>
-            <p className="mt-3 text-sm text-muted-foreground">{card.label}</p>
+            <p className="tabular text-4xl font-extrabold tracking-tight">{card.value}</p>
+            <p className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+              {card.label}
+              <ArrowRight
+                className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                aria-hidden="true"
+              />
+            </p>
           </Link>
         ))}
-        <div className="rounded-2xl border border-border bg-surface p-7 lg:col-span-3">
-          <h2 className="font-bold">Authentication</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {auth.isPending
-              ? "Checking…"
-              : auth.data?.authenticated
-                ? "Signed in with a secure Firebase-backed session."
-                : auth.data?.firebaseConfigured
-                  ? "Guest session active. Sign-in UI becomes available when the public Firebase browser keys are configured."
-                  : "Guest session active. Firebase browser configuration is still required."}
-          </p>
+        <div className="panel p-7 lg:col-span-3">
+          <div className="flex items-start gap-3">
+            <span
+              className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                auth.isPending
+                  ? "bg-muted-foreground"
+                  : auth.data?.authenticated
+                    ? "bg-positive"
+                    : "bg-deal"
+              }`}
+              aria-hidden="true"
+            />
+            <div>
+              <h2 className="font-bold">Authentication</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {auth.isPending
+                  ? "Checking…"
+                  : auth.data?.authenticated
+                    ? "Signed in with a secure Firebase-backed session."
+                    : auth.data?.firebaseConfigured
+                      ? "Guest session active. Sign-in UI becomes available when the public Firebase browser keys are configured."
+                      : "Guest session active. Firebase browser configuration is still required."}
+              </p>
+            </div>
+          </div>
         </div>
         <nav
           className="grid gap-3 sm:grid-cols-2 lg:col-span-3 lg:grid-cols-5"
@@ -80,55 +101,68 @@ function Account() {
             { label: "Notifications", to: "/notifications" as const },
             { label: "Returns", to: "/returns" as const },
           ].map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="flex min-h-11 items-center justify-center rounded-xl border border-border bg-surface px-4 text-sm font-semibold hover:border-signal"
-            >
+            <Link key={item.to} to={item.to} className="btn btn-quiet">
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="rounded-2xl border border-border bg-surface p-9 lg:col-span-3">
-          <h2 className="text-lg font-bold">Order history</h2>
+        <div className="panel p-7 lg:col-span-3 lg:p-9">
+          <h2 className="text-lg font-bold tracking-tight">Order history</h2>
           {orders.isPending ? (
-            <LoaderCircle className="mt-8 h-6 w-6 animate-spin" aria-label="Loading orders" />
+            <div className="mt-6 space-y-3" aria-busy="true">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ))}
+            </div>
           ) : orders.error ? (
             <p role="alert" className="mt-6 text-sm text-destructive">
               {orders.error.message}
             </p>
           ) : !orders.data?.length ? (
-            <p className="mt-6 text-sm text-muted-foreground">
-              No orders yet. Completed checkout orders will appear here.
-            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-5">
+              <p className="text-sm text-muted-foreground">
+                No orders yet. Completed checkout orders appear here with their live state.
+              </p>
+              <Link to="/shop" className="btn btn-quiet btn-sm">
+                Start an order
+              </Link>
+            </div>
           ) : (
-            <div className="mt-6 overflow-x-auto">
-              <table className="w-full min-w-[520px] text-sm">
-                <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr>
-                    <th className="pb-4">Order</th>
-                    <th className="pb-4">Date</th>
-                    <th className="pb-4">Total</th>
-                    <th className="pb-4">Status</th>
+            /* Hairline rows + zebra: same treatment as the comparison matrix so
+               every data table on the site reads the same way. */
+            <div className="mt-6 overflow-x-auto rounded-2xl border border-border">
+              <table className="spec-matrix min-w-130 text-sm">
+                <thead>
+                  <tr className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                    <th scope="col">Order</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.data.map((order) => (
-                    <tr key={order.reference} className="border-t border-border">
-                      <td className="py-4 font-medium">
+                    <tr key={order.reference}>
+                      <td>
                         <Link
                           to="/orders/$reference"
                           params={{ reference: order.reference }}
-                          className="underline"
+                          className="tabular font-semibold hover:text-glow hover:underline"
                         >
                           {order.reference}
                         </Link>
                       </td>
-                      <td className="py-4 text-muted-foreground">
+                      <td className="tabular text-muted-foreground">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="py-4">{formatPrice(order.totals.total.amountMinor / 100)}</td>
-                      <td className="py-4 capitalize">{order.state.replaceAll("_", " ")}</td>
+                      <td className="tabular font-semibold">
+                        {formatPrice(order.totals.total.amountMinor / 100)}
+                      </td>
+                      <td>
+                        <Pill tone={order.state === "cancelled" ? "danger" : "signal"}>
+                          {order.state.replaceAll("_", " ")}
+                        </Pill>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

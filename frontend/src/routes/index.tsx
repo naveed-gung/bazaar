@@ -4,6 +4,7 @@ import { ArrowRight, Truck, Headphones, ShieldCheck, Wallet } from "lucide-react
 import { HeroSlider } from "@/components/hero-slider";
 import { ProductCard } from "@/components/product-card";
 import { Reveal, useParallax } from "@/components/motion";
+import { ProductCardSkeleton, SectionHeading, Skeleton } from "@/components/ui";
 import { brands } from "@/lib/products";
 import { fromApiProduct, useCatalogCategories, useCatalogProducts } from "@/lib/api";
 import bannerAudio from "@/assets/banner-audio.jpg";
@@ -69,8 +70,26 @@ function Home() {
 
       {/* Categories */}
       <section className="mx-auto max-w-[1600px] px-6 py-20 lg:px-10 lg:py-28">
-        <Reveal>
+        <SectionHeading
+          size="lg"
+          eyebrow="Categories"
+          title="Shop by category"
+          copy="Six collections, every one of them curated rather than dumped in."
+          actions={
+            <Link to="/categories" className="btn btn-quiet btn-sm">
+              All categories <ArrowRight className="h-4 w-4" />
+            </Link>
+          }
+        />
+        <Reveal className="mt-12">
           <div className="grid grid-cols-3 gap-8 sm:grid-cols-6 lg:gap-10">
+            {categories.isPending &&
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="text-center">
+                  <Skeleton className="mx-auto aspect-square w-full max-w-42 rounded-full" />
+                  <Skeleton className="mx-auto mt-5 h-4 w-20" />
+                </div>
+              ))}
             {(categories.data ?? []).map((cat) => (
               <Link
                 key={cat.slug}
@@ -78,7 +97,7 @@ function Home() {
                 params={{ slug: cat.slug }}
                 className="group text-center"
               >
-                <div className="mx-auto aspect-square w-full max-w-[168px] overflow-hidden rounded-full border border-border bg-surface transition-all duration-500 group-hover:border-signal group-hover:shadow-glow">
+                <div className="mx-auto aspect-square w-full max-w-42 overflow-hidden rounded-full border border-border bg-surface transition-all duration-500 group-hover:border-signal group-hover:shadow-glow">
                   <img
                     src={cat.imageUrl}
                     alt={cat.name}
@@ -107,7 +126,7 @@ function Home() {
                 loading="lazy"
                 width={1100}
                 height={640}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-1200 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-background/60" />
               <div className="relative px-9 py-14 lg:px-12 lg:py-20">
@@ -120,10 +139,7 @@ function Home() {
                   {b.title[1]}
                 </h2>
                 <p className="mt-4 text-sm text-muted-foreground">{b.sub}</p>
-                <Link
-                  to={b.to}
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-signal px-7 py-3.5 text-sm font-semibold text-signal-foreground transition-transform hover:-translate-y-0.5"
-                >
+                <Link to={b.to} className="btn btn-primary btn-lg mt-8">
                   {b.cta} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -134,36 +150,36 @@ function Home() {
 
       {/* Trending */}
       <section className="mx-auto max-w-[1600px] px-6 py-24 lg:px-10 lg:py-32">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6">
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-glow">
-              Curated Selection
-            </p>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-tight lg:text-5xl">
-              Trending Products
-            </h2>
-          </div>
-          <Link
-            to="/shop"
-            className="flex shrink-0 items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-signal hover:text-foreground"
-          >
-            View All <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+        <SectionHeading
+          size="lg"
+          eyebrow="Curated Selection"
+          title="Trending Products"
+          copy="What people are actually buying this week, ranked by the catalog's own feature score."
+          actions={
+            <Link to="/shop" className="btn btn-quiet btn-sm">
+              View all <ArrowRight className="h-4 w-4" />
+            </Link>
+          }
+        />
 
-        <div className="mt-12 grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5 lg:gap-10">
-          {catalog.isPending && <p className="text-sm text-muted-foreground">Loading products…</p>}
-          {catalog.error && (
-            <p role="alert" className="text-sm text-destructive">
-              {catalog.error.message}
-            </p>
-          )}
-          {trending.map((product, i) => (
-            <Reveal key={product.slug} delay={i * 90}>
-              <ProductCard product={product} />
-            </Reveal>
-          ))}
-        </div>
+        {catalog.error ? (
+          <p role="alert" className="mt-12 text-sm text-destructive">
+            {catalog.error.message}
+          </p>
+        ) : (
+          <div
+            className="mt-12 grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5 lg:gap-10"
+            aria-busy={catalog.isPending || undefined}
+          >
+            {catalog.isPending
+              ? Array.from({ length: 5 }).map((_, index) => <ProductCardSkeleton key={index} />)
+              : trending.map((product, i) => (
+                  <Reveal key={product.slug} delay={i * 90}>
+                    <ProductCard product={product} />
+                  </Reveal>
+                ))}
+          </div>
+        )}
 
         <Reveal className="mt-20">
           <div className="grid gap-8 rounded-3xl border border-border bg-surface px-10 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-border">
@@ -209,7 +225,7 @@ function Home() {
             ].map((stat, i) => (
               <Reveal key={stat.value} delay={i * 120}>
                 <div className="rounded-2xl border border-border bg-background/60 p-9 text-center backdrop-blur">
-                  <p className="text-4xl font-extrabold tracking-tight text-glow lg:text-5xl">
+                  <p className="tabular text-4xl font-extrabold tracking-tight text-glow lg:text-5xl">
                     {stat.value}
                   </p>
                   <p className="mt-4 text-sm text-muted-foreground">{stat.label}</p>

@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Heart } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { ProductCard } from "@/components/product-card";
+import { EmptyState, ProductGridSkeleton } from "@/components/ui";
 import { fromApiProduct, useCatalogProducts } from "@/lib/api";
 import { useStore } from "@/lib/store";
 
@@ -32,23 +34,30 @@ function Wishlist() {
       />
       <section className="mx-auto max-w-[1600px] px-6 py-16 lg:px-10 lg:py-24">
         {catalog.isPending ? (
-          <p className="text-sm text-muted-foreground">Loading saved items…</p>
+          <ProductGridSkeleton count={4} />
         ) : list.length === 0 ? (
-          <div>
-            <p className="text-lg text-muted-foreground">You haven't saved anything yet.</p>
-            <Link
-              to="/shop"
-              className="mt-8 inline-block rounded-xl bg-signal px-7 py-3.5 text-sm font-semibold text-signal-foreground"
-            >
-              Browse products
-            </Link>
-          </div>
+          <EmptyState
+            icon={<Heart className="h-6 w-6" />}
+            title="Nothing saved yet"
+            copy="Tap the heart on any product to keep it here. Saved items follow your guest session and merge into your account when you sign in."
+            action={
+              <Link to="/shop" className="btn btn-primary">
+                Browse products
+              </Link>
+            }
+          />
         ) : (
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-10">
-            {list.map((p) => (
-              <ProductCard key={p.slug} product={p} />
-            ))}
-          </div>
+          <>
+            <p className="text-sm text-muted-foreground" aria-live="polite">
+              <span className="tabular font-semibold text-foreground">{list.length}</span> saved{" "}
+              {list.length === 1 ? "item" : "items"}
+            </p>
+            <div className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-10">
+              {list.map((p) => (
+                <ProductCard key={p.slug} product={p} />
+              ))}
+            </div>
+          </>
         )}
       </section>
     </>

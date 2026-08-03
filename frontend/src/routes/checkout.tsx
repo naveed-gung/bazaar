@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, ChevronLeft, ChevronRight, LoaderCircle, ShieldCheck } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
+import { Pill } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { formatPrice } from "@/lib/products";
 import { useStore } from "@/lib/store";
@@ -54,6 +55,9 @@ const initialShipping: Shipping = {
   country: "United States",
 };
 const steps = ["Shipping", "Payment", "Review"];
+
+/** `.field` is the shared input recipe from styles.css; mt-2 is local spacing. */
+const FIELD = "field mt-2";
 
 function Checkout() {
   const { cartLines, subtotal, clearCart } = useStore();
@@ -123,19 +127,37 @@ function Checkout() {
           copy="Your order is saved and its reference comes from the Bazaar API."
         />
         <section className="mx-auto max-w-[1600px] px-6 py-20 lg:px-10">
-          <div className="max-w-xl rounded-2xl border border-border bg-surface p-8" role="status">
-            <Check className="h-10 w-10 rounded-full bg-signal p-2 text-signal-foreground" />
-            <p className="mt-6 text-sm text-muted-foreground">Order reference</p>
-            <p className="mt-1 text-2xl font-bold tracking-tight">{order.reference}</p>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Total {formatPrice(order.totals.total.amountMinor / 100)} · Demo payment confirmed
-            </p>
-            <Link
-              to="/account"
-              className="mt-8 inline-flex min-h-11 items-center rounded-xl bg-signal px-7 text-sm font-semibold text-signal-foreground"
+          <div className="panel max-w-xl p-8" role="status">
+            <span
+              className="grid h-12 w-12 place-items-center rounded-full bg-signal text-signal-foreground"
+              aria-hidden="true"
             >
-              View order
-            </Link>
+              <Check className="h-6 w-6" />
+            </span>
+            <p className="mt-7 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Order reference
+            </p>
+            <p className="tabular mt-2 text-2xl font-extrabold tracking-tight">{order.reference}</p>
+            <dl className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
+              <div className="grid grid-cols-[1fr_auto] gap-6">
+                <dt className="text-muted-foreground">Total charged</dt>
+                <dd className="tabular font-bold">
+                  {formatPrice(order.totals.total.amountMinor / 100)}
+                </dd>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-6">
+                <dt className="text-muted-foreground">Payment</dt>
+                <dd className="font-semibold text-positive">Demo simulator · approved</dd>
+              </div>
+            </dl>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/account" className="btn btn-primary">
+                View order
+              </Link>
+              <Link to="/shop" className="btn btn-quiet">
+                Keep shopping
+              </Link>
+            </div>
           </div>
         </section>
       </>
@@ -149,16 +171,48 @@ function Checkout() {
         copy="Shipping, payment simulation, then a final review. No card number is collected."
       />
       <section className="mx-auto max-w-[1600px] px-6 py-16 lg:px-10 lg:py-24">
-        <ol className="grid max-w-2xl grid-cols-3 gap-2" aria-label="Checkout progress">
-          {steps.map((label, index) => (
-            <li
-              key={label}
-              aria-current={index === step ? "step" : undefined}
-              className={`border-t-2 pt-3 text-sm ${index <= step ? "border-signal font-semibold text-foreground" : "border-border text-muted-foreground"}`}
-            >
-              {index + 1}. {label}
-            </li>
-          ))}
+        {/* Numbered circles + connectors: position in the flow stays legible even
+            when the labels compress on a narrow viewport. */}
+        <ol className="flex max-w-2xl items-center gap-3" aria-label="Checkout progress">
+          {steps.map((label, index) => {
+            const done = index < step;
+            const current = index === step;
+            return (
+              <li
+                key={label}
+                aria-current={current ? "step" : undefined}
+                className={`flex min-w-0 items-center gap-3 ${
+                  index < steps.length - 1 ? "flex-1" : ""
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`tabular grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-bold transition-colors ${
+                    done
+                      ? "border-signal bg-signal text-signal-foreground"
+                      : current
+                        ? "border-signal text-glow"
+                        : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {done ? <Check className="h-4 w-4" /> : index + 1}
+                </span>
+                <span
+                  className={`truncate text-xs sm:text-sm ${
+                    done || current ? "font-semibold text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </span>
+                {index < steps.length - 1 && (
+                  <span
+                    aria-hidden="true"
+                    className={`h-px min-w-4 flex-1 ${done ? "bg-signal" : "bg-border"}`}
+                  />
+                )}
+              </li>
+            );
+          })}
         </ol>
         <div className="mt-12 grid gap-12 lg:grid-cols-[1.4fr_1fr]">
           <div>
@@ -169,8 +223,14 @@ function Checkout() {
                   event.preventDefault();
                   setStep(1);
                 }}
-                className="grid gap-5 sm:grid-cols-2"
+                className="panel grid gap-5 p-6 sm:grid-cols-2 lg:p-8"
               >
+                <div className="sm:col-span-2">
+                  <h2 className="text-lg font-bold tracking-tight">Shipping address</h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Where the order ships. All fields except apartment are required.
+                  </p>
+                </div>
                 {(
                   [
                     ["email", "Email", "email"],
@@ -185,39 +245,62 @@ function Checkout() {
                 ).map(([name, label, type]) => (
                   <label
                     key={name}
-                    className={`text-sm ${name === "address1" || name === "address2" ? "sm:col-span-2" : ""}`}
+                    className={`block text-sm ${name === "address1" || name === "address2" ? "sm:col-span-2" : ""}`}
                   >
-                    <span className="text-muted-foreground">{label}</span>
+                    <span className="font-medium">
+                      {label}
+                      {name !== "address2" && (
+                        <span className="ml-1 text-destructive" aria-hidden="true">
+                          *
+                        </span>
+                      )}
+                    </span>
                     <input
                       required={name !== "address2"}
                       autoComplete={
                         name === "fullName" ? "name" : name === "postalCode" ? "postal-code" : name
                       }
+                      inputMode={name === "postalCode" ? "numeric" : undefined}
                       type={type}
                       value={shipping[name]}
                       onChange={(event) =>
                         setShipping((current) => ({ ...current, [name]: event.target.value }))
                       }
-                      className="mt-2 min-h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm outline-none focus:border-signal"
+                      className={FIELD}
                     />
                   </label>
                 ))}
               </form>
             )}
             {step === 1 && (
-              <div className="rounded-2xl border border-border bg-surface p-8">
-                <ShieldCheck className="h-10 w-10 text-glow" />
-                <h2 className="mt-5 text-xl font-bold">Demo payment simulator</h2>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+              <div className="panel p-6 lg:p-8">
+                <div className="flex items-start justify-between gap-4">
+                  <span
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border bg-background text-glow"
+                    aria-hidden="true"
+                  >
+                    <ShieldCheck className="h-5 w-5" />
+                  </span>
+                  <Pill tone="signal">Simulation</Pill>
+                </div>
+                <h2 className="mt-6 text-lg font-bold tracking-tight">Demo payment simulator</h2>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
                   No money is charged and no card number, security code, or financial credential is
                   collected. Continuing simulates an approved payment for this staging store.
                 </p>
-                <label className="mt-6 flex min-h-11 items-center gap-3 rounded-xl border border-border bg-background px-4 text-sm">
-                  <input required type="radio" checked readOnly name="payment" /> Simulate
-                  successful payment
+                <label className="mt-6 flex min-h-11 cursor-default items-center gap-3 rounded-xl border border-signal/40 bg-signal/5 px-4 text-sm font-medium">
+                  <input
+                    required
+                    type="radio"
+                    checked
+                    readOnly
+                    name="payment"
+                    className="h-4 w-4 accent-signal"
+                  />
+                  Simulate successful payment
                 </label>
                 <label className="mt-6 block text-sm">
-                  <span className="text-muted-foreground">Promotion code (optional)</span>
+                  <span className="font-medium">Promotion code</span>
                   <input
                     type="text"
                     value={promotionCode}
@@ -227,15 +310,29 @@ function Checkout() {
                     }}
                     placeholder="WELCOME10"
                     autoComplete="off"
-                    className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-4 uppercase outline-none focus:border-signal"
+                    aria-describedby="promotion-help"
+                    className={`${FIELD} uppercase tracking-wider`}
                   />
+                  <span id="promotion-help" className="field-help">
+                    Optional. The server validates the code and applies the discount on the next
+                    step.
+                  </span>
                 </label>
               </div>
             )}
             {step === 2 && (
               <div className="space-y-6">
-                <div className="rounded-2xl border border-border bg-surface p-7">
-                  <h2 className="font-bold">Deliver to</h2>
+                <div className="panel p-6 lg:p-7">
+                  <div className="flex items-start justify-between gap-4">
+                    <h2 className="font-bold">Deliver to</h2>
+                    <button
+                      type="button"
+                      onClick={() => setStep(0)}
+                      className="btn btn-ghost btn-sm -mr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      Edit
+                    </button>
+                  </div>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">
                     {shipping.fullName}
                     <br />
@@ -247,8 +344,17 @@ function Checkout() {
                     {shipping.country}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border bg-surface p-7">
-                  <h2 className="font-bold">Payment</h2>
+                <div className="panel p-6 lg:p-7">
+                  <div className="flex items-start justify-between gap-4">
+                    <h2 className="font-bold">Payment</h2>
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="btn btn-ghost btn-sm -mr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      Edit
+                    </button>
+                  </div>
                   <p className="mt-3 text-sm text-muted-foreground">
                     Demo simulator · successful result
                   </p>
@@ -269,9 +375,18 @@ function Checkout() {
             {error && (
               <p
                 role="alert"
-                className="mt-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+                className="mt-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm leading-relaxed text-destructive"
               >
                 {error}
+              </p>
+            )}
+            {!cartLines.length && (
+              <p className="mt-6 rounded-xl border border-border bg-surface-2 p-4 text-sm text-muted-foreground">
+                Your cart is empty, so there is nothing to check out.{" "}
+                <Link to="/shop" className="font-semibold text-glow hover:underline">
+                  Browse the catalog
+                </Link>
+                .
               </p>
             )}
             <div className="mt-8 flex flex-wrap justify-between gap-3">
@@ -282,7 +397,7 @@ function Checkout() {
                   setError("");
                   setStep((current) => current - 1);
                 }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border px-5 text-sm font-semibold disabled:opacity-40"
+                className="btn btn-quiet"
               >
                 <ChevronLeft className="h-4 w-4" /> Back
               </button>
@@ -292,10 +407,10 @@ function Checkout() {
                   form={step === 0 ? "shipping-form" : undefined}
                   disabled={quoting || !cartLines.length}
                   onClick={step === 1 ? prepareReview : undefined}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-signal px-6 text-sm font-semibold text-signal-foreground disabled:opacity-40"
+                  className="btn btn-primary btn-lg"
                 >
                   {quoting && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                  {quoting ? "Reserving stock…" : "Continue"}{" "}
+                  {quoting ? "Reserving stock…" : "Continue"}
                   {!quoting && <ChevronRight className="h-4 w-4" />}
                 </button>
               ) : (
@@ -303,56 +418,96 @@ function Checkout() {
                   type="button"
                   disabled={!cartLines.length || submitting || !quote}
                   onClick={placeOrder}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-signal px-6 text-sm font-semibold text-signal-foreground disabled:opacity-40"
+                  className="btn btn-primary btn-lg"
                 >
                   {submitting && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                  {submitting
-                    ? "Placing order…"
-                    : `Place order · ${formatPrice((quote?.totals.total.amountMinor ?? total * 100) / 100)}`}
+                  {submitting ? (
+                    "Placing order…"
+                  ) : (
+                    <>
+                      Place order
+                      <span aria-hidden="true">·</span>
+                      <span className="tabular">
+                        {formatPrice((quote?.totals.total.amountMinor ?? total * 100) / 100)}
+                      </span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
           </div>
-          <aside className="h-fit rounded-2xl border border-border bg-surface p-8">
-            <h2 className="text-lg font-bold">Order summary</h2>
-            <ul className="mt-6 space-y-4 text-sm">
+          <aside className="panel h-fit p-6 lg:sticky lg:top-28 lg:p-8">
+            <h2 className="text-lg font-bold tracking-tight">Order summary</h2>
+            <ul className="mt-6 space-y-4">
               {cartLines.map(({ product, qty }) => (
-                <li key={product.slug} className="flex justify-between gap-4">
-                  <span className="min-w-0 truncate text-muted-foreground">
-                    {product.name} × {qty}
+                <li key={product.slug} className="flex items-center gap-4">
+                  <img
+                    src={product.img}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 shrink-0 rounded-xl border border-border object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{product.name}</p>
+                    <p className="tabular mt-0.5 text-xs text-muted-foreground">
+                      {formatPrice(product.price)} × {qty}
+                    </p>
+                  </div>
+                  <span className="tabular shrink-0 text-sm font-semibold">
+                    {formatPrice(product.price * qty)}
                   </span>
-                  <span>{formatPrice(product.price * qty)}</span>
                 </li>
               ))}
             </ul>
-            <dl className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
-              <div className="flex justify-between">
+            <dl className="mt-6 space-y-3.5 border-t border-border pt-5 text-sm">
+              <div className="grid grid-cols-[1fr_auto] gap-6">
                 <dt className="text-muted-foreground">Subtotal</dt>
-                <dd>{formatPrice((quote?.totals.subtotal.amountMinor ?? subtotal * 100) / 100)}</dd>
+                <dd className="tabular font-medium">
+                  {formatPrice((quote?.totals.subtotal.amountMinor ?? subtotal * 100) / 100)}
+                </dd>
               </div>
               {Boolean(quote?.totals.discount.amountMinor) && (
-                <div className="flex justify-between text-signal">
-                  <dt>Promotion</dt>
-                  <dd>−{formatPrice((quote?.totals.discount.amountMinor ?? 0) / 100)}</dd>
+                <div className="grid grid-cols-[1fr_auto] gap-6 text-positive">
+                  <dt className="font-medium">Promotion</dt>
+                  <dd className="tabular font-semibold">
+                    −{formatPrice((quote?.totals.discount.amountMinor ?? 0) / 100)}
+                  </dd>
                 </div>
               )}
-              <div className="flex justify-between">
+              <div className="grid grid-cols-[1fr_auto] gap-6">
                 <dt className="text-muted-foreground">Shipping</dt>
-                <dd>
+                <dd
+                  className={
+                    (quote?.totals.shipping.amountMinor ?? shippingCost * 100)
+                      ? "tabular font-medium"
+                      : "font-semibold text-positive"
+                  }
+                >
                   {(quote?.totals.shipping.amountMinor ?? shippingCost * 100)
                     ? formatPrice((quote?.totals.shipping.amountMinor ?? shippingCost * 100) / 100)
                     : "Free"}
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="grid grid-cols-[1fr_auto] gap-6">
                 <dt className="text-muted-foreground">{quote ? "Tax" : "Estimated tax"}</dt>
-                <dd>{formatPrice((quote?.totals.tax.amountMinor ?? tax * 100) / 100)}</dd>
+                <dd className="tabular font-medium">
+                  {formatPrice((quote?.totals.tax.amountMinor ?? tax * 100) / 100)}
+                </dd>
               </div>
-              <div className="flex justify-between pt-2 text-base font-bold">
+              <div className="grid grid-cols-[1fr_auto] gap-6 border-t border-border pt-4 text-base font-bold">
                 <dt>Total</dt>
-                <dd>{formatPrice((quote?.totals.total.amountMinor ?? total * 100) / 100)}</dd>
+                <dd className="tabular">
+                  {formatPrice((quote?.totals.total.amountMinor ?? total * 100) / 100)}
+                </dd>
               </div>
             </dl>
+            <p className="mt-5 flex gap-2 text-xs leading-relaxed text-muted-foreground">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-glow" aria-hidden="true" />
+              {quote
+                ? "These are the server-confirmed totals held by your reservation."
+                : "Totals shown are estimates until the server prepares your order on the review step."}
+            </p>
           </aside>
         </div>
       </section>

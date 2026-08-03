@@ -117,6 +117,7 @@ export function fromApiProduct(product: ProductSummary): Product {
   return {
     slug: product.slug,
     name: product.name,
+    brand: product.brand,
     category: product.category,
     categorySlug: product.categorySlug,
     price: product.price.amountMinor / 100,

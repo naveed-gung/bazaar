@@ -114,15 +114,12 @@ export function HeroSlider() {
                   {slide.copy}
                 </p>
                 <div className="mt-10 flex flex-wrap gap-4">
-                  <Link
-                    to={slide.to}
-                    className="inline-flex items-center gap-2 rounded-xl bg-signal px-8 py-4 text-sm font-semibold text-signal-foreground shadow-glow transition-transform hover:-translate-y-0.5 lg:text-base"
-                  >
-                    {slide.cta} <ArrowRight className="h-4 w-4" />
+                  <Link to={slide.to} className="btn btn-primary btn-lg shadow-glow lg:text-base">
+                    {slide.cta} <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
                   <Link
                     to="/new-arrivals"
-                    className="rounded-xl border border-border bg-surface/70 px-8 py-4 text-sm font-semibold backdrop-blur transition-colors hover:border-signal lg:text-base"
+                    className="btn btn-quiet btn-lg bg-surface/70 backdrop-blur lg:text-base"
                   >
                     View New Arrivals
                   </Link>

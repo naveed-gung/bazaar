@@ -1,4 +1,4 @@
-import { ObjectId, type Document } from "mongodb";
+import { ObjectId, type Db, type Document } from "mongodb";
 import type { ProductSummary } from "@bazaar/shared";
 
 export type ProductDocument = Document & {
@@ -43,4 +43,15 @@ export function serializeProduct(product: ProductDocument, quantityAvailable = 0
     specs: product.specs,
     revision: product.revision,
   };
+}
+
+/** Sellable quantity per product id, summed across its active variants. */
+export async function inventoryByProduct(db: Db, ids: ObjectId[]): Promise<Map<string, number>> {
+  const byProduct = new Map<string, number>();
+  if (!ids.length) return byProduct;
+  const variants = await db.collection("variants").find({ productId: { $in: ids }, state: "active" }).toArray();
+  const inventory = await db.collection("inventory").find({ variantId: { $in: variants.map((item) => item._id) } }).toArray();
+  const counts = new Map(inventory.map((item) => [item.variantId.toString(), Math.max(0, Number(item.onHand) - Number(item.reserved))]));
+  for (const variant of variants) byProduct.set(variant.productId.toString(), (byProduct.get(variant.productId.toString()) ?? 0) + (counts.get(variant._id.toString()) ?? 0));
+  return byProduct;
 }

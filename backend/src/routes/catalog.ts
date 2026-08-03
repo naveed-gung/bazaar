@@ -1,8 +1,8 @@
-import { ObjectId, type Sort } from "mongodb";
+import { type Sort } from "mongodb";
 import { Router } from "express";
 import { getDb } from "../database/client.js";
 import { AppError } from "../errors.js";
-import { serializeProduct, type ProductDocument } from "../domain/catalog.js";
+import { inventoryByProduct, serializeProduct, type ProductDocument } from "../domain/catalog.js";
 import { asyncHandler, parsePositiveInteger } from "../lib/http.js";
 
 export const catalogRouter = Router();
@@ -47,12 +47,3 @@ catalogRouter.get("/products/:slug", asyncHandler(async (req, res) => {
   res.setHeader("cache-control", "public, max-age=60, stale-while-revalidate=300");
   res.json({ data: { ...serializeProduct(product, Math.max(0, Number(inventory?.["onHand"] ?? 0) - Number(inventory?.["reserved"] ?? 0))), variants: variant ? [{ id: variant._id.toString(), sku: variant["sku"], name: variant["name"], options: variant["options"], availability: inventory ? Math.max(0, Number(inventory["onHand"]) - Number(inventory["reserved"])) : 0 }] : [] } });
 }));
-
-async function inventoryByProduct(db: Awaited<ReturnType<typeof getDb>>, ids: ObjectId[]) {
-  const variants = await db.collection("variants").find({ productId: { $in: ids }, state: "active" }).toArray();
-  const inventory = await db.collection("inventory").find({ variantId: { $in: variants.map((item) => item._id) } }).toArray();
-  const counts = new Map(inventory.map((item) => [item.variantId.toString(), Math.max(0, Number(item.onHand) - Number(item.reserved))]));
-  const byProduct = new Map<string, number>();
-  for (const variant of variants) byProduct.set(variant.productId.toString(), (byProduct.get(variant.productId.toString()) ?? 0) + (counts.get(variant._id.toString()) ?? 0));
-  return byProduct;
-}

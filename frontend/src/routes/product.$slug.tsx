@@ -1,8 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Heart, ShoppingBag, Truck, ShieldCheck, Scale } from "lucide-react";
+import {
+  ChevronRight,
+  Heart,
+  ListFilter,
+  RotateCcw,
+  Scale,
+  ShieldCheck,
+  ShoppingBag,
+  Truck,
+} from "lucide-react";
 import { useState } from "react";
 import { ProductCard } from "@/components/product-card";
+import { SpecSheet } from "@/components/spec-sheet";
+import { AvailabilityTag, Pill, Rating, SectionHeading, Skeleton } from "@/components/ui";
 import { formatPrice } from "@/lib/products";
 import { useStore } from "@/lib/store";
 import { api, fromApiProduct, type CatalogProduct } from "@/lib/api";
@@ -19,6 +30,16 @@ export const Route = createFileRoute("/product/$slug")({
   },
   component: ProductPage,
 });
+
+const TRUST = [
+  { icon: Truck, title: "Free shipping over $50", copy: "Flat $7.99 below the threshold." },
+  { icon: RotateCcw, title: "30-day returns", copy: "Refunds never exceed the captured amount." },
+  {
+    icon: ShieldCheck,
+    title: "Server-priced checkout",
+    copy: "Totals and stock verified on order.",
+  },
+];
 
 function ProductPage() {
   const { slug } = Route.useParams();
@@ -41,44 +62,45 @@ function ProductPage() {
     .filter((item) => item.slug !== slug)
     .map(fromApiProduct);
 
-  if (productQuery.isPending)
-    return (
-      <main className="mx-auto min-h-[60vh] max-w-[1600px] px-6 py-20 text-sm text-muted-foreground">
-        Loading product…
-      </main>
-    );
+  if (productQuery.isPending) return <ProductSkeleton />;
   if (productQuery.error || !product)
     return (
       <main className="mx-auto min-h-[60vh] max-w-[1600px] px-6 py-20">
         <p role="alert" className="text-destructive">
           {productQuery.error?.message ?? "Product not found."}
         </p>
-        <Link
-          to="/shop"
-          className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-signal px-5 text-sm font-semibold text-signal-foreground"
-        >
+        <Link to="/shop" className="btn btn-primary mt-6">
           Back to shop
         </Link>
       </main>
     );
 
+  const soldOut = product.availability === "out_of_stock";
+  const saved = product.was ? Math.round((1 - product.price / product.was) * 100) : 0;
+  const wished = isWishlisted(product.slug);
+
   return (
     <>
       <section className="mx-auto max-w-[1600px] px-6 py-14 lg:px-10 lg:py-20">
-        <nav className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs">
+          <Link to="/" className="text-muted-foreground hover:text-foreground">
             Home
           </Link>
-          <span>/</span>
-          <Link to="/shop" className="hover:text-foreground">
+          <ChevronRight className="h-3 w-3 text-muted-foreground/60" aria-hidden="true" />
+          <Link to="/shop" className="text-muted-foreground hover:text-foreground">
             Shop
           </Link>
-          <span>/</span>
-          <span className="text-foreground">{product.name}</span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/60" aria-hidden="true" />
+          <span className="truncate font-medium text-foreground">{product.name}</span>
         </nav>
 
-        <div className="mt-10 grid gap-14 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-3xl border border-border bg-surface">
+        <div className="mt-10 grid items-start gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-surface">
+            {product.badge && (
+              <span className="absolute left-5 top-5 z-10 rounded-full bg-signal px-3 py-1 text-[11px] font-bold tracking-wide text-signal-foreground">
+                {product.badge === "Deal" && saved > 0 ? `-${saved}%` : product.badge}
+              </span>
+            )}
             <img
               src={product.img}
               alt={product.name}
@@ -88,55 +110,55 @@ function ProductPage() {
             />
           </div>
 
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-glow">
-              {product.category}
-            </p>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight lg:text-5xl">
+          <div className="lg:sticky lg:top-28">
+            <div className="flex flex-wrap items-center gap-2">
+              <Pill tone="signal">{product.brand}</Pill>
+              <Link to="/categories/$slug" params={{ slug: product.categorySlug }}>
+                <Pill className="transition-colors hover:border-signal hover:text-foreground">
+                  {product.category}
+                </Pill>
+              </Link>
+            </div>
+            <h1 className="mt-5 text-3xl font-extrabold leading-[1.1] tracking-tight lg:text-[2.75rem]">
               {product.name}
             </h1>
-            <div className="mt-5 flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${i < product.rating ? "fill-glow text-glow" : "text-border"}`}
-                  />
-                ))}
-              </span>
-              {product.reviews} reviews
-            </div>
-            <div className="mt-7 flex items-end gap-4">
-              <span className="text-3xl font-extrabold lg:text-4xl">
+            <Rating rating={product.rating} reviews={product.reviews} className="mt-5" />
+
+            <div className="mt-7 flex flex-wrap items-end gap-x-4 gap-y-2">
+              <span className="tabular text-3xl font-extrabold lg:text-4xl">
                 {formatPrice(product.price)}
               </span>
               {product.was && (
-                <span className="text-lg text-muted-foreground line-through">
-                  {formatPrice(product.was)}
-                </span>
+                <>
+                  <span className="tabular text-lg text-muted-foreground line-through">
+                    {formatPrice(product.was)}
+                  </span>
+                  <Pill tone="deal">Save {saved}%</Pill>
+                </>
               )}
             </div>
-            <p className="mt-7 text-base leading-relaxed text-muted-foreground">{product.blurb}</p>
+            <AvailabilityTag availability={product.availability} className="mt-4" />
 
-            <div className="mt-9 flex flex-wrap gap-4">
+            <p className="mt-6 text-base leading-relaxed text-muted-foreground">{product.blurb}</p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => addToCart(product.slug)}
-                disabled={product.availability === "out_of_stock"}
-                className="inline-flex items-center gap-2 rounded-xl bg-signal px-8 py-4 text-sm font-semibold text-signal-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:hover:translate-y-0"
+                disabled={soldOut}
+                className="btn btn-primary btn-lg sm:flex-1"
               >
-                <ShoppingBag className="h-4 w-4" />{" "}
-                {product.availability === "out_of_stock" ? "Out of stock" : "Add to Cart"}
+                <ShoppingBag className="h-4 w-4" />
+                {soldOut ? "Out of stock" : "Add to cart"}
               </button>
               <button
                 type="button"
                 onClick={() => toggleWishlist(product.slug)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border px-8 py-4 text-sm font-medium text-muted-foreground hover:border-signal hover:text-foreground"
+                aria-pressed={wished}
+                className="btn btn-quiet btn-lg"
               >
-                <Heart
-                  className={`h-4 w-4 ${isWishlisted(product.slug) ? "fill-glow text-glow" : ""}`}
-                />
-                {isWishlisted(product.slug) ? "Saved" : "Save"}
+                <Heart className={wished ? "h-4 w-4 fill-signal text-signal" : "h-4 w-4"} />
+                {wished ? "Saved" : "Save"}
               </button>
               <button
                 type="button"
@@ -150,46 +172,85 @@ function ProductPage() {
                     );
                   }
                 }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border px-6 text-sm font-medium text-muted-foreground hover:border-signal hover:text-foreground"
+                className="btn btn-quiet btn-lg"
               >
-                <Scale className="h-4 w-4" /> Compare
+                <Scale className="h-4 w-4" />
+                Compare
               </button>
             </div>
-            {compareStatus && (
-              <p className="mt-3 text-sm text-muted-foreground" aria-live="polite">
-                {compareStatus} ·{" "}
-                <Link to="/compare" className="underline">
-                  View comparison
-                </Link>
-              </p>
+            <p className="mt-3 min-h-5 text-sm text-muted-foreground" aria-live="polite">
+              {compareStatus && (
+                <>
+                  {compareStatus} ·{" "}
+                  <Link to="/compare" className="font-medium text-foreground underline">
+                    View comparison
+                  </Link>
+                </>
+              )}
+            </p>
+
+            {product.specs.length > 0 && (
+              <a href="#specifications" className="btn btn-ghost btn-sm mt-4 -ml-3.5">
+                <ListFilter className="h-4 w-4" />
+                See all {product.specs.length} specifications
+              </a>
             )}
 
-            <dl className="mt-10 grid gap-x-8 gap-y-4 border-t border-border pt-8 sm:grid-cols-2">
-              {product.specs.map((spec: { label: string; value: string }) => (
-                <div key={spec.label} className="flex justify-between gap-4 text-sm">
-                  <dt className="text-muted-foreground">{spec.label}</dt>
-                  <dd className="font-medium">{spec.value}</dd>
-                </div>
+            <ul className="mt-8 grid gap-3 border-t border-border pt-8 sm:grid-cols-3">
+              {TRUST.map((item) => (
+                <li key={item.title} className="flex gap-3">
+                  <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-glow" aria-hidden="true" />
+                  <div>
+                    <p className="text-xs font-semibold leading-tight">{item.title}</p>
+                    <p className="mt-1 text-xs leading-snug text-muted-foreground">{item.copy}</p>
+                  </div>
+                </li>
               ))}
-            </dl>
-
-            <div className="mt-10 grid gap-4 sm:grid-cols-2">
-              <p className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Truck className="h-5 w-5 shrink-0 text-glow" /> Free shipping over $50
-              </p>
-              <p className="flex items-center gap-3 text-sm text-muted-foreground">
-                <ShieldCheck className="h-5 w-5 shrink-0 text-glow" /> 30-day money back
-              </p>
-            </div>
+            </ul>
           </div>
+        </div>
+      </section>
+
+      <section
+        id="specifications"
+        className="border-t border-border bg-background py-16 lg:py-24"
+        aria-labelledby="specifications-heading"
+      >
+        <div className="mx-auto max-w-[1600px] px-6 lg:px-10">
+          <SectionHeading
+            id="specifications-heading"
+            eyebrow="Specifications"
+            title="What you actually get"
+            copy="Published catalog values for this exact product revision — no marketing rounding."
+            actions={
+              <Link to="/compare" className="btn btn-quiet btn-sm">
+                <Scale className="h-4 w-4" />
+                Compare side by side
+              </Link>
+            }
+          />
+          <SpecSheet specs={product.specs} className="mt-10" />
         </div>
       </section>
 
       <ProductCinematic product={product} />
 
       {related.length > 0 && (
-        <section className="mx-auto max-w-[1600px] px-6 pb-24 lg:px-10">
-          <h2 className="text-2xl font-extrabold tracking-tight lg:text-3xl">You may also like</h2>
+        <section className="mx-auto max-w-[1600px] px-6 py-16 lg:px-10 lg:py-24">
+          <SectionHeading
+            eyebrow="Related"
+            title="You may also like"
+            actions={
+              <Link
+                to="/categories/$slug"
+                params={{ slug: product.categorySlug }}
+                className="btn btn-quiet btn-sm"
+              >
+                All {product.category}
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            }
+          />
           <div className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-10">
             {related.map((p) => (
               <ProductCard key={p.slug} product={p} />
@@ -198,5 +259,38 @@ function ProductPage() {
         </section>
       )}
     </>
+  );
+}
+
+function ProductSkeleton() {
+  return (
+    <section
+      className="mx-auto max-w-[1600px] px-6 py-14 lg:px-10 lg:py-20"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <Skeleton className="h-3 w-56" />
+      <div className="mt-10 grid items-start gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
+        <Skeleton className="aspect-square w-full rounded-3xl" />
+        <div>
+          <Skeleton className="h-6 w-40 rounded-full" />
+          <Skeleton className="mt-6 h-10 w-4/5" />
+          <Skeleton className="mt-3 h-10 w-1/2" />
+          <Skeleton className="mt-7 h-4 w-44" />
+          <Skeleton className="mt-7 h-9 w-52" />
+          <Skeleton className="mt-6 h-16 w-full" />
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Skeleton className="h-13 w-48 rounded-2xl" />
+            <Skeleton className="h-13 w-32 rounded-2xl" />
+            <Skeleton className="h-13 w-32 rounded-2xl" />
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

@@ -13,6 +13,15 @@ const mainNav = [
   { label: "New Arrivals", to: "/new-arrivals" },
 ] as const;
 
+/* 40px round hit area for every header icon — roomier than a bare 20px glyph
+   while keeping the action cluster narrow enough for a 375px viewport. */
+const ICON_CONTROL =
+  "grid h-10 w-10 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground";
+
+/* The wishlist icon is hidden below sm to keep the action cluster narrow, so the
+   drawer has to carry it. */
+const mobileOnlyNav = [{ label: "Wishlist", to: "/wishlist" }] as const;
+
 const pagesNav = [
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
@@ -74,7 +83,8 @@ export function SiteHeader() {
                 key={item.to}
                 to={item.to}
                 activeOptions={{ exact: item.to === "/" }}
-                className="pb-1 text-muted-foreground transition-colors hover:text-foreground [&.active]:border-b-2 [&.active]:border-signal [&.active]:text-foreground"
+                /* Border is always present so activating a link never shifts the row. */
+                className="border-b-2 border-transparent pb-1 text-muted-foreground transition-colors hover:text-foreground [&.active]:border-signal [&.active]:text-foreground"
               >
                 {item.label}
               </Link>
@@ -82,17 +92,18 @@ export function SiteHeader() {
             <div className="group relative">
               <button
                 type="button"
-                className="flex items-center gap-1 pb-1 text-muted-foreground transition-colors group-hover:text-foreground"
+                className="flex cursor-pointer items-center gap-1 border-b-2 border-transparent pb-1 text-muted-foreground transition-colors group-hover:text-foreground"
               >
-                Pages <ChevronDown className="h-3 w-3" />
+                Pages{" "}
+                <ChevronDown className="h-3 w-3 transition-transform group-hover:rotate-180" />
               </button>
-              <div className="invisible absolute left-1/2 top-full z-50 w-48 -translate-x-1/2 pt-3 opacity-0 transition-all group-hover:visible group-hover:opacity-100">
+              <div className="invisible absolute left-1/2 top-full z-50 w-48 -translate-x-1/2 pt-3 opacity-0 transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                 <div className="overflow-hidden rounded-xl border border-border bg-surface p-2 shadow-lift">
                   {pagesNav.map((item) => (
                     <Link
                       key={item.to}
                       to={item.to}
-                      className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+                      className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground [&.active]:bg-surface-2 [&.active]:text-foreground"
                     >
                       {item.label}
                     </Link>
@@ -102,13 +113,15 @@ export function SiteHeader() {
             </div>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-4 justify-self-end lg:gap-6">
+          <div className="flex shrink-0 items-center gap-0.5 justify-self-end lg:gap-2">
             <ThemeToggle />
             <button
               type="button"
-              onClick={() => setSearchOpen((v) => !v)}
+              onClick={() => setSearchOpen((open) => !open)}
               aria-label="Search products"
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              aria-expanded={searchOpen}
+              aria-controls="site-search"
+              className={ICON_CONTROL}
             >
               <Search className="h-5 w-5" />
             </button>
@@ -118,7 +131,7 @@ export function SiteHeader() {
                 auth.data?.authenticated ? "Open account" : "Guest shopper — sign in optional"
               }
               title={auth.data?.authenticated ? "Account" : "Shopping as guest"}
-              className="hidden items-center gap-2 text-muted-foreground transition-colors hover:text-foreground sm:flex"
+              className="hidden h-10 items-center gap-2 rounded-full px-2.5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground sm:inline-flex"
             >
               <User className="h-5 w-5" />
               {!auth.data?.authenticated && !auth.isPending && (
@@ -127,33 +140,37 @@ export function SiteHeader() {
             </Link>
             <Link
               to="/wishlist"
-              aria-label="Wishlist"
-              className="relative text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={
+                wishlist.length ? `Wishlist, ${wishlist.length} saved` : "Wishlist, empty"
+              }
+              className={`${ICON_CONTROL} relative hidden sm:grid`}
             >
               <Heart className="h-5 w-5" />
               {wishlist.length > 0 && (
-                <span className="absolute -right-2 -top-2 grid h-4 w-4 place-items-center rounded-full bg-glow text-[10px] font-bold text-signal-foreground">
+                <span className="tabular absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-glow text-[10px] font-bold text-signal-foreground">
                   {wishlist.length}
                 </span>
               )}
             </Link>
             <Link
               to="/cart"
-              aria-label="Cart"
-              className="relative text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={cartCount ? `Cart, ${cartCount} items` : "Cart, empty"}
+              className={`${ICON_CONTROL} relative`}
             >
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -right-2 -top-2 grid h-4 w-4 place-items-center rounded-full bg-signal text-[10px] font-bold text-signal-foreground">
+                <span className="tabular absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-signal text-[10px] font-bold text-signal-foreground">
                   {cartCount}
                 </span>
               )}
             </Link>
             <button
               type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Open menu"
-              className="text-muted-foreground lg:hidden"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="site-mobile-nav"
+              className={`${ICON_CONTROL} lg:hidden`}
             >
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -161,23 +178,32 @@ export function SiteHeader() {
         </div>
 
         {searchOpen && (
-          <div className="border-t border-border bg-surface">
+          <div id="site-search" className="border-t border-border bg-surface">
             <form
               onSubmit={submitSearch}
+              role="search"
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setSearchOpen(false);
+              }}
               className="mx-auto flex max-w-[1600px] items-center gap-3 px-6 py-5 lg:px-10"
             >
-              <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <Search className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <label className="sr-only" htmlFor="site-search-input">
+                Search products
+              </label>
               <input
                 autoFocus
+                id="site-search-input"
+                name="q"
+                type="search"
+                enterKeyHint="search"
+                maxLength={100}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search headphones, cameras, smart home…"
                 className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
               />
-              <button
-                type="submit"
-                className="shrink-0 rounded-lg bg-signal px-5 py-2.5 text-sm font-semibold text-signal-foreground"
-              >
+              <button type="submit" className="btn btn-primary btn-sm shrink-0">
                 Search
               </button>
             </form>
@@ -185,15 +211,22 @@ export function SiteHeader() {
         )}
 
         {menuOpen && (
-          <nav className="border-t border-border bg-surface px-6 py-4 lg:hidden">
-            {[...mainNav, ...pagesNav].map((item) => (
+          <nav
+            id="site-mobile-nav"
+            aria-label="Mobile"
+            className="border-t border-border bg-surface px-6 py-4 lg:hidden"
+          >
+            {[...mainNav, ...mobileOnlyNav, ...pagesNav].map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 onClick={() => setMenuOpen(false)}
-                className="block border-b border-border/60 py-3.5 text-sm text-muted-foreground last:border-0"
+                className="flex items-center justify-between border-b border-border/60 py-3.5 text-sm text-muted-foreground last:border-0 [&.active]:font-semibold [&.active]:text-foreground"
               >
                 {item.label}
+                {item.to === "/wishlist" && wishlist.length > 0 && (
+                  <span className="tabular text-xs text-muted-foreground">{wishlist.length}</span>
+                )}
               </Link>
             ))}
           </nav>

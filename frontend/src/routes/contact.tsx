@@ -19,6 +19,9 @@ export const Route = createFileRoute("/contact")({
   component: Contact,
 });
 
+/** `.field` is the shared input recipe from styles.css; mt-2 is local spacing. */
+const FIELD = "field mt-2";
+
 function Contact() {
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
@@ -39,8 +42,13 @@ function Contact() {
             { icon: MapPin, title: "Studio", value: "14 Harbour Lane, Lisbon" },
           ].map(({ icon: Icon, title, value }) => (
             <div key={title} className="flex items-start gap-5">
-              <Icon className="mt-1 h-6 w-6 shrink-0 text-glow" strokeWidth={1.5} />
-              <div className="min-w-0">
+              <span
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border bg-surface text-glow"
+                aria-hidden="true"
+              >
+                <Icon className="h-5 w-5" strokeWidth={1.6} />
+              </span>
+              <div className="min-w-0 pt-1.5">
                 <p className="font-bold">{title}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{value}</p>
               </div>
@@ -72,47 +80,63 @@ function Contact() {
               setPending(false);
             }
           }}
-          className="grid gap-6 rounded-3xl border border-border bg-surface p-9 sm:grid-cols-2"
+          className="panel grid gap-6 p-7 sm:grid-cols-2 lg:p-9"
         >
           <label className="block text-sm">
-            <span className="text-muted-foreground">Name</span>
-            <input
-              name="name"
-              required
-              className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-signal"
-            />
+            <span className="font-medium">
+              Name
+              <span className="ml-1 text-destructive" aria-hidden="true">
+                *
+              </span>
+            </span>
+            <input name="name" required autoComplete="name" className={FIELD} />
           </label>
           <label className="block text-sm">
-            <span className="text-muted-foreground">Email</span>
-            <input
-              name="email"
-              required
-              type="email"
-              className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-signal"
-            />
+            <span className="font-medium">
+              Email
+              <span className="ml-1 text-destructive" aria-hidden="true">
+                *
+              </span>
+            </span>
+            <input name="email" required type="email" autoComplete="email" className={FIELD} />
           </label>
           <label className="block text-sm sm:col-span-2">
-            <span className="text-muted-foreground">Message</span>
+            <span className="font-medium">
+              Message
+              <span className="ml-1 text-destructive" aria-hidden="true">
+                *
+              </span>
+            </span>
             <textarea
               name="message"
               required
               minLength={10}
               rows={6}
-              className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-signal"
+              aria-describedby="message-help"
+              className={`${FIELD} min-h-32 py-3.5`}
             />
+            <span id="message-help" className="field-help">
+              At least 10 characters. Include an order reference if the question is about an order.
+            </span>
           </label>
           {error && (
-            <p role="alert" className="text-sm text-destructive sm:col-span-2">
+            <p
+              role="alert"
+              className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive sm:col-span-2"
+            >
               {error}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={pending}
-            className="rounded-xl bg-signal px-7 py-4 text-sm font-semibold text-signal-foreground disabled:opacity-50 sm:col-span-2"
-          >
-            {pending ? "Sending…" : sent ? "Message sent — thank you" : "Send message"}
-          </button>
+          <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
+            <button type="submit" disabled={pending} className="btn btn-primary btn-lg">
+              {pending ? "Sending…" : "Send message"}
+            </button>
+            {sent && !pending && (
+              <p className="text-sm font-semibold text-positive" aria-live="polite">
+                Message sent — we'll reply within one business day.
+              </p>
+            )}
+          </div>
         </form>
       </section>
     </>

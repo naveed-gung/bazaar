@@ -4,10 +4,23 @@ import { PageHero } from "@/components/page-hero";
 import { api } from "@/lib/api";
 type ReturnSearch = { reference?: string };
 export const Route = createFileRoute("/returns")({
+  head: () => ({
+    meta: [
+      { title: "Start a return — Bazaar" },
+      {
+        name: "description",
+        content: "Request a refund or replacement for a delivered Bazaar order.",
+      },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): ReturnSearch =>
     typeof search["reference"] === "string" ? { reference: search["reference"] } : {},
   component: Returns,
 });
+
+/** `.field` is the shared input recipe from styles.css; mt-2 is local spacing. */
+const FIELD = "field mt-2";
+
 function Returns() {
   const search = Route.useSearch();
   const [status, setStatus] = useState("");
@@ -25,7 +38,7 @@ function Returns() {
         body: JSON.stringify({ reason: data.get("reason"), resolution: data.get("resolution") }),
       });
       setFailed(false);
-      setStatus("Return request submitted.");
+      setStatus("Return request submitted. Support replies within one business day.");
     } catch (caught) {
       setFailed(true);
       setStatus(caught instanceof Error ? caught.message : "Return failed.");
@@ -41,55 +54,66 @@ function Returns() {
         copy="Delivered orders can request a refund or replacement through the API."
       />
       <section className="mx-auto max-w-xl px-6 py-16">
-        <form
-          onSubmit={submit}
-          className="space-y-5 rounded-2xl border border-border bg-surface p-8"
-        >
+        <form onSubmit={submit} className="panel space-y-5 p-7 lg:p-9">
           <label className="block text-sm">
-            <span className="text-muted-foreground">Order reference</span>
+            <span className="font-medium">
+              Order reference
+              <span className="ml-1 text-destructive" aria-hidden="true">
+                *
+              </span>
+            </span>
             <input
               name="reference"
               required
               maxLength={40}
               defaultValue={search.reference}
-              className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-4"
+              aria-describedby="reference-help"
+              className={`${FIELD} tabular uppercase tracking-wider`}
             />
+            <span id="reference-help" className="field-help">
+              Found on your confirmation email and in order history.
+            </span>
           </label>
           <label className="block text-sm">
-            <span className="text-muted-foreground">Reason</span>
+            <span className="font-medium">
+              Reason
+              <span className="ml-1 text-destructive" aria-hidden="true">
+                *
+              </span>
+            </span>
             <textarea
               name="reason"
               required
               minLength={5}
               maxLength={500}
               rows={5}
-              className="mt-2 w-full rounded-xl border border-border bg-background p-4"
+              aria-describedby="reason-help"
+              className={`${FIELD} min-h-32 py-3.5`}
             />
+            <span id="reason-help" className="field-help">
+              At least 5 characters. Describe the fault or the reason for sending it back.
+            </span>
           </label>
           <label className="block text-sm">
-            <span className="text-muted-foreground">Resolution</span>
-            <select
-              name="resolution"
-              className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-4"
-            >
+            <span className="font-medium">Resolution</span>
+            <select name="resolution" className={FIELD}>
               <option value="refund">Refund</option>
               <option value="replacement">Replacement</option>
             </select>
           </label>
-          <button
-            disabled={pending}
-            className="min-h-11 rounded-xl bg-signal px-6 text-sm font-semibold text-signal-foreground disabled:cursor-wait disabled:opacity-60"
-          >
-            {pending ? "Submitting…" : "Submit return"}
-          </button>
-          {status && (
-            <p
-              role={failed ? "alert" : "status"}
-              className={`text-sm ${failed ? "text-destructive" : "text-muted-foreground"}`}
-            >
-              {status}
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-4 border-t border-border pt-6">
+            <button disabled={pending} className="btn btn-primary btn-lg">
+              {pending ? "Submitting…" : "Submit return"}
+            </button>
+            {status && (
+              <p
+                role={failed ? "alert" : "status"}
+                className={`text-sm font-semibold ${failed ? "text-destructive" : "text-positive"}`}
+              >
+                {status}
+              </p>
+            )}
+          </div>
         </form>
       </section>
     </>

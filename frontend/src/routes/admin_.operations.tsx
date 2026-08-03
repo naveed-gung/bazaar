@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LoaderCircle } from "lucide-react";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { PageHero } from "@/components/page-hero";
+import { Pill, Skeleton, Stars } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatPrice } from "@/lib/products";
 
@@ -90,7 +91,8 @@ function OperationsAdmin() {
         copy="Advance valid order and return states, then publish or reject verified reviews."
       />
       <section className="mx-auto max-w-[1400px] space-y-12 px-6 py-16">
-        <Link to="/admin" className="text-sm font-semibold text-signal hover:underline">
+        <Link to="/admin" className="btn btn-ghost btn-sm -ml-3.5 text-muted-foreground">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to dashboard
         </Link>
         {action.error && (
@@ -107,16 +109,19 @@ function OperationsAdmin() {
             return (
               <article
                 key={order.id}
-                className="grid gap-3 rounded-2xl border border-border bg-surface p-5 md:grid-cols-[1fr_1fr_auto] md:items-center"
+                className="panel grid gap-3 p-5 md:grid-cols-[1fr_1fr_auto] md:items-center"
               >
                 <div>
-                  <h3 className="font-semibold">{order.reference}</h3>
+                  <h3 className="tabular font-semibold">{order.reference}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {order.customer} · {formatPrice(order.total.amountMinor / 100)}
+                    {order.customer} ·{" "}
+                    <span className="tabular">{formatPrice(order.total.amountMinor / 100)}</span>
                   </p>
                 </div>
-                <p className="text-sm font-semibold capitalize">
-                  {order.state.replaceAll("_", " ")}
+                <p>
+                  <Pill tone={order.state === "cancelled" ? "danger" : "signal"}>
+                    {order.state.replaceAll("_", " ")}
+                  </Pill>
                 </p>
                 {next && (
                   <ActionButton
@@ -141,16 +146,18 @@ function OperationsAdmin() {
             return (
               <article
                 key={item.id}
-                className="grid gap-3 rounded-2xl border border-border bg-surface p-5 md:grid-cols-[1fr_1fr_auto] md:items-center"
+                className="panel grid gap-3 p-5 md:grid-cols-[1fr_1fr_auto] md:items-center"
               >
                 <div>
-                  <h3 className="font-semibold">{item.reference}</h3>
+                  <h3 className="tabular font-semibold">{item.reference}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {item.reason} · {item.resolution}
                   </p>
                 </div>
-                <p className="text-sm font-semibold capitalize">
-                  {item.state.replaceAll("_", " ")}
+                <p>
+                  <Pill tone={item.state === "rejected" ? "danger" : "signal"}>
+                    {item.state.replaceAll("_", " ")}
+                  </Pill>
                 </p>
                 {next && (
                   <ActionButton
@@ -175,12 +182,15 @@ function OperationsAdmin() {
           error={reviews.error?.message}
         >
           {reviews.data?.map((review) => (
-            <article key={review.id} className="rounded-2xl border border-border bg-surface p-5">
+            <article key={review.id} className="panel p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h3 className="font-semibold">
-                    {review.title} · {review.rating}/5
-                  </h3>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="font-semibold">{review.title}</h3>
+                    <Stars rating={review.rating} />
+                    <span className="tabular text-sm text-muted-foreground">{review.rating}/5</span>
+                    {review.verified && <Pill tone="positive">Verified</Pill>}
+                  </div>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                     {review.body}
                   </p>
@@ -205,7 +215,7 @@ function OperationsAdmin() {
                         body: { state: "rejected" },
                       })
                     }
-                    className="min-h-10 rounded-xl border border-border px-4 text-xs font-semibold disabled:opacity-40"
+                    className="btn btn-quiet btn-sm"
                   >
                     Reject
                   </button>
@@ -232,8 +242,14 @@ function AdminSection({
 }) {
   return (
     <div>
-      <h2 className="text-xl font-bold">{title}</h2>
-      {pending && <p className="mt-4 text-sm text-muted-foreground">Loading…</p>}
+      <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+      {pending && (
+        <div className="mt-5 space-y-3" aria-busy="true">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-24 w-full rounded-2xl" />
+          ))}
+        </div>
+      )}
       {error && (
         <p role="alert" className="mt-4 text-sm text-destructive">
           {error}
@@ -254,11 +270,7 @@ function ActionButton({
   children: ReactNode;
 }) {
   return (
-    <button
-      disabled={pending}
-      onClick={onClick}
-      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-signal px-4 text-xs font-semibold capitalize text-signal-foreground disabled:opacity-40"
-    >
+    <button disabled={pending} onClick={onClick} className="btn btn-primary btn-sm capitalize">
       {pending && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
       {children}
     </button>

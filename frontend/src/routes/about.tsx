@@ -56,10 +56,7 @@ function About() {
               The result is a storefront that feels fast on any device, reads clearly at any screen
               size, and treats attention as something worth protecting.
             </p>
-            <Link
-              to="/shop"
-              className="inline-block rounded-xl bg-signal px-7 py-3.5 text-sm font-semibold text-signal-foreground"
-            >
+            <Link to="/shop" className="btn btn-primary btn-lg">
               Explore the catalogue
             </Link>
           </div>

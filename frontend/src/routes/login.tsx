@@ -16,6 +16,9 @@ export const Route = createFileRoute("/login")({
   component: Login,
 });
 
+/** `.field` is the shared input recipe from styles.css; mt-2 is local spacing. */
+const FIELD = "field mt-2";
+
 function Login() {
   const [register, setRegister] = useState(false);
   const [pending, setPending] = useState(false);
@@ -77,26 +80,23 @@ function Login() {
         {auth === undefined ? (
           <LoaderCircle className="mx-auto h-6 w-6 animate-spin" aria-label="Loading sign in" />
         ) : !auth ? (
-          <div className="rounded-2xl border border-border bg-surface p-8">
+          <div className="panel p-8">
             <h2 className="font-bold">Browser authentication setup required</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Add the four public VITE_FIREBASE_* values from Firebase web-app settings. The Admin
               SDK credential is already handled separately and never sent to the browser.
             </p>
-            <Link
-              to="/shop"
-              className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-signal px-5 text-sm font-semibold text-signal-foreground"
-            >
+            <Link to="/shop" className="btn btn-primary mt-6">
               Continue as guest
             </Link>
           </div>
         ) : (
-          <div className="rounded-2xl border border-border bg-surface p-8">
+          <div className="panel p-8">
             <button
               type="button"
               onClick={google}
               disabled={pending}
-              className="min-h-11 w-full rounded-xl border border-border bg-background px-5 text-sm font-semibold disabled:opacity-50"
+              className="btn btn-quiet w-full"
             >
               Continue with Google
             </button>
@@ -107,35 +107,35 @@ function Login() {
             </div>
             <form onSubmit={emailSubmit} className="space-y-5">
               <label className="block text-sm">
-                <span className="text-muted-foreground">Email</span>
-                <input
-                  name="email"
-                  required
-                  type="email"
-                  autoComplete="email"
-                  className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-4"
-                />
+                <span className="font-medium">Email</span>
+                <input name="email" required type="email" autoComplete="email" className={FIELD} />
               </label>
               <label className="block text-sm">
-                <span className="text-muted-foreground">Password</span>
+                <span className="font-medium">Password</span>
                 <input
                   name="password"
                   required
                   minLength={8}
                   type="password"
                   autoComplete={register ? "new-password" : "current-password"}
-                  className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-4"
+                  aria-describedby={register ? "password-help" : undefined}
+                  className={FIELD}
                 />
+                {register && (
+                  <span id="password-help" className="field-help">
+                    At least 8 characters.
+                  </span>
+                )}
               </label>
               {error && (
-                <p role="alert" className="text-sm text-destructive">
+                <p
+                  role="alert"
+                  className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-sm text-destructive"
+                >
                   {error}
                 </p>
               )}
-              <button
-                disabled={pending}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-signal px-5 text-sm font-semibold text-signal-foreground disabled:opacity-50"
-              >
+              <button disabled={pending} className="btn btn-primary w-full">
                 {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
                 {register ? "Create account" : "Sign in"}
               </button>
@@ -146,7 +146,7 @@ function Login() {
                 setRegister((value) => !value);
                 setError("");
               }}
-              className="mt-5 min-h-11 w-full text-sm text-muted-foreground underline"
+              className="btn btn-ghost btn-sm mt-5 w-full text-muted-foreground"
             >
               {register ? "Already have an account? Sign in" : "New here? Create an account"}
             </button>
@@ -156,10 +156,7 @@ function Login() {
                 Shop, favorite, compare, and check out as a guest. If you sign in later, your
                 current shopping state is merged without replacing account items.
               </p>
-              <Link
-                to="/shop"
-                className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-border bg-background px-5 text-sm font-semibold hover:border-signal"
-              >
+              <Link to="/shop" className="btn btn-quiet mt-5">
                 Continue as guest
               </Link>
             </div>

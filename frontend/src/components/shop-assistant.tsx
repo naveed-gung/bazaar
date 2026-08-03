@@ -63,7 +63,7 @@ export function ShopAssistant() {
                     <Link
                       key={`${action.href}-${action.label}`}
                       to={action.href}
-                      className="rounded-lg border border-border px-3 py-2 text-xs font-semibold"
+                      className="btn btn-quiet btn-sm"
                     >
                       {action.label}
                     </Link>
@@ -87,12 +87,9 @@ export function ShopAssistant() {
               onChange={(event) => setMessage(event.target.value)}
               maxLength={500}
               placeholder="Find audio under $300…"
-              className="min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 text-sm"
+              className="field min-w-0 flex-1 bg-surface"
             />
-            <button
-              disabled={pending}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-signal text-signal-foreground disabled:opacity-50"
-            >
+            <button disabled={pending} className="btn btn-primary btn-icon shrink-0">
               {pending ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ClipboardCheck, LoaderCircle } from "lucide-react";
+import { Check, ClipboardCheck, LoaderCircle } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
+import { Pill } from "@/components/ui";
 import { api } from "@/lib/api";
 
 type TrackedOrder = { reference: string; state: string; timeline: { state: string; at: string }[] };
@@ -44,7 +45,10 @@ function TrackOrder() {
         copy="Enter a real Bazaar reference. Orders are only returned to the session that created them."
       />
       <section className="mx-auto max-w-3xl px-6 py-16 lg:py-24">
-        <form onSubmit={track} className="flex flex-col gap-3 sm:flex-row">
+        <form
+          onSubmit={track}
+          className="panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center"
+        >
           <label className="sr-only" htmlFor="order-reference">
             Order reference
           </label>
@@ -53,19 +57,27 @@ function TrackOrder() {
             required
             maxLength={40}
             autoCapitalize="characters"
+            autoComplete="off"
             value={reference}
             onChange={(event) => setReference(event.target.value)}
             placeholder="e.g. BZ-2026-A1B2C3D4"
-            className="min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-surface px-5 text-sm outline-none focus:border-signal"
+            className="tabular min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-background px-5 text-sm uppercase tracking-wider outline-none transition-colors focus:border-signal focus:ring-2 focus:ring-signal/25"
           />
-          <button
-            disabled={loading}
-            type="submit"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-signal px-7 text-sm font-semibold text-signal-foreground disabled:opacity-50"
-          >
-            {loading && <LoaderCircle className="h-4 w-4 animate-spin" />}Track order
+          <button disabled={loading} type="submit" className="btn btn-primary shrink-0">
+            {loading ? (
+              <>
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+                Looking up…
+              </>
+            ) : (
+              "Track order"
+            )}
           </button>
         </form>
+        <p className="mt-3 px-1 text-xs text-muted-foreground">
+          References look like <span className="tabular font-semibold">BZ-2026-A1B2C3D4</span> and
+          only resolve for the session that placed the order.
+        </p>
         {error && (
           <p
             role="alert"
@@ -75,23 +87,59 @@ function TrackOrder() {
           </p>
         )}
         {order && (
-          <div className="mt-12 rounded-2xl border border-border bg-surface p-8">
-            <p className="text-sm text-muted-foreground">{order.reference}</p>
-            <p className="mt-2 text-2xl font-bold capitalize">{order.state.replaceAll("_", " ")}</p>
-            <ol className="mt-8 space-y-6">
-              {order.timeline.map((event) => (
-                <li key={`${event.state}-${event.at}`} className="flex gap-4">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-signal text-signal-foreground">
-                    <ClipboardCheck className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="font-semibold capitalize">{event.state.replaceAll("_", " ")}</p>
-                    <time className="text-sm text-muted-foreground">
-                      {new Date(event.at).toLocaleString()}
-                    </time>
-                  </div>
-                </li>
-              ))}
+          <div className="panel mt-12 p-6 lg:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                  Reference
+                </p>
+                <p className="tabular mt-1.5 text-lg font-bold tracking-tight">{order.reference}</p>
+              </div>
+              <Pill tone="signal">{order.state.replaceAll("_", " ")}</Pill>
+            </div>
+
+            {/* Connected timeline: the rail makes the sequence readable at a glance,
+                and the newest event is the one carrying the signal colour. */}
+            <ol className="mt-8 border-t border-border pt-8">
+              {order.timeline.map((event, index) => {
+                const current = index === order.timeline.length - 1;
+                return (
+                  <li
+                    key={`${event.state}-${event.at}`}
+                    className="relative flex gap-4 pb-7 last:pb-0"
+                  >
+                    {!current && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute bottom-1 left-5 top-11 w-px bg-border"
+                      />
+                    )}
+                    <span
+                      aria-hidden="true"
+                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border ${
+                        current
+                          ? "border-signal bg-signal text-signal-foreground"
+                          : "border-border bg-background text-muted-foreground"
+                      }`}
+                    >
+                      {current ? (
+                        <ClipboardCheck className="h-5 w-5" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                    </span>
+                    <div className="min-w-0 pt-1.5">
+                      <p className="font-semibold capitalize">{event.state.replaceAll("_", " ")}</p>
+                      <time
+                        dateTime={event.at}
+                        className="tabular mt-0.5 block text-sm text-muted-foreground"
+                      >
+                        {new Date(event.at).toLocaleString()}
+                      </time>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </div>
         )}

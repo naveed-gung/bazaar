@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ImagePlus, LoaderCircle, PackagePlus } from "lucide-react";
+import { ArrowLeft, ImagePlus, LoaderCircle, PackagePlus } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
+import { Pill, Skeleton } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatPrice } from "@/lib/products";
 
@@ -22,6 +23,9 @@ export const Route = createFileRoute("/admin_/catalog")({
   head: () => ({ meta: [{ title: "Catalog admin — Bazaar" }] }),
   component: CatalogAdmin,
 });
+
+/** `.field` is the shared input recipe from styles.css; mt-2 is local spacing. */
+const FIELD = "field mt-2";
 
 function CatalogAdmin() {
   const queryClient = useQueryClient();
@@ -94,17 +98,20 @@ function CatalogAdmin() {
         title="Products and media"
         copy="Create products, attach repository or uploaded images, then control publication with optimistic revisions."
       />
-      <section className="mx-auto grid max-w-[1400px] gap-10 px-6 py-16 lg:grid-cols-[0.9fr_1.4fr]">
+      <section className="mx-auto grid max-w-350 gap-10 px-6 py-16 lg:grid-cols-[0.9fr_1.4fr]">
         <div>
-          <Link to="/admin" className="text-sm font-semibold text-signal hover:underline">
+          <Link to="/admin" className="btn btn-ghost btn-sm -ml-3.5 text-muted-foreground">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back to dashboard
           </Link>
-          <form
-            onSubmit={submit}
-            className="mt-5 space-y-4 rounded-2xl border border-border bg-surface p-7"
-          >
-            <div className="flex items-center gap-3">
-              <PackagePlus className="h-5 w-5 text-signal" />
+          <form onSubmit={submit} className="panel mt-5 space-y-4 p-7">
+            <div className="flex items-center gap-3 border-b border-border pb-5">
+              <span
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-surface-2 text-glow"
+                aria-hidden="true"
+              >
+                <PackagePlus className="h-5 w-5" strokeWidth={1.6} />
+              </span>
               <h2 className="font-bold">New product</h2>
             </div>
             {[
@@ -116,37 +123,32 @@ function CatalogAdmin() {
               ["price", "Price in USD", "129.00"],
             ].map(([name, label, placeholder]) => (
               <label key={name} className="block text-sm">
-                <span className="text-muted-foreground">{label}</span>
+                <span className="font-medium">{label}</span>
                 <input
                   name={name}
                   required
                   placeholder={placeholder}
                   type={name === "price" ? "number" : "text"}
                   {...(name === "price" ? { min: 0, step: "0.01" } : {})}
-                  className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-4 outline-none focus:border-signal"
+                  className={name === "price" ? `${FIELD} tabular` : FIELD}
                 />
               </label>
             ))}
             <label className="block text-sm">
-              <span className="text-muted-foreground">Description</span>
-              <textarea
-                name="blurb"
-                required
-                rows={4}
-                className="mt-2 w-full rounded-xl border border-border bg-background p-4 outline-none focus:border-signal"
-              />
+              <span className="font-medium">Description</span>
+              <textarea name="blurb" required rows={4} className={`${FIELD} min-h-28 py-3.5`} />
             </label>
             <label className="block text-sm">
-              <span className="text-muted-foreground">Repository or CDN image URL</span>
+              <span className="font-medium">Repository or CDN image URL</span>
               <input
                 name="imageUrl"
                 value={imageUrl}
                 onChange={(event) => setImageUrl(event.target.value)}
                 placeholder="/catalog/product.jpg"
-                className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-4 outline-none focus:border-signal"
+                className={FIELD}
               />
             </label>
-            <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold">
+            <label className="btn btn-quiet w-full cursor-pointer">
               {upload.isPending ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (
@@ -166,13 +168,13 @@ function CatalogAdmin() {
             </label>
             <button
               disabled={createProduct.isPending || upload.isPending}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-signal px-6 text-sm font-semibold text-signal-foreground disabled:opacity-40"
+              className="btn btn-primary w-full"
             >
               {createProduct.isPending && <LoaderCircle className="h-4 w-4 animate-spin" />}
               {createProduct.isPending ? "Creating…" : "Create draft"}
             </button>
             {status && (
-              <p role="status" className="text-sm text-muted-foreground">
+              <p role="status" className="text-sm font-semibold text-glow">
                 {status}
               </p>
             )}
@@ -180,9 +182,13 @@ function CatalogAdmin() {
         </div>
 
         <div>
-          <h2 className="text-xl font-bold">Catalog</h2>
+          <h2 className="text-xl font-bold tracking-tight">Catalog</h2>
           {products.isPending && (
-            <p className="mt-5 text-sm text-muted-foreground">Loading products…</p>
+            <div className="mt-5 space-y-3" aria-busy="true">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton key={index} className="h-28 w-full rounded-2xl" />
+              ))}
+            </div>
           )}
           {products.error && (
             <p
@@ -196,18 +202,30 @@ function CatalogAdmin() {
             {products.data?.map((product) => (
               <article
                 key={product.id}
-                className="grid gap-4 rounded-2xl border border-border bg-surface p-5 sm:grid-cols-[72px_1fr_auto] sm:items-center"
+                className="panel grid gap-4 p-5 sm:grid-cols-[72px_1fr_auto] sm:items-center"
               >
                 <img
                   src={product.imageUrl}
                   alt=""
-                  className="h-[72px] w-[72px] rounded-xl border border-border object-cover"
+                  className="h-18 w-18 rounded-xl border border-border object-cover"
                 />
                 <div className="min-w-0">
-                  <h3 className="truncate font-semibold">{product.name}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {formatPrice(product.priceMinor / 100)} · {product.state} · revision{" "}
-                    {product.revision}
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h3 className="truncate font-semibold">{product.name}</h3>
+                    <Pill
+                      tone={
+                        product.state === "published"
+                          ? "positive"
+                          : product.state === "archived"
+                            ? "danger"
+                            : "neutral"
+                      }
+                    >
+                      {product.state}
+                    </Pill>
+                  </div>
+                  <p className="tabular mt-1.5 text-sm text-muted-foreground">
+                    {formatPrice(product.priceMinor / 100)} · revision {product.revision}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -221,7 +239,7 @@ function CatalogAdmin() {
                           state: "published",
                         })
                       }
-                      className="min-h-10 rounded-xl bg-signal px-4 text-xs font-semibold text-signal-foreground disabled:opacity-40"
+                      className="btn btn-primary btn-sm"
                     >
                       Publish
                     </button>
@@ -236,7 +254,7 @@ function CatalogAdmin() {
                           state: "archived",
                         })
                       }
-                      className="min-h-10 rounded-xl border border-border px-4 text-xs font-semibold disabled:opacity-40"
+                      className="btn btn-quiet btn-sm"
                     >
                       Archive
                     </button>

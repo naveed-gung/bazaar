@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getDb } from "../database/client.js";
+import { inventoryByProduct, serializeProduct, type ProductDocument } from "../domain/catalog.js";
 import { AppError } from "../errors.js";
 import { asyncHandler, ownerKey } from "../lib/http.js";
 import { requireUser } from "../middleware/auth.js";
@@ -41,8 +42,9 @@ engagementRouter.delete("/favorites/:slug", requireActiveGuest, asyncHandler(asy
 
 engagementRouter.get("/comparison", requireActiveGuest, asyncHandler(async (req, res) => {
   const db = await getDb(); const comparison = await db.collection<ComparisonDocument>("comparisons").findOne({ ownerKey: ownerKey(req) });
-  const products = await db.collection("products").find({ _id: { $in: comparison?.["productIds"] ?? [] }, state: "published" }).toArray();
-  res.json({ data: products.map((item) => ({ id: item._id.toString(), slug: item.slug, name: item.name, category: item.category, imageUrl: item.imageUrl, price: { amountMinor: item.priceMinor, currency: "USD" }, specs: item.specs })) });
+  const products = await db.collection<ProductDocument>("products").find({ _id: { $in: comparison?.["productIds"] ?? [] }, state: "published" }).toArray();
+  const inventories = await inventoryByProduct(db, products.map((item) => item._id));
+  res.json({ data: products.map((item) => serializeProduct(item, inventories.get(item._id.toHexString()) ?? 0)) });
 }));
 
 engagementRouter.put("/comparison/:slug", requireActiveGuest, asyncHandler(async (req, res) => {

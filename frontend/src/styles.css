@@ -10,12 +10,15 @@
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-tint: var(--tint);
   --color-glow: var(--glow);
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
   --color-deal: var(--deal);
+  --color-positive: var(--positive);
   --shadow-glow: var(--shadow-glow-v);
   --shadow-lift: var(--shadow-lift-v);
+  --shadow-soft: var(--shadow-soft-v);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -65,6 +68,9 @@
   --foreground: oklch(0.18 0.018 258);
   --surface: oklch(0.965 0.006 255);
   --surface-2: oklch(0.93 0.012 255);
+  /* Row tint for spec sheets and data tables — one step off --surface. */
+  --tint: oklch(0.978 0.004 255);
+  --positive: oklch(0.55 0.13 155);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.018 258);
   --popover: oklch(1 0 0);
@@ -89,6 +95,8 @@
   --shadow-glow-v:
     0 0 0 1px oklch(0.55 0.2 258 / 0.12), 0 24px 70px -32px oklch(0.55 0.2 258 / 0.3);
   --shadow-lift-v: 0 30px 80px -40px oklch(0.2 0.02 258 / 0.3);
+  --shadow-soft-v:
+    0 1px 2px oklch(0.2 0.02 258 / 0.05), 0 14px 36px -26px oklch(0.2 0.02 258 / 0.22);
   --chart-1: oklch(0.55 0.2 258);
   --chart-2: oklch(0.63 0.16 235);
   --chart-3: oklch(0.7 0.16 300);
@@ -110,6 +118,8 @@
   --foreground: oklch(0.95 0.006 255);
   --surface: oklch(0.19 0.006 255);
   --surface-2: oklch(0.245 0.008 255);
+  --tint: oklch(0.215 0.006 255);
+  --positive: oklch(0.74 0.14 158);
   --card: oklch(0.19 0.006 255);
   --card-foreground: oklch(0.95 0.006 255);
   --popover: oklch(0.19 0.006 255);
@@ -132,6 +142,7 @@
   --shadow-glow-v:
     0 0 0 1px oklch(0.7 0.16 252 / 0.16), 0 24px 70px -32px oklch(0.7 0.16 252 / 0.26);
   --shadow-lift-v: 0 30px 80px -40px oklch(0.02 0 0 / 0.92);
+  --shadow-soft-v: 0 1px 2px oklch(0 0 0 / 0.4), 0 16px 40px -28px oklch(0 0 0 / 0.7);
   --sidebar: oklch(0.19 0.006 255);
   --sidebar-foreground: oklch(0.95 0.006 255);
   --sidebar-primary: oklch(0.7 0.16 252);
@@ -175,6 +186,11 @@
     background-color: var(--color-signal);
     color: var(--color-signal-foreground);
   }
+
+  /* Anchor jumps must clear the sticky header. */
+  [id] {
+    scroll-margin-top: 6rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -210,6 +226,235 @@
   background-image: none;
 }
 
+/* Lining figures for money, ratings and spec values so columns never jitter. */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Component primitives. Kept in @layer components so Tailwind utilities in
+   markup still win (e.g. `className="btn btn-primary w-full"`).
+   --------------------------------------------------------------------------- */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    border: 1px solid transparent;
+    border-radius: 0.875rem;
+    padding-inline: 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 180ms ease-out,
+      border-color 180ms ease-out,
+      color 180ms ease-out,
+      box-shadow 180ms ease-out,
+      transform 180ms ease-out,
+      opacity 180ms ease-out;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-primary {
+    background-color: var(--signal);
+    color: var(--signal-foreground);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: var(--shadow-glow-v);
+    transform: translateY(-1px);
+  }
+
+  .btn-quiet {
+    border-color: var(--border);
+    background-color: var(--surface);
+    color: var(--foreground);
+  }
+
+  .btn-quiet:hover:not(:disabled) {
+    border-color: color-mix(in oklch, var(--signal) 45%, var(--border));
+    background-color: var(--surface-2);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--foreground);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--surface-2);
+  }
+
+  .btn-danger {
+    border-color: color-mix(in oklch, var(--destructive) 30%, transparent);
+    background-color: color-mix(in oklch, var(--destructive) 12%, transparent);
+    color: var(--destructive);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background-color: color-mix(in oklch, var(--destructive) 20%, transparent);
+  }
+
+  .btn-lg {
+    min-height: 3.25rem;
+    border-radius: 1rem;
+    padding-inline: 2rem;
+    font-size: 0.9375rem;
+  }
+
+  /* Compact variant for dense toolbars; still 36px tall with 8px+ neighbours. */
+  .btn-sm {
+    min-height: 2.25rem;
+    border-radius: 0.75rem;
+    padding-inline: 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  .btn-icon {
+    width: 2.75rem;
+    padding-inline: 0;
+  }
+
+  .btn-icon.btn-sm {
+    width: 2.25rem;
+  }
+
+  /* Flat card surface used for every boxed block on the site. */
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    background-color: var(--surface);
+  }
+
+  /* Single input recipe for every form on the site: 44px for touch, and a
+     signal-coloured focus ring so the active field is unmistakable. */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: var(--background);
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition:
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out;
+  }
+
+  .field:focus {
+    border-color: var(--signal);
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--signal) 25%, transparent);
+  }
+
+  .field:disabled {
+    cursor: not-allowed;
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+  }
+
+  .field-help {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .skeleton {
+    border-radius: 0.75rem;
+    background-color: var(--surface-2);
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+  }
+
+  /* Comparison / specification matrix. Hairline rows read as rows, not blocks. */
+  .spec-matrix {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .spec-matrix th,
+  .spec-matrix td {
+    border-bottom: 1px solid var(--border);
+    padding: 0.875rem 1.125rem;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .spec-matrix tbody tr:last-child th,
+  .spec-matrix tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .spec-matrix tbody tr:nth-child(even) {
+    background-color: var(--tint);
+  }
+
+  /* Sticky LEFT only: the horizontal scroll wrapper is itself a scroll
+     container, so a vertically sticky <thead> would never pin to the viewport. */
+  .spec-matrix-label {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    box-shadow: 1px 0 0 var(--border);
+    background-color: var(--background);
+    font-weight: 600;
+  }
+
+  .spec-matrix tbody tr:nth-child(even) .spec-matrix-label {
+    background-color: var(--tint);
+  }
+
+  .spec-matrix tbody tr[data-diff="true"] .spec-matrix-label {
+    box-shadow:
+      inset 3px 0 0 var(--signal),
+      1px 0 0 var(--border);
+    color: var(--foreground);
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
 @keyframes slide-fade {
   from {
     opacity: 0;
@@ -242,7 +487,9 @@
   height: 100%;
   width: 100%;
   object-fit: cover;
-  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 180ms ease-out;
+  transition:
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 180ms ease-out;
 }
 
 .product-motion-video {
