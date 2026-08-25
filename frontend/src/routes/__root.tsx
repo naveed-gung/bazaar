@@ -137,19 +137,20 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Inline, parser-blocking, PRE-PAINT: the theme flip ONLY. All splash
-            machinery left React/DOM injection for good in SSR-32 — the overlay
-            is again a STATIC SSR'd component (welcome-screen.tsx) whose markup
-            hydrates identically by construction; see the RootComponent mount
-            below and the SSR-32 brief in docs/agent/10-swiss-signal.md for why
-            the imperative body-start script had to go (it appended #bw-host
-            while the parser was still inside <body>, landing it between the
-            script and the app root div — squarely inside React's hydration
-            path, failing hydration on every cold load). */}
+        {/* Inline, parser-blocking, PRE-hydration: (1) the theme flip and
+            (2) SSR-56 — Netlify injects <meta name="netlify-deploy"> carrying
+            a per-deploy UUID into <head> at serve time; React 19 hydrates the
+            React-managed head strictly, so that foreign meta aborted hydration
+            with #418 on every production load and stripped all event handlers.
+            Removing it here, before the hydration bundle executes, restores an
+            exact match. The splash itself is client-only (welcome-screen.tsx)
+            and ships no markup in this payload. */}
         <script
           dangerouslySetInnerHTML={{
-            __html:
+            __html: [
               "try{document.documentElement.classList.toggle('dark',localStorage.getItem('bazaar.theme')==='dark')}catch(e){}",
+              "try{document.head.querySelectorAll('meta[name=\"netlify-deploy\"]').forEach(function(m){m.remove()})}catch(e){}",
+            ].join(""),
           }}
         />
         <HeadContent />
