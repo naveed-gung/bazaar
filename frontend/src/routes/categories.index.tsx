@@ -1,9 +1,10 @@
+import { useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { PageHero } from "@/components/page-hero";
-import { Reveal } from "@/components/motion";
-import { Skeleton } from "@/components/ui";
-import { useCatalogCategories } from "@/lib/api";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { INDEX_ROW_ROLL, Reveal, Stagger } from "@/components/motion";
+import { EmptyState, Skeleton } from "@/components/ui";
+import { useCatalogCategories, useCatalogProducts } from "@/lib/api";
 
 export const Route = createFileRoute("/categories/")({
   head: () => ({
@@ -24,58 +25,104 @@ export const Route = createFileRoute("/categories/")({
 });
 
 function Categories() {
-  const catalog = useCatalogCategories();
-  const categories = catalog.data ?? [];
+  const categories = useCatalogCategories();
+  /** One full listing call backs the per-row product counts; capped at the API max. */
+  const all = useCatalogProducts({ limit: "100" });
+  const list = categories.data ?? [];
+
+  const counts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of all.data?.items ?? []) {
+      map.set(item.categorySlug, (map.get(item.categorySlug) ?? 0) + 1);
+    }
+    return map;
+  }, [all.data]);
+
   return (
     <>
-      <PageHero
-        eyebrow="Categories"
-        title="Shop by Category"
-        copy="Focused collections built around how people actually use technology day to day."
-      />
-      <section className="mx-auto grid max-w-[1600px] gap-8 px-6 py-16 sm:grid-cols-2 lg:grid-cols-3 lg:px-10 lg:py-24">
-        {catalog.isPending &&
-          Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="panel overflow-hidden">
-              <Skeleton className="aspect-4/3 w-full rounded-none" />
-              <div className="px-8 py-7">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-3 h-3 w-44" />
-              </div>
+      {/* 01 — Index header */}
+      <section className="shell pt-10 pb-12 lg:pt-14 lg:pb-16">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Categories" }]} />
+        <div className="rule-strong mt-8" />
+        <Reveal>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+            <div className="max-w-3xl">
+              <span className="eyebrow">01 — Index</span>
+              <h1 className="headline mt-4 text-[clamp(2.5rem,6vw,4.5rem)]">Shop by Category</h1>
             </div>
-          ))}
-        {catalog.error && (
-          <p role="alert" className="text-sm text-destructive">
-            {catalog.error.message}
-          </p>
+            <p className="measure max-w-md pb-2 text-sm leading-relaxed text-muted-foreground">
+              Focused collections built around how people actually use technology day to day.
+            </p>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* 02 — The numbered index list */}
+      <section className="shell pb-20 lg:pb-28">
+        <div className="rule-strong" />
+        <span className="eyebrow mt-6">02 — Collections</span>
+
+        {categories.isPending ? (
+          <div className="mt-8" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between gap-8 border-b border-border py-7"
+              >
+                <Skeleton className="h-3 w-8 shrink-0" />
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="hidden h-3 w-28 sm:block" />
+              </div>
+            ))}
+          </div>
+        ) : categories.error ? (
+          <div className="panel mt-8 p-7">
+            <p role="alert" className="text-sm text-destructive">
+              {categories.error.message}
+            </p>
+          </div>
+        ) : list.length === 0 ? (
+          <EmptyState
+            title="No categories yet"
+            copy="Collections appear here as soon as the catalog publishes them."
+            action={
+              <Link to="/shop" className="btn btn-primary">
+                Browse all products
+              </Link>
+            }
+            className="mt-8"
+          />
+        ) : (
+          <nav aria-label="Category index" className="mt-8 border-t border-border">
+            <Stagger step={40}>
+              {list.map((cat, index) => {
+                const count = counts.get(cat.slug);
+                return (
+                  <Link
+                    key={cat.slug}
+                    to="/categories/$slug"
+                    params={{ slug: cat.slug }}
+                    className="index-row group"
+                  >
+                    <span className="index-row-num">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="index-row-label h-[1.2em] overflow-hidden">
+                      <span className={`block ${INDEX_ROW_ROLL}`}>{cat.name}</span>
+                      <span aria-hidden="true" className={`block text-accent ${INDEX_ROW_ROLL}`}>
+                        {cat.name}
+                      </span>
+                    </span>
+                    <span className="index-row-meta tabular">
+                      {count === undefined
+                        ? "Collection"
+                        : `${count} ${count === 1 ? "product" : "products"}`}
+                    </span>
+                    <ArrowRight className="index-row-arrow h-5 w-5" aria-hidden="true" />
+                  </Link>
+                );
+              })}
+            </Stagger>
+          </nav>
         )}
-        {categories.map((cat, i) => (
-          <Reveal key={cat.slug} delay={i * 80}>
-            <Link
-              to="/categories/$slug"
-              params={{ slug: cat.slug }}
-              className="group block overflow-hidden rounded-3xl border border-border bg-surface transition-colors hover:border-signal"
-            >
-              <div className="aspect-4/3 overflow-hidden">
-                <img
-                  src={cat.imageUrl}
-                  alt={cat.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </div>
-              <div className="flex items-center justify-between gap-4 px-8 py-7">
-                <div className="min-w-0">
-                  <h2 className="truncate text-xl font-bold">{cat.name}</h2>
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    Browse the current collection
-                  </p>
-                </div>
-                <ArrowRight className="h-5 w-5 shrink-0 text-glow transition-transform group-hover:translate-x-1" />
-              </div>
-            </Link>
-          </Reveal>
-        ))}
       </section>
     </>
   );
