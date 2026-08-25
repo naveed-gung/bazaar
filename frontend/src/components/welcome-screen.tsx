@@ -38,6 +38,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "@tanstack/react-router";
 
 const SPLASH_CSS = `
 #bw{position:fixed;inset:0;z-index:90;display:flex;align-items:center;background:var(--foreground,#111111);color:var(--background,#f5f5f3);font-family:Archivo,'Instrument Sans',Arial,sans-serif;animation:bw-cover 1600ms linear both,bw-failsafe 1900ms linear both}
@@ -156,6 +157,68 @@ export function WelcomeScreen() {
         </p>
         <span className="bw-rule" />
         <p className="bw-label">Everyday tech — est. MMXXVI</p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   SSR-47 — ROUTE-TRANSITION COVER. Owner directive: the welcome moment plays
+   when a user goes from page to page as well as on full loads. This companion
+   component watches the router pathname and replays a SHORT cover (fade-in
+   140 ms, hold ~380 ms, fade-out 220 ms — pure CSS timeline, JS only flips
+   visibility) on every pathname change AFTER the first render. The very first
+   render is skipped because the full-length <WelcomeScreen /> above already
+   owns the initial document load. Client-side remounts/toggles happen strictly
+   post-hydration, so there is no SSR divergence surface at all. Reduced-motion
+   visitors never see it. */
+
+const COVER_CSS = `
+#bwt{position:fixed;inset:0;z-index:89;display:flex;align-items:center;background:var(--foreground,#111111);color:var(--background,#f5f5f3);font-family:Archivo,'Instrument Sans',Arial,sans-serif;animation:bwt-in 140ms ease-out both,bwt-out 220ms ease-in 400ms both}
+#bwt .bw-shell{padding:0 clamp(24px,6vw,96px)}
+#bwt .bw-mark{margin:0;border:1px solid var(--background,#f5f5f3);padding:8px 16px;font-size:clamp(28px,5vw,48px);line-height:1;font-weight:800;letter-spacing:-.02em}
+#bwt .bw-mark span{color:var(--accent,#c42b1c)}
+#bwt .bw-rule{display:block;width:min(360px,50vw);height:2px;margin-top:14px;background:var(--accent,#c42b1c);transform-origin:left center;animation:bwt-sweep 420ms cubic-bezier(.22,1,.36,1) 60ms both}
+@keyframes bwt-in{from{opacity:0}to{opacity:1}}
+@keyframes bwt-out{from{opacity:1}to{opacity:0;visibility:hidden}}
+@keyframes bwt-sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){#bwt{display:none}}
+`;
+
+export function RouteTransitionCover() {
+  const pathname = useLocation().pathname;
+  // The first pathname value belongs to the initial document load, which
+  // <WelcomeScreen /> already covers — so the very first effect run is a no-op.
+  const seenInitial = useRef(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!seenInitial.current) {
+      seenInitial.current = true;
+      return;
+    }
+    let reduced = false;
+    try {
+      reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      /* matchMedia unavailable — default to showing the cover */
+    }
+    if (reduced) return;
+    setVisible(true);
+    const timer = window.setTimeout(() => setVisible(false), 640);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
+
+  if (!visible) return null;
+
+  return (
+    <div id="bwt" aria-hidden="true">
+      <style dangerouslySetInnerHTML={{ __html: COVER_CSS }} />
+      <div className="bw-shell">
+        <p className="bw-mark">
+          Bazaar<span>.</span>
+        </p>
+        <span className="bw-rule" />
       </div>
     </div>
   );
