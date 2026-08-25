@@ -5,6 +5,10 @@ import { api } from "@/lib/api";
 
 type AssistantReply = { answer: string; actions: { label: string; href: string }[] };
 
+/**
+ * Floating shopping assistant. Swiss: a square ink launcher and a flat ruled
+ * panel — no rounding, no shadow. Behaviour and a11y wiring unchanged.
+ */
 export function ShopAssistant() {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -36,7 +40,7 @@ export function ShopAssistant() {
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="bazaar-assistant"
-        className="grid h-12 w-12 place-items-center rounded-full bg-signal text-signal-foreground shadow-lift transition-transform active:scale-95"
+        className="grid h-12 w-12 cursor-pointer place-items-center border border-signal bg-signal text-signal-foreground transition-colors hover:bg-background hover:text-foreground"
       >
         {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
         <span className="sr-only">{open ? "Close" : "Open"} shopping assistant</span>
@@ -45,17 +49,22 @@ export function ShopAssistant() {
         <section
           id="bazaar-assistant"
           aria-label="Shopping assistant"
-          className="absolute bottom-16 right-0 w-[min(88vw,360px)] rounded-2xl border border-border bg-background p-5 shadow-lift"
+          className="panel absolute bottom-16 right-0 w-[min(88vw,360px)] bg-background p-5"
         >
           <div className="flex items-center gap-3">
             <Bot className="h-5 w-5 text-glow" />
-            <h2 className="font-bold">Bazaar assistant</h2>
+            <h2 className="font-display text-base font-semibold uppercase tracking-tight">
+              Bazaar assistant
+            </h2>
           </div>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
             Deterministic, zero-cost help using live catalog and cart services.
           </p>
           {reply && (
-            <div className="mt-5 rounded-xl bg-surface p-4 text-sm leading-6" aria-live="polite">
+            <div
+              className="mt-5 border border-border bg-surface p-4 text-sm leading-6"
+              aria-live="polite"
+            >
               <p>{reply.answer}</p>
               {reply.actions.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
