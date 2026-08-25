@@ -77,7 +77,7 @@ export function AvailabilityTag({
   }[availability];
   return (
     <span className={cn("flex items-center gap-2 text-xs font-semibold", copy.text, className)}>
-      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", copy.dot)} aria-hidden="true" />
+      <span className={cn("h-1.5 w-1.5 shrink-0", copy.dot)} aria-hidden="true" />
       {copy.label}
     </span>
   );
@@ -109,19 +109,19 @@ export function SectionHeading({
       )}
     >
       <div className="max-w-2xl">
-        {eyebrow && (
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-glow">{eyebrow}</p>
-        )}
+        {eyebrow && <span className="eyebrow">{eyebrow}</span>}
         <h2
           {...(id ? { id } : {})}
           className={cn(
-            "mt-3 font-extrabold tracking-tight",
+            "font-display mt-3 font-semibold tracking-tight",
             size === "lg" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-3xl",
           )}
         >
           {title}
         </h2>
-        {copy && <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{copy}</p>}
+        {copy && (
+          <p className="measure mt-4 text-sm leading-relaxed text-muted-foreground">{copy}</p>
+        )}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>}
     </div>
@@ -144,7 +144,7 @@ export function EmptyState({
   return (
     <div className={cn("panel flex flex-col items-center px-6 py-16 text-center", className)}>
       {icon && (
-        <span className="grid h-14 w-14 place-items-center rounded-2xl border border-border bg-background text-muted-foreground">
+        <span className="grid h-14 w-14 place-items-center border border-border bg-background text-muted-foreground">
           {icon}
         </span>
       )}
@@ -164,7 +164,7 @@ export function Skeleton({ className }: { className?: string }) {
 export function ProductCardSkeleton() {
   return (
     <div className="flex flex-col">
-      <Skeleton className="aspect-square w-full rounded-2xl" />
+      <Skeleton className="aspect-square w-full" />
       <Skeleton className="mt-5 h-3 w-20" />
       <Skeleton className="mt-3 h-4 w-4/5" />
       <Skeleton className="mt-3 h-5 w-24" />
