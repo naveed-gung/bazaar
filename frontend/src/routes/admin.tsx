@@ -24,7 +24,7 @@ function Admin() {
         title="Admin dashboard"
         copy="RBAC-protected catalog, order, return, customer, and revenue overview."
       />
-      <section className="mx-auto max-w-[1200px] px-6 py-16">
+      <section className="shell py-16">
         <nav className="mb-8 flex flex-wrap gap-3" aria-label="Admin sections">
           <Link to="/admin/catalog" className="btn btn-primary">
             Manage products and images
