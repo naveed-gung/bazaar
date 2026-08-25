@@ -17,10 +17,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ShopAssistant } from "@/components/shop-assistant";
 import { ToastViewport } from "@/components/toast";
 import { ConfirmDialogHost } from "@/components/confirm-dialog";
-import {
-  RouteTransitionCover,
-  WelcomeScreen,
-} from "@/components/welcome-screen";
+import { RouteTransitionCover, WelcomeScreen } from "@/components/welcome-screen";
 
 function NotFoundComponent() {
   return (
