@@ -36,6 +36,9 @@ export function requestContext(req: Request, res: Response, next: NextFunction):
   req.principal = {
     type: "guest",
     id: guestId,
+    email: null,
+    displayName: null,
+    roles: [],
     permissions: [],
   };
 
