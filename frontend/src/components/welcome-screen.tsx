@@ -67,16 +67,19 @@ const TEARDOWN_MS = EXIT_MS + 100;
 
 export function WelcomeScreen() {
   const rootRef = useRef<HTMLDivElement>(null);
-  // Flipped only from the post-hydration effect — the FIRST render (server and
-  // client) always emits the identical static shell.
-  const [gone, setGone] = useState(false);
+  /* SSR-47 rev3 — PRODUCTION HOTFIX (React #418 on bazaa1.netlify.app): the
+     static-SSR shell was the last remaining hydration surface. The splash now
+     mounts CLIENT-ONLY: the first render (server AND client) emits nothing,
+     a post-hydration effect flips the phase to "play", and teardown flips it
+     back to "hidden". Zero SSR markup = zero possibility of a hydration
+     mismatch from the splash. Cost: the cover appears one tick after first
+     paint instead of with it — accepted to guarantee an interactive page. */
+  const [phase, setPhase] = useState<"hidden" | "play" | "exit">("hidden");
 
   useEffect(() => {
-    const mounted = rootRef.current;
-    if (!mounted) return;
-    // Non-null alias captured AFTER the guard so the hoisted helpers below
-    // see a definite HTMLDivElement.
-    const root = mounted;
+    const node = rootRef.current;
+    if (!node) return;
+    const root = node;
 
     let exited = false;
     let tornDown = false;
@@ -92,10 +95,8 @@ export function WelcomeScreen() {
     const prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
 
-    // SSR-45 — skip gestures now exit GRACEFULLY through the 300 ms fade
-    // instead of vanishing in place: an abrupt mid-animation disappear was the
-    // reported "glitch". Reduced-motion users still get an instant clear,
-    // because their media query collapses every duration to ~1 ms.
+    // SSR-45 — skip gestures exit GRACEFULLY through the fade instead of
+    // vanishing in place. Reduced-motion collapses durations to ~1 ms.
     function kill() {
       beginExit();
     }
@@ -113,22 +114,17 @@ export function WelcomeScreen() {
       window.clearTimeout(exitTimer);
       off();
       document.documentElement.style.overflow = prevOverflow;
-      setGone(true);
+      setPhase("hidden");
     }
     function beginExit() {
       if (exited || tornDown) return;
       exited = true;
       window.clearTimeout(holdTimer);
-      root.classList.add("bw-exit");
+      setPhase("exit");
       exitTimer = window.setTimeout(teardown, TEARDOWN_MS);
     }
-    function onAnimationEnd(event: AnimationEvent) {
-      if (event.target !== root) return;
-      if (event.animationName === "bw-cover") beginExit();
-      else if (event.animationName === "bw-exit") teardown();
-    }
 
-    root.addEventListener("animationend", onAnimationEnd);
+    setPhase("play");
     holdTimer = window.setTimeout(beginExit, HOLD_MS);
     if (reduced) holdTimer = window.setTimeout(teardown, 60);
 
@@ -144,16 +140,20 @@ export function WelcomeScreen() {
       // timers never fired. Idempotent with teardown().
       window.clearTimeout(holdTimer);
       window.clearTimeout(exitTimer);
-      root.removeEventListener("animationend", onAnimationEnd);
       off();
       document.documentElement.style.overflow = prevOverflow;
     };
   }, []);
 
-  if (gone) return null;
+  if (phase === "hidden") return null;
 
   return (
-    <div ref={rootRef} id="bw" aria-hidden="true">
+    <div
+      ref={rootRef}
+      id="bw"
+      aria-hidden="true"
+      className={phase === "exit" ? "bw-exit" : undefined}
+    >
       <style dangerouslySetInnerHTML={{ __html: SPLASH_CSS }} />
       <div className="bw-shell">
         <p className="bw-mark">
