@@ -100,7 +100,7 @@ const DRIFT_STYLE: CSSProperties = { willChange: "transform" };
       unmount, which also clears the inline transform.
     - Measurement subtracts the previously applied shift, so the element's own
       transform cannot feed back into the reading. */
-export function useScrollDrift(strength = 0.08) {
+export function useScrollDrift(strength = 0.14) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,7 +116,7 @@ export function useScrollDrift(strength = 0.08) {
       // Subtract the shift already on the element: getBoundingClientRect
       // reports the TRANSFORMED box, and reusing it would damp the drift.
       const distance = rect.top + rect.height / 2 - window.innerHeight / 2 - applied;
-      const shift = Math.max(-24, Math.min(24, -distance * strength));
+      const shift = Math.max(-40, Math.min(40, -distance * strength));
       applied = shift;
       node.style.transform = shift === 0 ? "" : `translateY(${shift.toFixed(2)}px)`;
     };
