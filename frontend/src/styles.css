@@ -4,13 +4,86 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Bazaar: cool-white light theme, neutral-charcoal dark theme. */
+/* ---------------------------------------------------------------------------
+   Bazaar — SWISS SIGNAL design system (supersedes Editorial Retail values,
+   docs/agent/10-swiss-signal.md; architecture retained from DS-01…DS-04).
+   Cool neutral paper, near-black ink, ONE signal red. Zero radius, zero drop
+   shadows — depth comes from 3px ink rules and hairlines. Archivo (display,
+   variable wght+wdth) + Instrument Sans (body), self-hosted. Light and dark
+   are authored together, token by token; every fg/bg pair is contrast-measured
+   — see "Measured contrast" in docs/agent/10-swiss-signal.md.
+   --------------------------------------------------------------------------- */
+
+/* --- Self-hosted fonts (latin subset, variable axes, SIL OFL) --------------- */
+
+/* Display face. Variable weight 100–900 AND width axis 62–125 — the wdth axis
+   powers `.headline`'s expanded-black setting via `font-stretch`. */
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/archivo-latin-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Body/UI face. Restrained grotesk, 16px minimum in practice. */
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("/fonts/instrument-sans-latin-var.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Metric-matched fallbacks so `font-display: swap` never shifts layout.
+   Overrides approximate each face's ascent/descent/advance against Arial
+   (Archivo ≈ 1080/-270/1000 · Instrument Sans ≈ 969/-251/1000). */
+@font-face {
+  font-family: "Archivo Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Segoe UI");
+  ascent-override: 108%;
+  descent-override: 27%;
+  line-gap-override: 0%;
+  size-adjust: 103%;
+}
+
+@font-face {
+  font-family: "Instrument Sans Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Segoe UI");
+  ascent-override: 97%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+  size-adjust: 100%;
+}
+
+/* --- Theme re-exports ------------------------------------------------------ */
 
 @theme inline {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans", "Instrument Sans Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo", "Archivo Fallback", ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale — 12 · 14 · 16 · 18 · 24 · 32 · 48 · display(clamp). */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 3rem;
+  --text-5xl: 3rem;
+  --text-display: clamp(3rem, 7vw, 7rem);
+
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-tint: var(--tint);
+  --color-rule: var(--rule);
   --color-glow: var(--glow);
   --color-signal: var(--signal);
   --color-signal-foreground: var(--signal-foreground);
@@ -19,13 +92,17 @@
   --shadow-glow: var(--shadow-glow-v);
   --shadow-lift: var(--shadow-lift-v);
   --shadow-soft: var(--shadow-soft-v);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Radius: ZERO everywhere. Legacy xl/2xl+ exports stay mapped so stray
+     rounded-* utilities collapse square until the sweep removes them. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -61,113 +138,186 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* --- Light theme — cool neutral paper --------------------------------------- */
+
 :root {
-  --radius: 1rem;
+  --radius: 0px;
   color-scheme: light;
-  --background: oklch(0.99 0.002 255);
-  --foreground: oklch(0.18 0.018 258);
-  --surface: oklch(0.965 0.006 255);
-  --surface-2: oklch(0.93 0.012 255);
-  /* Row tint for spec sheets and data tables — one step off --surface. */
-  --tint: oklch(0.978 0.004 255);
-  --positive: oklch(0.55 0.13 155);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.018 258);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.018 258);
-  --primary: oklch(0.55 0.2 258);
-  --primary-foreground: oklch(0.99 0.002 255);
-  --signal: oklch(0.55 0.2 258);
-  --signal-foreground: oklch(0.99 0.002 255);
-  --glow: oklch(0.55 0.2 258);
-  --deal: oklch(0.56 0.14 190);
-  --secondary: oklch(0.93 0.012 255);
-  --secondary-foreground: oklch(0.2 0.02 258);
-  --muted: oklch(0.95 0.008 255);
-  --muted-foreground: oklch(0.48 0.025 258);
-  --accent: oklch(0.92 0.035 255);
-  --accent-foreground: oklch(0.28 0.09 258);
-  --destructive: oklch(0.62 0.21 25);
-  --destructive-foreground: oklch(0.97 0.008 250);
-  --border: oklch(0.86 0.014 255);
-  --input: oklch(0.86 0.014 255);
-  --ring: oklch(0.55 0.2 258);
-  --shadow-glow-v:
-    0 0 0 1px oklch(0.55 0.2 258 / 0.12), 0 24px 70px -32px oklch(0.55 0.2 258 / 0.3);
-  --shadow-lift-v: 0 30px 80px -40px oklch(0.2 0.02 258 / 0.3);
-  --shadow-soft-v:
-    0 1px 2px oklch(0.2 0.02 258 / 0.05), 0 14px 36px -26px oklch(0.2 0.02 258 / 0.22);
-  --chart-1: oklch(0.55 0.2 258);
-  --chart-2: oklch(0.63 0.16 235);
-  --chart-3: oklch(0.7 0.16 300);
-  --chart-4: oklch(0.61 0.17 290);
-  --chart-5: oklch(0.72 0.15 160);
-  --sidebar: oklch(0.965 0.006 255);
-  --sidebar-foreground: oklch(0.18 0.018 258);
-  --sidebar-primary: oklch(0.55 0.2 258);
-  --sidebar-primary-foreground: oklch(0.99 0.002 255);
-  --sidebar-accent: oklch(0.93 0.012 255);
-  --sidebar-accent-foreground: oklch(0.18 0.018 258);
-  --sidebar-border: oklch(0.86 0.014 255);
-  --sidebar-ring: oklch(0.55 0.2 258);
+
+  /* Surfaces — cool neutral grey paper, NOT warm stone. */
+  --background: oklch(0.97 0.0026 106.4); /* #F5F5F3 paper */
+  --surface: oklch(1 0 0); /* #FFFFFF */
+  --surface-2: oklch(0.939 0.004 106.5); /* #EBEBE8 insets, wells */
+  --tint: var(--surface-2); /* legacy row-tint alias */
+
+  /* Ink. */
+  --foreground: oklch(0.178 0 0); /* #111111 ink */
+  --muted-foreground: oklch(0.509 0.0047 106.6); /* #666663 ≥ 4.5:1 everywhere */
+
+  /* Hairlines + the major print rule. */
+  --border: oklch(0.899 0.0054 106.5); /* #DEDEDA minor divisions */
+  --input: oklch(0.899 0.0054 106.5);
+  --rule: var(--foreground); /* #111111 — 3px card tops, section rules */
+
+  /* The ONE accent — signal red. Eyebrows, active nav, sale, focus ring. */
+  --accent: oklch(0.536 0.1912 30.1); /* #C42B1C — 5.19:1 on paper, 5.66:1 on white */
+  --accent-foreground: oklch(0.97 0.0026 106.4); /* paper on red = 5.19:1 */
+  --ring: var(--accent);
+
+  /* Legacy accent aliases — every route keeps compiling, now the ink scheme.
+     `.btn-primary` becomes solid ink fill / paper text; `--glow` drives star
+     fills and emphasis text in monochrome ink. */
+  --signal: var(--foreground);
+  --signal-foreground: var(--background);
+  --glow: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+
+  /* Semantics — always paired with an icon or a word, never colour alone. */
+  --positive: oklch(0.48 0.12 155); /* #00713E */
+  --deal: oklch(0.54 0.14 42); /* #AF4D22 terracotta */
+  --destructive: oklch(0.52 0.19 28); /* #BE241F */
+  --destructive-foreground: oklch(0.97 0.0026 106.4);
+
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+
+  /* Elevation — NONE. Flat ring-only values so unmigrated markup stays
+     coherent; depth comes from rules and layering, never drop shadows. */
+  --shadow-1-v: 0 0 0 1px var(--hairline);
+  --shadow-2-v: 0 0 0 1px var(--hairline-strong);
+  --shadow-3-v: 0 0 0 1px var(--rule);
+
+  /* Legacy shadow aliases. */
+  --shadow-soft-v: var(--shadow-1-v);
+  --shadow-lift-v: var(--shadow-2-v);
+  --shadow-glow-v: 0 0 0 1px var(--hairline-strong);
+
+  /* Charts / sidebar — reserved for the ADM-01 dashboard rebuild. */
+  --chart-1: var(--accent);
+  --chart-2: var(--muted-foreground);
+  --chart-3: var(--positive);
+  --chart-4: var(--deal);
+  --chart-5: oklch(0.52 0.08 250);
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: var(--accent-foreground);
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--accent);
+
+  /* Motion — fast and mechanical. Enter ease-out, exit ease-in, 120ms. */
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --dur-fast: 120ms;
+  --dur-base: 120ms;
+  --dur-reveal: 240ms;
+  --stagger: 40ms;
+
+  /* Ink-alpha hairlines — components prefer these over flat grey borders. */
+  --hairline: oklch(0.178 0 0 / 0.1);
+  --hairline-strong: oklch(0.178 0 0 / 0.18);
 }
+
+/* --- Dark theme — inverted print -------------------------------------------- */
 
 .dark {
   color-scheme: dark;
-  --background: oklch(0.145 0.004 255);
-  --foreground: oklch(0.95 0.006 255);
-  --surface: oklch(0.19 0.006 255);
-  --surface-2: oklch(0.245 0.008 255);
-  --tint: oklch(0.215 0.006 255);
-  --positive: oklch(0.74 0.14 158);
-  --card: oklch(0.19 0.006 255);
-  --card-foreground: oklch(0.95 0.006 255);
-  --popover: oklch(0.19 0.006 255);
-  --popover-foreground: oklch(0.95 0.006 255);
-  --primary: oklch(0.7 0.16 252);
-  --primary-foreground: oklch(0.12 0.01 255);
-  --signal: oklch(0.7 0.16 252);
-  --signal-foreground: oklch(0.12 0.01 255);
-  --glow: oklch(0.74 0.14 244);
-  --deal: oklch(0.72 0.14 190);
-  --secondary: oklch(0.245 0.008 255);
-  --secondary-foreground: oklch(0.95 0.006 255);
-  --muted: oklch(0.23 0.007 255);
-  --muted-foreground: oklch(0.7 0.015 255);
-  --accent: oklch(0.29 0.035 255);
-  --accent-foreground: oklch(0.95 0.006 255);
-  --border: oklch(0.32 0.01 255);
-  --input: oklch(0.32 0.01 255);
-  --ring: oklch(0.7 0.16 252);
-  --shadow-glow-v:
-    0 0 0 1px oklch(0.7 0.16 252 / 0.16), 0 24px 70px -32px oklch(0.7 0.16 252 / 0.26);
-  --shadow-lift-v: 0 30px 80px -40px oklch(0.02 0 0 / 0.92);
-  --shadow-soft-v: 0 1px 2px oklch(0 0 0 / 0.4), 0 16px 40px -28px oklch(0 0 0 / 0.7);
-  --sidebar: oklch(0.19 0.006 255);
-  --sidebar-foreground: oklch(0.95 0.006 255);
-  --sidebar-primary: oklch(0.7 0.16 252);
-  --sidebar-primary-foreground: oklch(0.12 0.01 255);
-  --sidebar-accent: oklch(0.245 0.008 255);
-  --sidebar-accent-foreground: oklch(0.95 0.006 255);
-  --sidebar-border: oklch(0.32 0.01 255);
-  --sidebar-ring: oklch(0.7 0.16 252);
+
+  --background: oklch(0.182 0 0); /* #121212 ink page */
+  --surface: oklch(0.218 0 0); /* #1A1A1A */
+  --surface-2: oklch(0.26 0 0); /* #242424 */
+  --tint: var(--surface-2);
+
+  --foreground: oklch(0.96 0.004 106.5); /* #F2F2EF paper */
+  --muted-foreground: oklch(0.715 0.0043 106.5); /* #A3A3A0 */
+
+  --border: oklch(0.32 0.0052 106.7); /* #333330 */
+  --input: oklch(0.32 0.0052 106.7);
+  --rule: var(--foreground); /* paper rules on ink */
+
+  --accent: oklch(0.677 0.2112 29.8); /* #FF5340 brightened signal — 5.86:1 on ink */
+  --accent-foreground: oklch(0.182 0 0); /* ink on bright red = 5.86:1 */
+  --ring: var(--accent);
+
+  --signal: var(--foreground);
+  --signal-foreground: var(--background);
+  --glow: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+
+  --positive: oklch(0.72 0.13 155); /* #57BC80 */
+  --deal: oklch(0.74 0.12 55); /* #E5955D */
+  --destructive: oklch(0.68 0.17 25); /* #EF6661 */
+  --destructive-foreground: oklch(0.182 0 0);
+
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-2);
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+
+  --shadow-1-v: 0 0 0 1px var(--hairline);
+  --shadow-2-v: 0 0 0 1px var(--hairline-strong);
+  --shadow-3-v: 0 0 0 1px var(--rule);
+
+  --shadow-soft-v: var(--shadow-1-v);
+  --shadow-lift-v: var(--shadow-2-v);
+  --shadow-glow-v: 0 0 0 1px var(--hairline-strong);
+
+  --chart-1: var(--accent);
+  --chart-2: var(--muted-foreground);
+  --chart-3: var(--positive);
+  --chart-4: var(--deal);
+  --chart-5: oklch(0.7 0.08 250);
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: var(--accent-foreground);
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--accent);
+
+  --hairline: oklch(1 0 0 / 0.12);
+  --hairline-strong: oklch(1 0 0 / 0.2);
 }
+
+/* --- Base ------------------------------------------------------------------ */
 
 @layer base {
   * {
     border-color: var(--color-border);
   }
 
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-size: 1rem;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-wrap: pretty;
   }
 
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
     text-wrap: balance;
   }
 
@@ -178,18 +328,26 @@
   textarea {
     outline-offset: 3px;
   }
+
   :focus-visible {
     outline: 2px solid var(--color-ring);
   }
 
+  /* Selection: signal red ground, paper figure. */
   ::selection {
-    background-color: var(--color-signal);
-    color: var(--color-signal-foreground);
+    background-color: var(--color-accent);
+    color: var(--color-accent-foreground);
   }
 
   /* Anchor jumps must clear the sticky header. */
   [id] {
     scroll-margin-top: 6rem;
+  }
+
+  /* The main landmark receives programmatic focus from the skip link. */
+  main:focus-visible,
+  [tabindex="-1"]:focus-visible {
+    outline: none;
   }
 }
 
@@ -206,24 +364,41 @@
     opacity: 1;
     transform: none;
   }
+  /* Marquee dies completely — no partial frames, no movement. */
+  .ticker-track {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
-/* Reveal-on-scroll primitive */
+/* --- Utilities -------------------------------------------------------------- */
+
+/* The one page container. Breakpoints of the rebuild: 375/768/1024/1440. */
+@utility shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1440px;
+  padding-inline: 1.25rem;
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+  @media (width >= 64rem) {
+    padding-inline: 3rem;
+  }
+}
+
+/* Reveal-on-scroll primitive — fade-up only (transform + opacity). */
 @utility reveal {
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(20px);
   transition:
-    opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--dur-reveal) var(--ease-enter),
+    transform var(--dur-reveal) var(--ease-enter);
 }
 
 @utility reveal-in {
   opacity: 1;
   transform: none;
-}
-
-@utility grid-noise {
-  background-image: none;
 }
 
 /* Lining figures for money, ratings and spec values so columns never jitter. */
@@ -232,65 +407,98 @@
   font-feature-settings: "tnum" 1;
 }
 
+/* Measure cap for long-form copy. */
+@utility measure {
+  max-width: 68ch;
+}
+
+/* Skip-to-content link — first focusable element on every page.
+   Swiss: a solid ink block, square corners, no shadow. */
+.skip-link {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--foreground);
+  color: var(--background);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: translateY(-300%);
+  transition: transform var(--dur-fast) var(--ease-exit);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+  outline: 2px solid var(--color-ring);
+  outline-offset: 3px;
+}
+
 /* ---------------------------------------------------------------------------
-   Component primitives. Kept in @layer components so Tailwind utilities in
-   markup still win (e.g. `className="btn btn-primary w-full"`).
+   Component primitives. One recipe per concept, inside @layer components so
+   Tailwind utilities in markup still win (e.g. `className="btn btn-primary w-full"`).
    --------------------------------------------------------------------------- */
 @layer components {
+  /* Buttons — rectangular, sharp, uppercase micro-type. 48px touch minimum;
+     NO pills, NO chips, NO lift-on-hover. Hover = fill inversion. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    min-height: 2.75rem;
+    min-height: 3rem;
     border: 1px solid transparent;
-    border-radius: 0.875rem;
-    padding-inline: 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 600;
+    border-radius: 0;
+    padding-inline: 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     line-height: 1;
+    text-transform: uppercase;
     white-space: nowrap;
     cursor: pointer;
     transition:
-      background-color 180ms ease-out,
-      border-color 180ms ease-out,
-      color 180ms ease-out,
-      box-shadow 180ms ease-out,
-      transform 180ms ease-out,
-      opacity 180ms ease-out;
-  }
-
-  .btn:active:not(:disabled) {
-    transform: translateY(1px) scale(0.99);
+      background-color var(--dur-fast) var(--ease-enter),
+      border-color var(--dur-fast) var(--ease-enter),
+      color var(--dur-fast) var(--ease-enter),
+      opacity var(--dur-fast) var(--ease-enter);
   }
 
   .btn:disabled,
   .btn[aria-disabled="true"] {
     cursor: not-allowed;
     opacity: 0.5;
-    transform: none;
-    box-shadow: none;
   }
 
+  /* Primary — solid ink fill, paper text. Hover inverts to paper fill / ink
+     text behind a 1px inset ring so the footprint never shifts. */
   .btn-primary {
+    border-color: var(--signal);
     background-color: var(--signal);
     color: var(--signal-foreground);
   }
 
   .btn-primary:hover:not(:disabled) {
-    box-shadow: var(--shadow-glow-v);
-    transform: translateY(-1px);
+    background-color: var(--background);
+    color: var(--foreground);
+    box-shadow: inset 0 0 0 1px var(--foreground);
   }
 
+  /* Secondary — 1px ink border, transparent fill. Hover inverts to solid ink. */
   .btn-quiet {
-    border-color: var(--border);
-    background-color: var(--surface);
+    border-color: var(--foreground);
+    background-color: transparent;
     color: var(--foreground);
   }
 
   .btn-quiet:hover:not(:disabled) {
-    border-color: color-mix(in oklch, var(--signal) 45%, var(--border));
-    background-color: var(--surface-2);
+    background-color: var(--foreground);
+    color: var(--background);
   }
 
   .btn-ghost {
@@ -302,33 +510,34 @@
     background-color: var(--surface-2);
   }
 
+  /* Danger — red border/text, transparent fill. Hover floods red. */
   .btn-danger {
-    border-color: color-mix(in oklch, var(--destructive) 30%, transparent);
-    background-color: color-mix(in oklch, var(--destructive) 12%, transparent);
+    border-color: var(--destructive);
+    background-color: transparent;
     color: var(--destructive);
   }
 
   .btn-danger:hover:not(:disabled) {
-    background-color: color-mix(in oklch, var(--destructive) 20%, transparent);
+    background-color: var(--destructive);
+    color: var(--destructive-foreground);
   }
 
   .btn-lg {
-    min-height: 3.25rem;
-    border-radius: 1rem;
+    min-height: 3.5rem;
     padding-inline: 2rem;
-    font-size: 0.9375rem;
-  }
-
-  /* Compact variant for dense toolbars; still 36px tall with 8px+ neighbours. */
-  .btn-sm {
-    min-height: 2.25rem;
-    border-radius: 0.75rem;
-    padding-inline: 0.875rem;
     font-size: 0.8125rem;
   }
 
+  /* Compact variant for dense admin toolbars only — documented non-touch use
+     (36 px tall, ≥ 8 px neighbours); never used as a primary mobile CTA. */
+  .btn-sm {
+    min-height: 2.25rem;
+    padding-inline: 0.875rem;
+    font-size: 0.6875rem;
+  }
+
   .btn-icon {
-    width: 2.75rem;
+    width: 3rem;
     padding-inline: 0;
   }
 
@@ -336,33 +545,44 @@
     width: 2.25rem;
   }
 
-  /* Flat card surface used for every boxed block on the site. */
+  /* Card surface — flat white ground, 3px ink top rule, hairline sides.
+     Utilities still win over this recipe. */
   .panel {
     border: 1px solid var(--border);
-    border-radius: calc(var(--radius) + 4px);
+    border-top: 3px solid var(--rule);
+    border-radius: 0;
     background-color: var(--surface);
   }
 
-  /* Single input recipe for every form on the site: 44px for touch, and a
-     signal-coloured focus ring so the active field is unmistakable. */
+  /* Single input recipe — 44 px touch minimum, sharp corners, 1px strong
+     hairline, 2px red outline focus ring. Attribute-driven error state:
+     routes opt in with `aria-invalid="true"` plus a `.field-error` slot
+     described by `aria-describedby`. */
   .field {
     display: block;
     width: 100%;
     min-height: 2.75rem;
-    border: 1px solid var(--border);
-    border-radius: 0.875rem;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 0;
     background-color: var(--background);
     padding: 0.625rem 1rem;
     font-size: 0.875rem;
     outline: none;
-    transition:
-      border-color 180ms ease-out,
-      box-shadow 180ms ease-out;
+    transition: border-color var(--dur-fast) var(--ease-enter);
   }
 
   .field:focus {
-    border-color: var(--signal);
-    box-shadow: 0 0 0 2px color-mix(in oklch, var(--signal) 25%, transparent);
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .field[aria-invalid="true"] {
+    border-color: var(--destructive);
+  }
+
+  .field[aria-invalid="true"]:focus {
+    outline-color: var(--destructive);
   }
 
   .field:disabled {
@@ -378,12 +598,21 @@
     color: var(--muted-foreground);
   }
 
+  .field-error {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--destructive);
+  }
+
+  /* Square tag. Same sizing/type as before; the pill device is gone. */
   .pill {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 0;
     padding: 0.25rem 0.625rem;
     font-size: 0.6875rem;
     font-weight: 700;
@@ -392,13 +621,60 @@
     white-space: nowrap;
   }
 
+  /* Flat grey block — simple opacity pulse, no glow. */
   .skeleton {
-    border-radius: 0.75rem;
+    border-radius: 0;
     background-color: var(--surface-2);
     animation: skeleton-pulse 1.6s ease-in-out infinite;
   }
 
-  /* Comparison / specification matrix. Hairline rows read as rows, not blocks. */
+  /* Hairline divider. */
+  .rule {
+    width: 100%;
+    height: 1px;
+    border: 0;
+    background-color: var(--hairline-strong);
+  }
+
+  /* Major print rule — 3px ink. Section headers sit on this. */
+  .rule-strong {
+    width: 100%;
+    height: 3px;
+    border: 0;
+    background-color: var(--rule);
+  }
+
+  /* Accent micro-label: red square marker + uppercase micro-type.
+     Compose as `<span className="eyebrow">01 — Categories</span>`. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .eyebrow::before {
+    content: "";
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: var(--accent);
+  }
+
+  /* Money. Tabular, aligned; downstream agents scale it oversized. */
+  .price {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Comparison / specification matrix. Pure hairline rows — no zebra tint. */
   .spec-matrix {
     width: 100%;
     border-collapse: separate;
@@ -407,7 +683,7 @@
 
   .spec-matrix th,
   .spec-matrix td {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--hairline);
     padding: 0.875rem 1.125rem;
     text-align: left;
     vertical-align: middle;
@@ -418,30 +694,136 @@
     border-bottom: 0;
   }
 
-  .spec-matrix tbody tr:nth-child(even) {
-    background-color: var(--tint);
-  }
-
   /* Sticky LEFT only: the horizontal scroll wrapper is itself a scroll
      container, so a vertically sticky <thead> would never pin to the viewport. */
   .spec-matrix-label {
     position: sticky;
     left: 0;
     z-index: 2;
-    box-shadow: 1px 0 0 var(--border);
+    box-shadow: 1px 0 0 var(--hairline-strong);
     background-color: var(--background);
     font-weight: 600;
   }
 
-  .spec-matrix tbody tr:nth-child(even) .spec-matrix-label {
-    background-color: var(--tint);
-  }
-
   .spec-matrix tbody tr[data-diff="true"] .spec-matrix-label {
     box-shadow:
-      inset 3px 0 0 var(--signal),
-      1px 0 0 var(--border);
+      inset 3px 0 0 var(--accent),
+      1px 0 0 var(--hairline-strong);
     color: var(--foreground);
+  }
+
+  /* Ticker — marquee strip between two 3px rules. Markup contract: duplicate
+     the track once for a seamless loop,
+     `<div className="ticker"><div className="ticker-track">items…items</div></div>`;
+     the -50% keyframe travels exactly one copy's width. Pauses on hover;
+     fully static under prefers-reduced-motion (see the global block). */
+  .ticker {
+    display: flex;
+    overflow: hidden;
+    border-top: 3px solid var(--rule);
+    border-bottom: 3px solid var(--rule);
+  }
+
+  .ticker-track {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 3rem;
+    min-width: 100%;
+    padding-inline: 1.5rem;
+    animation: ticker-marquee 30s linear infinite;
+  }
+
+  .ticker:hover .ticker-track {
+    animation-play-state: paused;
+  }
+
+  .ticker-item {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Index row — numbered, baseline-ruled list row with a hover-revealed red
+     arrow. Markup contract:
+     `<a className="index-row"><span className="index-row-num">01</span>
+        <span className="index-row-label">Categories</span>
+        <span className="index-row-meta">13 entries</span>
+        <ArrowRight className="index-row-arrow" /></a>` */
+  .index-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: baseline;
+    column-gap: 1.25rem;
+    width: 100%;
+    border-bottom: 1px solid var(--hairline-strong);
+    padding-block: 1.125rem;
+    text-align: left;
+  }
+
+  .index-row-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted-foreground);
+  }
+
+  .index-row-label {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .index-row-meta {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  .index-row-arrow {
+    align-self: center;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateX(-0.375rem);
+    transition:
+      opacity var(--dur-fast) var(--ease-enter),
+      transform var(--dur-fast) var(--ease-enter);
+  }
+
+  .index-row:hover .index-row-arrow,
+  .index-row:focus-visible .index-row-arrow {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (width < 40rem) {
+    .index-row {
+      grid-template-columns: auto 1fr auto;
+    }
+    .index-row-meta {
+      display: none;
+    }
+  }
+
+  /* Headline — expanded-black uppercase display type. Requires the wdth axis
+     served by archivo-latin-var.woff2 (font-stretch maps onto it). */
+  .headline {
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    font-weight: 900;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    text-transform: uppercase;
   }
 }
 
@@ -452,6 +834,16 @@
   }
   50% {
     opacity: 0.55;
+  }
+}
+
+/* Seamless marquee: the track holds its content twice; -50% = one copy. */
+@keyframes ticker-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
@@ -466,163 +858,22 @@
   }
 }
 
-/* Local, scroll-controlled catalog motion. Flat surfaces only; no autoplay or gradients. */
-.product-card-motion {
-  position: relative;
-  aspect-ratio: 1;
-  overflow: hidden;
-  background: var(--surface);
-}
-
-.product-motion-visual {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.product-motion-image,
-.product-motion-video {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-  transition:
-    transform 700ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 180ms ease-out;
-}
-
-.product-motion-video {
-  pointer-events: none;
-  opacity: 0;
-}
-
-.product-motion-video[data-painted="true"] {
-  opacity: 1;
-}
-
-@media (hover: hover) {
-  .group:hover .product-card-motion .product-motion-image,
-  .group:hover .product-card-motion .product-motion-video {
-    transform: scale(1.035);
+/* Drawer + overlay entrances (transform + opacity only). The travelling edge
+   is chosen per instance via --drawer-from (100% right / -100% left). */
+@keyframes drawer-in {
+  from {
+    transform: translateX(var(--drawer-from, 100%));
+  }
+  to {
+    transform: translateX(0);
   }
 }
 
-.product-card-motion-rail,
-.product-cinematic-rail {
-  position: absolute;
-  z-index: 4;
-  overflow: hidden;
-  background: color-mix(in oklch, var(--border) 80%, transparent);
-}
-
-.product-card-motion-rail {
-  inset: auto 0 0;
-  height: 3px;
-}
-
-.product-card-motion-rail > span,
-.product-cinematic-rail > span {
-  display: block;
-  height: 100%;
-  width: 100%;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: var(--signal);
-  will-change: transform;
-}
-
-.product-cinematic {
-  position: relative;
-  min-height: 190svh;
-  border-block: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.product-cinematic-sticky {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  overflow: hidden;
-}
-
-.product-cinematic-frame {
-  position: absolute;
-  top: 50%;
-  right: clamp(1.5rem, 6vw, 7rem);
-  aspect-ratio: 1;
-  width: min(52vw, 44rem);
-  transform: translateY(-50%);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 2rem;
-  background: var(--background);
-  box-shadow: var(--shadow-lift-v);
-}
-
-.product-cinematic-copy {
-  position: absolute;
-  top: 50%;
-  left: clamp(1.5rem, 6vw, 7rem);
-  z-index: 2;
-  width: min(38vw, 36rem);
-  transform: translateY(-50%);
-}
-
-.product-cinematic-rail {
-  right: clamp(1.5rem, 6vw, 7rem);
-  bottom: 2rem;
-  left: clamp(1.5rem, 6vw, 7rem);
-  height: 4px;
-  border-radius: 999px;
-}
-
-@media (max-width: 767px) {
-  .product-cinematic-frame {
-    top: 8svh;
-    right: 1rem;
-    left: 1rem;
-    width: auto;
-    max-height: 62svh;
-    transform: none;
+@keyframes overlay-in {
+  from {
+    opacity: 0;
   }
-
-  .product-cinematic-copy {
-    top: auto;
-    right: 1rem;
-    bottom: 8svh;
-    left: 1rem;
-    width: auto;
-    transform: none;
-    border: 1px solid var(--border);
-    border-radius: 1.5rem;
-    background: color-mix(in oklch, var(--background) 94%, transparent);
-    padding: 1.25rem;
-    backdrop-filter: blur(14px);
-  }
-
-  .product-cinematic-rail {
-    right: 1rem;
-    bottom: 1.25rem;
-    left: 1rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .product-motion-video,
-  .product-card-motion-rail,
-  .product-cinematic-rail {
-    display: none;
-  }
-
-  .product-cinematic {
-    min-height: auto;
-  }
-
-  .product-cinematic-sticky {
-    position: relative;
-    height: auto;
-    min-height: 42rem;
-    padding: 2rem 1rem;
+  to {
+    opacity: 1;
   }
 }
