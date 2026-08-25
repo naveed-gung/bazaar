@@ -14,7 +14,26 @@ const refreshIdleLifetime = 7 * 24 * 60 * 60 * 1000;
 const refreshAbsoluteLifetime = 30 * 24 * 60 * 60 * 1000;
 const guestLinkLifetime = 5 * 24 * 60 * 60 * 1000;
 
-authRouter.get("/status", (req, res) => res.json({ data: { authenticated: req.principal.type === "user", refreshable: Boolean(req.cookies?.["bazaar_refresh"]), principal: req.principal.type === "user" ? { id: req.principal.id, permissions: req.principal.permissions } : null, firebaseConfigured: Boolean(firebaseAuth()) } }));
+authRouter.get("/status", (req, res) => {
+  // Never cacheable: permissions are resolved per request and role changes must be visible immediately.
+  res.setHeader("cache-control", "no-store");
+  res.json({
+    data: {
+      authenticated: req.principal.type === "user",
+      refreshable: Boolean(req.cookies?.["bazaar_refresh"]),
+      principal: req.principal.type === "user"
+        ? {
+            id: req.principal.id,
+            email: req.principal.email,
+            displayName: req.principal.displayName,
+            roles: req.principal.roles,
+            permissions: req.principal.permissions,
+          }
+        : null,
+      firebaseConfigured: Boolean(firebaseAuth()),
+    },
+  });
+});
 
 authRouter.post("/session", asyncHandler(async (req, res) => {
   if (Object.keys(req.body ?? {}).some((key) => key !== "idToken")) throw new AppError(422, "UNKNOWN_FIELDS", "Unknown session fields are not allowed.");
@@ -28,14 +47,14 @@ authRouter.post("/session", asyncHandler(async (req, res) => {
   const refreshCookie = randomBytes(48).toString("base64url");
   const csrf = randomBytes(24).toString("base64url");
   const familyId = randomBytes(24).toString("base64url");
-  const bootstrapRoles = decoded["role"] === "admin" || decoded.email?.toLowerCase() === config.bootstrapAdminEmail.toLowerCase() ? ["admin"] : ["client"];
+  const bootstrapRoles = decoded["role"] === "admin" || decoded.email?.toLowerCase() === config.bootstrapAdminEmail.toLowerCase() ? ["owner"] : ["customer"];
   const db = await getDb();
   const user = await db.collection("users").findOneAndUpdate(
     { firebaseUid: decoded.uid },
     { $set: { email: decoded.email?.toLowerCase(), displayName: decoded.name, lastSeenAt: new Date() }, $setOnInsert: { roles: bootstrapRoles, createdAt: new Date() } },
     { upsert: true, returnDocument: "after" },
   );
-  const roles = Array.isArray(user?.["roles"]) ? user.roles as string[] : ["client"];
+  const roles = Array.isArray(user?.["roles"]) ? user.roles as string[] : ["customer"];
   const now = new Date();
   const absoluteExpiresAt = new Date(now.getTime() + refreshAbsoluteLifetime);
   await db.collection("sessions").insertOne({ tokenHash: hash(sessionCookie), refreshTokenHash: hash(refreshCookie), csrfHash: hash(csrf), familyId, firebaseUid: decoded.uid, email: decoded.email?.toLowerCase(), displayName: decoded.name, roles, userAgent: req.header("user-agent")?.slice(0, 300), ipHash: hash(req.ip ?? "unknown"), createdAt: now, lastSeenAt: now, expiresAt: new Date(now.getTime() + accessLifetime), refreshExpiresAt: new Date(now.getTime() + refreshIdleLifetime), absoluteExpiresAt, purgeAt: absoluteExpiresAt });
@@ -96,11 +115,11 @@ authRouter.post("/refresh", asyncHandler(async (req, res) => {
   res.json({ data: { authenticated: true, expiresAt: new Date(now.getTime() + accessLifetime) } });
 }));
 
-async function mergeGuestState(db: Awaited<ReturnType<typeof getDb>>, guestSessionHash: string, userOwner: string) {
+export async function mergeGuestState(db: Awaited<ReturnType<typeof getDb>>, guestSessionHash: string, userOwner: string) {
   const guestOwner = `guest:${guestSessionHash}`;
   const targetUserId = userOwner.slice("user:".length);
   const mongoSession = (await getMongoClient()).startSession();
-  let report = { cartLines: 0, favorites: 0, comparisonItems: 0, adjustments: [] as string[] };
+  let report = { cartLines: 0, favorites: 0, comparisonItems: 0, recentlyViewed: 0, adjustments: [] as string[] };
   try {
     await mongoSession.withTransaction(async () => {
       const existing = await db.collection("guestMerges").findOne({ guestSessionHash, targetUserId }, { session: mongoSession });
@@ -153,6 +172,21 @@ async function mergeGuestState(db: Awaited<ReturnType<typeof getDb>>, guestSessi
         report.comparisonItems = productIds.length;
         await db.collection("comparisons").deleteOne({ ownerKey: guestOwner }, { session: mongoSession });
       }
+      // API-04: recently-viewed history rides the same ownerKey merge — upsert per product so
+      // a product present on both sides is never duplicated; the later viewedAt wins.
+      const guestViewed = await db.collection("recentlyViewed").find({ ownerKey: guestOwner }, { session: mongoSession }).toArray();
+      for (const view of guestViewed) {
+        await db.collection("recentlyViewed").updateOne(
+          { ownerKey: userOwner, productId: view["productId"] },
+          {
+            $set: { viewedAt: view["viewedAt"] instanceof Date ? view["viewedAt"] : new Date() },
+            $setOnInsert: { ownerKey: userOwner, productId: view["productId"], createdAt: view["createdAt"] instanceof Date ? view["createdAt"] : new Date() },
+          },
+          { upsert: true, session: mongoSession },
+        );
+      }
+      report.recentlyViewed = guestViewed.length;
+      await db.collection("recentlyViewed").deleteMany({ ownerKey: guestOwner }, { session: mongoSession });
       const now = new Date();
       const receipt = await db.collection("guestMerges").insertOne({ guestSessionHash, targetUserId, report, createdAt: now }, { session: mongoSession });
       await db.collection("guestSessions").updateOne(
