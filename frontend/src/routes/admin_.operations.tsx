@@ -90,7 +90,7 @@ function OperationsAdmin() {
         title="Fulfillment and moderation"
         copy="Advance valid order and return states, then publish or reject verified reviews."
       />
-      <section className="mx-auto max-w-[1400px] space-y-12 px-6 py-16">
+      <section className="shell space-y-12 py-16">
         <Link to="/admin" className="btn btn-ghost btn-sm -ml-3.5 text-muted-foreground">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to dashboard
