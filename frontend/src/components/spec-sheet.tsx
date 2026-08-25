@@ -57,7 +57,7 @@ export function SpecTiles({ specs, className }: { specs: Spec[]; className?: str
         return (
           <div key={spec.label} className="panel flex flex-col p-5">
             <span
-              className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-background text-glow"
+              className="grid h-9 w-9 place-items-center border border-border bg-background text-foreground"
               aria-hidden="true"
             >
               <Icon className="h-4 w-4" />
@@ -80,7 +80,12 @@ export function SpecTiles({ specs, className }: { specs: Spec[]; className?: str
 export function SpecTable({ specs, className }: { specs: Spec[]; className?: string }) {
   if (!specs.length) return null;
   return (
-    <dl className={cn("overflow-hidden rounded-2xl border border-border", className)}>
+    <dl
+      className={cn(
+        "overflow-hidden border border-border border-t-[3px] border-t-rule bg-surface",
+        className,
+      )}
+    >
       {specs.map((spec, index) => {
         const Icon = specIcon(spec.label);
         return (
@@ -89,7 +94,6 @@ export function SpecTable({ specs, className }: { specs: Spec[]; className?: str
             className={cn(
               "grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] items-baseline gap-6 px-5 py-3.5 text-sm sm:grid-cols-[minmax(9rem,15rem)_1fr] sm:px-6",
               index > 0 && "border-t border-border",
-              index % 2 === 1 ? "bg-tint" : "bg-surface",
             )}
           >
             <dt className="flex items-baseline gap-2.5 text-muted-foreground">
