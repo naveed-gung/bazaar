@@ -242,3 +242,89 @@ describe("welcome discount (SSR-20)", () => {
     }
   }, 30_000);
 });
+
+// ---------------------------------------------------------------- SSR-38: public promotion validation
+
+/** One active promotion with a unique code; overrides let a test expire or reshape it. */
+async function seedValidationPromotion(db: Db, overrides: Record<string, unknown> = {}) {
+  const code = `VAL-${randomBytes(4).toString("hex").toUpperCase()}`;
+  await db.collection("promotions").insertOne({
+    code,
+    name: "Validate Test 10%",
+    kind: "percentage",
+    percentOff: 10,
+    maxDiscountMinor: 5000,
+    state: "active",
+    startsAt: new Date("2024-01-01T00:00:00.000Z"),
+    endsAt: new Date("2030-01-01T00:00:00.000Z"),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  });
+  return code;
+}
+
+function validatePromotion(code: string) {
+  return request(app)
+    .post("/api/v1/orders/promotions/validate")
+    .set("origin", config.webOrigin)
+    .send({ code });
+}
+
+describe("promotion validation (SSR-38)", () => {
+  it("validates an active code with NO session of any kind — no cart, no guest upsert", async () => {
+    const db = await getDb();
+    const code = await seedValidationPromotion(db);
+    try {
+      const response = await validatePromotion(code).expect(200);
+      expect(response.body.data).toEqual({
+        valid: true,
+        code,
+        name: "Validate Test 10%",
+        kind: "percentage",
+        value: 10,
+      });
+      // Codes are matched case-insensitively, exactly like /quote's lookup.
+      const lowered = await validatePromotion(code.toLowerCase()).expect(200);
+      expect(lowered.body.data.valid).toBe(true);
+      // A probe guest cookie proves requireActiveGuest never ran: the middleware would have
+      // upserted a guestSessions document for this exact token hash.
+      const probeToken = randomBytes(32).toString("base64url");
+      await request(app)
+        .post("/api/v1/orders/promotions/validate")
+        .set("origin", config.webOrigin)
+        .set("Cookie", `bazaar_guest=${probeToken}`)
+        .send({ code })
+        .expect(200);
+      expect(
+        await db.collection("guestSessions").countDocuments({ tokenHash: sha256(probeToken) }),
+      ).toBe(0);
+    } finally {
+      await db.collection("promotions").deleteOne({ code });
+    }
+  }, 30_000);
+
+  it("answers 404 PROMOTION_INVALID for unknown and expired codes", async () => {
+    const db = await getDb();
+    const expired = await seedValidationPromotion(db, { endsAt: new Date(Date.now() - 60_000) });
+    try {
+      const unknown = await validatePromotion("NOSUCHCODE").expect(404);
+      expect(unknown.body.code).toBe("PROMOTION_INVALID");
+      const stale = await validatePromotion(expired).expect(404);
+      expect(stale.body.code).toBe("PROMOTION_INVALID");
+    } finally {
+      await db.collection("promotions").deleteOne({ code: expired });
+    }
+  }, 30_000);
+
+  it("rejects malformed payloads with 422 before touching the promotions collection", async () => {
+    const badFormat = await validatePromotion("bad code!").expect(422);
+    expect(badFormat.body.code).toBe("VALIDATION_FAILED");
+    const unknownField = await request(app)
+      .post("/api/v1/orders/promotions/validate")
+      .set("origin", config.webOrigin)
+      .send({ code: "WELCOME10", cartId: "sneaky" })
+      .expect(422);
+    expect(unknownField.body.code).toBe("UNKNOWN_FIELDS");
+  }, 30_000);
+});
