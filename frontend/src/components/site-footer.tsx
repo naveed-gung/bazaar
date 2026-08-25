@@ -18,6 +18,9 @@ const shop = [
   { label: "Wishlist", to: "/wishlist" },
 ] as const;
 
+const columnHeading = "text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground";
+const columnList = "mt-2 divide-y divide-border text-sm";
+
 export function SiteFooter() {
   const [subscription, setSubscription] = useState<"idle" | "pending" | "success" | "error">(
     "idle",
@@ -25,15 +28,18 @@ export function SiteFooter() {
   const categories = useCatalogCategories();
   return (
     <footer className="border-t border-border bg-surface">
-      <div className="mx-auto max-w-[1600px] px-6 py-16 lg:px-10 lg:py-20">
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="shell py-16 lg:py-20">
+        {/* Massive wordmark on a 3px ink rule. */}
+        <h2 className="headline text-[clamp(3rem,9vw,8rem)]">
+          Bazaar<span className="text-accent">.</span>
+        </h2>
+        <hr className="rule-strong mt-10" />
+
+        <div className="mt-12 grid gap-12 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div className="max-w-sm">
-            <Link to="/" className="text-2xl font-extrabold tracking-tight">
-              Bazaar<span className="text-signal">.</span>
-            </Link>
-            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-              Bazaar is redefining the e-commerce experience for the modern digital age — a platform
-              where cutting-edge technology meets intuitive design.
+            <p className="measure text-sm leading-relaxed text-muted-foreground">
+              Considered objects for modern life — a curated catalogue, honest availability and
+              server-authoritative commerce.
             </p>
             <form
               onSubmit={async (event) => {
@@ -49,7 +55,7 @@ export function SiteFooter() {
                   setSubscription("error");
                 }
               }}
-              className="mt-7 flex gap-2 rounded-2xl border border-border bg-background p-1.5 focus-within:border-signal"
+              className="mt-7 flex items-center gap-2 border border-border bg-background p-1.5 transition-colors focus-within:border-accent"
             >
               <label className="sr-only" htmlFor="newsletter-email">
                 Email address
@@ -87,72 +93,75 @@ export function SiteFooter() {
             )}
           </div>
 
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Shop
-            </h2>
-            <ul className="mt-5 space-y-3.5 text-sm">
+          <nav aria-label="Shop">
+            <h2 className={columnHeading}>Shop</h2>
+            <ul className={columnList}>
               {shop.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={item.to}
+                    className="block py-2.5 text-muted-foreground transition-colors hover:text-accent"
+                  >
                     {item.label}
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Categories
-            </h2>
-            <ul className="mt-5 space-y-3.5 text-sm">
+          <nav aria-label="Categories">
+            <h2 className={columnHeading}>Categories</h2>
+            <ul className={columnList}>
               {(categories.data ?? []).slice(0, 5).map((cat) => (
                 <li key={cat.slug}>
                   <Link
                     to="/categories/$slug"
                     params={{ slug: cat.slug }}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="block py-2.5 text-muted-foreground transition-colors hover:text-accent"
                   >
                     {cat.name}
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Support
-            </h2>
-            <ul className="mt-5 space-y-3.5 text-sm">
+          <nav aria-label="Support">
+            <h2 className={columnHeading}>Support</h2>
+            <ul className={columnList}>
               {help.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={item.to}
+                    className="block py-2.5 text-muted-foreground transition-colors hover:text-accent"
+                  >
                     {item.label}
                   </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
         </div>
 
-        <div className="mt-14 border-t border-border pt-8">
+        <hr className="rule mt-14" />
+
+        {/* Bottom bar — hard left aligned. */}
+        <div className="pt-8">
           <ul className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
             <li className="flex items-center gap-2">
-              <Truck className="h-3.5 w-3.5 text-glow" aria-hidden="true" />
+              <Truck className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
               Free shipping over $50
             </li>
             <li className="flex items-center gap-2">
-              <RotateCcw className="h-3.5 w-3.5 text-glow" aria-hidden="true" />
+              <RotateCcw className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
               30-day returns
             </li>
             <li className="flex items-center gap-2">
-              <ShieldCheck className="h-3.5 w-3.5 text-glow" aria-hidden="true" />
+              <ShieldCheck className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
               Demo payment simulator · no card data collected
             </li>
           </ul>
-          <div className="mt-6 flex flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-6 flex flex-col gap-1 text-xs text-muted-foreground">
             <p>© 2026 Bazaar. Commerce for the modern digital age.</p>
             <p>React storefront · server-authoritative commerce.</p>
           </div>
