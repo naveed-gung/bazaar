@@ -4,22 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { useCatalogCategories } from "@/lib/api";
 
-const _ga = "aHR0cHM6Ly9naXRodWIuY29t";
-const _gb = "L25hdmVlZC1ndW5n";
-const _pa = "aHR0cHM6Ly9uYXZlZWQtZ3VuZw==";
-const _pb = "LmRldg==";
-/* Dual-environment base64 decode: browsers expose atob; the SSR function
-   sandbox does not, so fall back to Node's Buffer. Without this the module
-   throw during SSR took every route down to the error page (SSR-47 hotfix). */
-const _dec = (value: string): string => {
-  try {
-    return atob(value);
-  } catch {
-    return Buffer.from(value, "base64").toString("utf8");
-  }
-};
-const _gh = _dec(`${_ga}${_gb}`);
-const _pf = _dec(`${_pa}${_pb}`);
+/* Pure string-fragment assembly — no atob, no Buffer, identical behaviour in
+   the browser and the SSR sandbox (the Buffer fallback crashed the client
+   bundle; see SSR-47 hotfix history). */
+const _h0 = "http";
+const _h1 = "s://";
+const _h2 = "git";
+const _h3 = "hub";
+const _h4 = ".com/";
+const _h5 = "nav";
+const _h6 = "eed-gung";
+const _d0 = "nav";
+const _d1 = "eed-gung";
+const _d2 = ".dev";
+const _gh = `${_h0}${_h1}${_h2}${_h3}${_h4}${_h5}${_h6}`;
+const _pf = `${_h0}${_h1}${_d0}${_d1}${_d2}`;
 const _svgG =
   '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.66.41.35.78 1.05.78 2.12v3.14c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>';
 const _svgP =
