@@ -1,10 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 170" role="img" aria-labelledby="bwm-title">
   <title id="bwm-title">Bazaar — Swiss Signal wordmark</title>
-  <!-- SWISS SIGNAL lockup: expanded-black uppercase ink type, one signal-red
-       full stop, hairline baseline rule. Matches frontend tokens
-       (#111111 ink · #C42B1C signal red · #F5F5F3 paper). -->
+  <!-- SWISS SIGNAL lockup. Theme-aware: ink type on light, paper type on dark
+       (GitHub renders SVG <style> media queries against the viewer's system
+       theme). Signal-red accents stay constant across both. -->
+  <style>
+    .bwm-type { fill: #111111; }
+    .bwm-rule { fill: #C42B1C; }
+    .bwm-dot  { fill: #C42B1C; }
+    @media (prefers-color-scheme: dark) {
+      .bwm-type { fill: #F2F2EF; }
+    }
+  </style>
   <g font-family="Archivo, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="800" letter-spacing="-3">
-    <text x="16" y="118" font-size="128" fill="#111111">BAZAAR<tspan fill="#C42B1C">.</tspan></text>
+    <text x="16" y="118" font-size="128" class="bwm-type">BAZAAR<tspan class="bwm-dot">.</tspan></text>
   </g>
-  <rect x="20" y="140" width="150" height="5" fill="#C42B1C"/>
+  <rect x="20" y="140" width="150" height="5" class="bwm-rule"/>
 </svg>
