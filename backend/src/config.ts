@@ -33,6 +33,7 @@ const schema = Joi.object({
   BOOTSTRAP_CLIENT_EMAIL: Joi.string().email().allow("").default(""),
   BOOTSTRAP_CLIENT_UID: Joi.string().allow("").default(""),
   RESEND_API_KEY: Joi.string().allow("").default(""),
+  TAX_RATE: Joi.number().min(0).max(1).default(0.08),
   LOG_LEVEL: Joi.string().valid("fatal", "error", "warn", "info", "debug", "trace").default("info"),
 }).unknown(true);
 
@@ -75,6 +76,7 @@ export const config = Object.freeze({
   bootstrapClientEmail: env["BOOTSTRAP_CLIENT_EMAIL"]!,
   bootstrapClientUid: env["BOOTSTRAP_CLIENT_UID"]!,
   resendApiKey: env["RESEND_API_KEY"]!,
+  taxRate: Number(env["TAX_RATE"]),
   logLevel: env["LOG_LEVEL"]!,
   isProduction: env["NODE_ENV"] === "production",
 });
