@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { ApiProblem, FieldError } from "@bazaar/shared";
+import type { ApiProblem, FieldError, Permission } from "@bazaar/shared";
 import { MongoNetworkError, MongoServerSelectionError } from "mongodb";
 import { logger } from "./logger.js";
 
@@ -79,7 +79,14 @@ declare global {
   namespace Express {
     interface Request {
       id: string;
-      principal: { type: "guest" | "user"; id: string; permissions: string[] };
+      principal: {
+        type: "guest" | "user";
+        id: string;
+        email: string | null;
+        displayName: string | null;
+        roles: string[];
+        permissions: Permission[];
+      };
       guestSessionHash: string;
       sessionHash?: string;
       sessionFamilyId?: string;
