@@ -1,7 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
-import { getDb } from "../database/client.js";
-import { AppError } from "../errors.js";
 import { createHash } from "node:crypto";
+import type { Permission } from "@bazaar/shared";
+import { getDb } from "../database/client.js";
+import { resolvePermissions } from "../domain/rbac.js";
+import { AppError } from "../errors.js";
 
 export async function authenticateOptional(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const session = req.cookies?.["bazaar_session"] as string | undefined;
@@ -13,11 +15,22 @@ export async function authenticateOptional(req: Request, _res: Response, next: N
     if (!activeSession) throw new Error("Session is not active");
     const user = await db.collection("users").findOneAndUpdate(
       { firebaseUid: activeSession["firebaseUid"] },
-      { $set: { email: activeSession["email"], displayName: activeSession["displayName"], lastSeenAt: new Date() }, $setOnInsert: { roles: ["client"], createdAt: new Date() } },
+      { $set: { email: activeSession["email"], displayName: activeSession["displayName"], lastSeenAt: new Date() }, $setOnInsert: { roles: ["customer"], createdAt: new Date() } },
       { upsert: true, returnDocument: "after" },
     );
-    const storedRoles = Array.isArray(user?.["roles"]) ? user.roles as string[] : ["client"];
-    req.principal = { type: "user", id: String(activeSession["firebaseUid"]), permissions: storedRoles.includes("admin") ? ["admin"] : [] };
+    // Roles come from the user document fetched THIS request — never from the role copy
+    // stored on the session document — so a role edit or revocation takes effect on the
+    // caller's very next request. Resolution costs one extra query over `roles`.
+    const storedRoles = Array.isArray(user?.["roles"]) ? user.roles as string[] : ["customer"];
+    const permissions = await resolvePermissions(db, storedRoles);
+    req.principal = {
+      type: "user",
+      id: String(activeSession["firebaseUid"]),
+      email: typeof activeSession["email"] === "string" ? activeSession["email"] : null,
+      displayName: typeof activeSession["displayName"] === "string" ? activeSession["displayName"] : null,
+      roles: storedRoles,
+      permissions,
+    };
     req.sessionHash = sessionHash;
     if (typeof activeSession["familyId"] === "string") req.sessionFamilyId = activeSession["familyId"];
     if (typeof activeSession["csrfHash"] === "string") req.csrfHash = activeSession["csrfHash"];
@@ -34,7 +47,19 @@ export function requireUser(req: Request, _res: Response, next: NextFunction): v
   next();
 }
 
-export function requireAdmin(req: Request, _res: Response, next: NextFunction): void {
-  if (!req.principal.permissions.includes("admin")) { next(new AppError(403, "ADMIN_REQUIRED", "Administrator permission is required.")); return; }
-  next();
+/**
+ * Per-endpoint authorisation. Implies authentication: a guest gets 401 AUTH_REQUIRED, a
+ * signed-in user lacking any listed permission gets 403 PERMISSION_DENIED with the missing
+ * permission named in the detail (and mirrored in `meta.missingPermission`).
+ */
+export function requirePermission(...required: Permission[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (req.principal.type !== "user") { next(new AppError(401, "AUTH_REQUIRED", "Sign in to continue.")); return; }
+    const missing = required.find((permission) => !req.principal.permissions.includes(permission));
+    if (missing !== undefined) {
+      next(new AppError(403, "PERMISSION_DENIED", `The ${missing} permission is required for this action.`, undefined, { missingPermission: missing }));
+      return;
+    }
+    next();
+  };
 }
