@@ -3,7 +3,7 @@ import { Router } from "express";
 import { getStore } from "@netlify/blobs";
 import { AppError } from "../errors.js";
 import { asyncHandler } from "../lib/http.js";
-import { requireAdmin } from "../middleware/auth.js";
+import { requirePermission } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 
 export const mediaRouter = Router();
@@ -26,7 +26,7 @@ mediaRouter.get("/:key", asyncHandler(async (req, res) => {
   res.send(Buffer.from(data));
 }));
 
-mediaRouter.post("/", requireAdmin, rateLimit({ name: "media-upload", limit: 20, windowMs: 60 * 60_000, principal: true }), asyncHandler(async (req, res) => {
+mediaRouter.post("/", requirePermission("catalog:write"), rateLimit({ name: "media-upload", limit: 20, windowMs: 60 * 60_000, principal: true }), asyncHandler(async (req, res) => {
   const contentType = typeof req.body?.contentType === "string" ? req.body.contentType : "";
   const dataBase64 = typeof req.body?.dataBase64 === "string" ? req.body.dataBase64 : "";
   const extension = allowedTypes.get(contentType);
@@ -52,7 +52,7 @@ function matchesFileSignature(contentType: string, data: Buffer) {
   return false;
 }
 
-mediaRouter.delete("/:key", requireAdmin, asyncHandler(async (req, res) => {
+mediaRouter.delete("/:key", requirePermission("catalog:write"), asyncHandler(async (req, res) => {
   const key = String(req.params["key"] ?? "");
   if (!/^[a-f0-9-]+\.(?:jpg|png|webp|avif)$/.test(key)) throw new AppError(404, "MEDIA_NOT_FOUND", "Media not found.");
   await getStore("product-media").delete(key);
