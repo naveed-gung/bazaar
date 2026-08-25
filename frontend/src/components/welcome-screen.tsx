@@ -87,8 +87,12 @@ export function WelcomeScreen() {
     const prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
 
+    // SSR-45 — skip gestures now exit GRACEFULLY through the 300 ms fade
+    // instead of vanishing in place: an abrupt mid-animation disappear was the
+    // reported "glitch". Reduced-motion users still get an instant clear,
+    // because their media query collapses every duration to ~1 ms.
     function kill() {
-      teardown();
+      beginExit();
     }
     function off() {
       document.removeEventListener("click", kill, true);
