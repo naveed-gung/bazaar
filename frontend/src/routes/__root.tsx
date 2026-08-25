@@ -15,26 +15,29 @@ import { StoreProvider } from "@/lib/store";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ShopAssistant } from "@/components/shop-assistant";
+import { ToastViewport } from "@/components/toast";
+import { ConfirmDialogHost } from "@/components/confirm-dialog";
+import { WelcomeScreen } from "@/components/welcome-screen";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-[70vh] items-center justify-center bg-background px-6 py-20">
-      <div className="max-w-md text-center">
-        <p className="tabular text-[clamp(4rem,14vw,7rem)] font-extrabold leading-none tracking-tight text-glow">
-          404
-        </p>
-        <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Page not found</h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link to="/" className="btn btn-primary">
-            Go home
-          </Link>
-          <Link to="/shop" className="btn btn-quiet">
-            Browse the shop
-          </Link>
-        </div>
+    <div className="shell flex min-h-[70vh] flex-col justify-center py-20">
+      {/* Oversized numeral — the one signal-red element on the page. */}
+      <p className="price font-display text-display leading-none tracking-tight text-accent">404</p>
+      <hr className="rule-strong mt-8" />
+      <h1 className="font-display mt-8 text-2xl font-bold uppercase tracking-tight">
+        Page not found
+      </h1>
+      <p className="measure mt-3 text-sm leading-relaxed text-muted-foreground">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Link to="/" className="btn btn-primary">
+          Go home
+        </Link>
+        <Link to="/shop" className="btn btn-quiet">
+          Browse the shop
+        </Link>
       </div>
     </div>
   );
@@ -44,19 +47,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   return (
-    <div className="flex min-h-[70vh] items-center justify-center bg-background px-6 py-20">
-      <div className="panel max-w-md p-8 text-center" role="alert">
+    <div className="shell flex min-h-[70vh] items-center py-20">
+      <div className="panel w-full max-w-xl p-8 lg:p-10" role="alert">
         <span
-          className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-border bg-background text-destructive"
+          className="grid h-12 w-12 place-items-center border border-destructive text-destructive"
           aria-hidden="true"
         >
           <TriangleAlert className="h-5 w-5" />
         </span>
-        <h1 className="mt-6 text-xl font-extrabold tracking-tight">This page didn't load</h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <h1 className="font-display mt-6 text-xl font-bold uppercase tracking-tight">
+          This page didn't load
+        </h1>
+        <p className="measure mt-3 text-sm leading-relaxed text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => {
@@ -99,18 +104,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      // Self-hosted fonts — zero third-party requests. ONLY the display face is
+      // preloaded (SSR-34 hygiene): Archivo renders every above-the-fold
+      // headline/wordmark, so its preload is always consumed. The Instrument
+      // Sans preload warned "preloaded but not used" whenever no body copy sat
+      // above the fold; the @font-face declaration still loads it on first use,
+      // so dropping the preload removes the warning and trims the critical
+      // path without changing any rendered glyph.
+      {
+        rel: "preload",
+        href: "/fonts/archivo-latin-var.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
+      },
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
-      },
-
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      // SSR-27/E1 — Swiss mark: ink square, paper "B." (no .ico exists).
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
 
@@ -124,14 +137,33 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Inline, parser-blocking, PRE-PAINT: the theme flip ONLY. All splash
+            machinery left React/DOM injection for good in SSR-32 — the overlay
+            is again a STATIC SSR'd component (welcome-screen.tsx) whose markup
+            hydrates identically by construction; see the RootComponent mount
+            below and the SSR-32 brief in docs/agent/10-swiss-signal.md for why
+            the imperative body-start script had to go (it appended #bw-host
+            while the parser was still inside <body>, landing it between the
+            script and the app root div — squarely inside React's hydration
+            path, failing hydration on every cold load). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{document.documentElement.classList.toggle('dark',localStorage.getItem('bazaar.theme')==='dark')}catch(e){}`,
+            __html:
+              "try{document.documentElement.classList.toggle('dark',localStorage.getItem('bazaar.theme')==='dark')}catch(e){}",
           }}
         />
         <HeadContent />
       </head>
-      <body>
+      {/* E2 — extensions (e.g. ColorZilla) mutate <body> attributes before
+          React hydrates; suppress the documented extension-only warning. */}
+      <body suppressHydrationWarning>
+        {/* SSR-32 — NO imperative splash scripts remain in <body>. The old
+            body-start injection executed while the parser was still INSIDE
+            <body> (body's only child at that moment was this very script), so
+            its appendChild placed #bw-host BETWEEN the script and the app root
+            div — inside React's hydration path — and hydration failed on every
+            cold load. The splash is now the static SSR'd <WelcomeScreen />
+            mounted in RootComponent below; see welcome-screen.tsx. */}
         {children}
         <Scripts />
       </body>
@@ -145,14 +177,25 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-dvh flex-col">
+          {/* WCAG 2.4.1 — first focusable element on every page. */}
+          <a href="#main" className="skip-link">
+            Skip to content
+          </a>
           <SiteHeader />
-          <main className="flex-1">
+          {/* The one main landmark; routes render <section> inside it. */}
+          <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
           </main>
           <SiteFooter />
           <ShopAssistant />
+          <ToastViewport />
+          <ConfirmDialogHost />
+          {/* SSR-32 — static SSR'd splash: ships in the payload, hydrates
+              identically, tears down post-hydration only (timers + one-shot
+              skip listeners + scroll unlock live in its own effect). */}
+          <WelcomeScreen />
         </div>
       </StoreProvider>
     </QueryClientProvider>
