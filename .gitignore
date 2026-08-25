@@ -32,3 +32,8 @@ test-results/
 Thumbs.db
 .vscode/
 .idea/
+
+# Agent knowledge base — kept local by owner directive (SSR-48)
+docs/agent/
+plans/
+CLAUDE.md
