@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { PageHero } from "@/components/page-hero";
+import { useEffect, type ReactNode } from "react";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Pill, Skeleton } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatPrice } from "@/lib/products";
@@ -25,6 +26,151 @@ export const Route = createFileRoute("/account")({
   component: Account,
 });
 
+/** Numbered sidebar shared by the four account routes (SSR-07). Active entry
+    carries the red left bar; every row keeps a 44px touch height. */
+const ACCOUNT_NAV = [
+  { num: "01", label: "Overview", to: "/account" },
+  { num: "02", label: "Profile", to: "/profile" },
+  { num: "03", label: "Addresses", to: "/addresses" },
+  { num: "04", label: "Sessions", to: "/sessions" },
+  { num: "05", label: "Notifications", to: "/notifications" },
+  { num: "06", label: "Returns", to: "/returns" },
+];
+
+/** SSR-18 — guest lockout. Lives INSIDE AccountLayout so all four routes that
+    render through this shell (/account, /profile, /addresses, /sessions) are
+    guarded without touching those files. While auth status is pending the
+    layout renders only the standard skeleton panel; once confirmed
+    unauthenticated it navigates to /login carrying the current path incl.
+    query as ?redirect= (login's safeRedirect accepts same-origin relative
+    paths and honours it after sign-in). */
+function useAccountGuard() {
+  const auth = useQuery({
+    queryKey: ["auth-status"],
+    queryFn: () => api<AuthStatus>("/auth/status"),
+  });
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pending = auth.isPending;
+  const authenticated = auth.data?.authenticated === true;
+
+  useEffect(() => {
+    if (!pending && !authenticated) {
+      void navigate({
+        to: "/login",
+        search: { redirect: `${location.pathname}${location.searchStr}` },
+      });
+    }
+  }, [pending, authenticated, navigate, location.pathname, location.searchStr]);
+
+  return { pending, authenticated };
+}
+
+/**
+ * The one account shell (SSR-07): hard-left header over a `.rule-strong`, then
+ * an asymmetric 3/9 split — numbered nav rail sticky on desktop, content right.
+ * Profile, addresses and sessions render inside this same layout. SSR-18 adds
+ * the guest guard here so no account surface ever renders for a guest.
+ */
+export function AccountLayout({
+  active,
+  title,
+  copy,
+  children,
+}: {
+  active: string;
+  title: string;
+  copy?: string;
+  children: ReactNode;
+}) {
+  const { pending, authenticated } = useAccountGuard();
+
+  // Auth status still resolving — standard skeleton panel only; never a flash
+  // of account chrome that a guest would then be bounced away from.
+  if (pending) {
+    return (
+      <section className="shell pt-10 pb-12 lg:pt-14 lg:pb-16" aria-busy="true">
+        <div className="panel mx-auto max-w-xl p-8">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="mt-4 h-9 w-2/3 max-w-xs" />
+          <Skeleton className="mt-8 h-11 w-full" />
+          <Skeleton className="mt-4 h-11 w-full" />
+          <Skeleton className="mt-4 h-11 w-full" />
+          <Skeleton className="mt-8 h-px w-full" />
+          <Skeleton className="mt-6 h-3 w-40" />
+          <Skeleton className="mt-4 h-11 w-full" />
+        </div>
+      </section>
+    );
+  }
+
+  // Confirmed guest: the redirect to /login is in flight — render nothing so
+  // no part of the account surface paints for them.
+  if (!authenticated) return null;
+
+  return (
+    <>
+      <section className="shell pt-10 pb-12 lg:pt-14 lg:pb-16">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Account" }]} />
+        <div className="rule-strong mt-8" />
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <div className="max-w-3xl">
+            <span className="eyebrow">Account</span>
+            <h1 className="headline mt-4 text-[clamp(2.25rem,5vw,4rem)]">{title}</h1>
+          </div>
+          {copy && (
+            <p className="measure max-w-md pb-2 text-sm leading-relaxed text-muted-foreground">
+              {copy}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="shell pb-20 lg:pb-28">
+        <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-12">
+          <nav aria-label="Account sections" className="lg:sticky lg:top-28 lg:col-span-3">
+            <ol>
+              {ACCOUNT_NAV.map((item) => {
+                const isActive = item.to === active;
+                return (
+                  <li key={item.to}>
+                    <Link
+                      to={item.to}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`flex min-h-11 items-center gap-4 border-b border-border border-l-2 py-3 pr-2 pl-4 transition-colors ${
+                        isActive
+                          ? "border-l-accent"
+                          : "border-l-transparent hover:border-l-foreground"
+                      }`}
+                    >
+                      <span
+                        className={`tabular text-xs font-bold ${
+                          isActive ? "text-accent" : "text-muted-foreground"
+                        }`}
+                      >
+                        {item.num}
+                      </span>
+                      <span
+                        className={`text-xs font-bold uppercase tracking-[0.14em] ${
+                          isActive ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+
+          <div className="min-w-0 lg:col-span-9">{children}</div>
+        </div>
+      </section>
+    </>
+  );
+}
+
 function Account() {
   const { cartCount, wishlist } = useStore();
   const orders = useQuery({ queryKey: ["orders"], queryFn: () => api<Order[]>("/orders") });
@@ -32,52 +178,57 @@ function Account() {
     queryKey: ["auth-status"],
     queryFn: () => api<AuthStatus>("/auth/status"),
   });
+
   return (
-    <>
-      <PageHero
-        eyebrow="Account"
-        title="Your account"
-        copy="Cart, saved items, authentication status, and orders come from the Bazaar API."
-      />
-      <section className="mx-auto grid max-w-[1600px] gap-8 px-6 py-16 lg:grid-cols-3 lg:px-10 lg:py-24">
-        {[
-          { label: "Items in cart", value: String(cartCount), to: "/cart" as const },
-          { label: "Saved items", value: String(wishlist.length), to: "/wishlist" as const },
-          {
-            label: "Orders placed",
-            value: String(orders.data?.length ?? 0),
-            to: "/track-order" as const,
-          },
-        ].map((card) => (
-          <Link
-            key={card.label}
-            to={card.to}
-            className="panel group p-9 transition-colors hover:border-signal/50"
-          >
-            <p className="tabular text-4xl font-extrabold tracking-tight">{card.value}</p>
-            <p className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
-              {card.label}
-              <ArrowRight
-                className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </p>
-          </Link>
-        ))}
-        <div className="panel p-7 lg:col-span-3">
+    <AccountLayout
+      active="/account"
+      title="Overview"
+      copy="Cart, saved items, authentication status, and orders come from the Bazaar API."
+    >
+      <div className="space-y-10">
+        {/* Oversized tabular counters — the Swiss stat block. */}
+        <div className="grid gap-6 sm:grid-cols-3">
+          {[
+            { label: "Items in cart", value: String(cartCount), to: "/cart" as const },
+            { label: "Saved items", value: String(wishlist.length), to: "/wishlist" as const },
+            {
+              label: "Orders placed",
+              value: String(orders.data?.length ?? 0),
+              to: "/track-order" as const,
+            },
+          ].map((card) => (
+            <Link key={card.label} to={card.to} className="panel group p-7 hover:border-accent">
+              <p className="price tabular text-5xl leading-none font-bold">{card.value}</p>
+              <p className="mt-4 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                {card.label}
+                <ArrowRight
+                  className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </p>
+            </Link>
+          ))}
+        </div>
+
+        <section aria-labelledby="account-auth-heading" className="panel p-7">
           <div className="flex items-start gap-3">
             <span
-              className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+              aria-hidden="true"
+              className={`mt-1.5 h-2 w-2 shrink-0 ${
                 auth.isPending
                   ? "bg-muted-foreground"
                   : auth.data?.authenticated
                     ? "bg-positive"
                     : "bg-deal"
               }`}
-              aria-hidden="true"
             />
             <div>
-              <h2 className="font-bold">Authentication</h2>
+              <h2
+                id="account-auth-heading"
+                className="text-xs font-bold uppercase tracking-[0.14em]"
+              >
+                Authentication
+              </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {auth.isPending
                   ? "Checking…"
@@ -89,25 +240,13 @@ function Account() {
               </p>
             </div>
           </div>
-        </div>
-        <nav
-          className="grid gap-3 sm:grid-cols-2 lg:col-span-3 lg:grid-cols-5"
-          aria-label="Account settings"
-        >
-          {[
-            { label: "Profile", to: "/profile" as const },
-            { label: "Addresses", to: "/addresses" as const },
-            { label: "Sessions", to: "/sessions" as const },
-            { label: "Notifications", to: "/notifications" as const },
-            { label: "Returns", to: "/returns" as const },
-          ].map((item) => (
-            <Link key={item.to} to={item.to} className="btn btn-quiet">
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="panel p-7 lg:col-span-3 lg:p-9">
-          <h2 className="text-lg font-bold tracking-tight">Order history</h2>
+        </section>
+
+        <section aria-labelledby="account-orders-heading" className="panel p-7">
+          <h2 id="account-orders-heading" className="text-xs font-bold uppercase tracking-[0.14em]">
+            Order history
+          </h2>
+          <div className="rule mt-3" />
           {orders.isPending ? (
             <div className="mt-6 space-y-3" aria-busy="true">
               {Array.from({ length: 3 }).map((_, index) => (
@@ -128,9 +267,9 @@ function Account() {
               </Link>
             </div>
           ) : (
-            /* Hairline rows + zebra: same treatment as the comparison matrix so
-               every data table on the site reads the same way. */
-            <div className="mt-6 overflow-x-auto rounded-2xl border border-border">
+            /* Hairline rows via spec-matrix: every data table on the site reads
+               the same way. */
+            <div className="mt-6 overflow-x-auto border border-border">
               <table className="spec-matrix min-w-130 text-sm">
                 <thead>
                   <tr className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -147,13 +286,13 @@ function Account() {
                         <Link
                           to="/orders/$reference"
                           params={{ reference: order.reference }}
-                          className="tabular font-semibold hover:text-glow hover:underline"
+                          className="tabular font-semibold hover:text-accent hover:underline"
                         >
                           {order.reference}
                         </Link>
                       </td>
                       <td className="tabular text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString()}
+                        {new Date(order.createdAt).toLocaleDateString("en-US")}
                       </td>
                       <td className="tabular font-semibold">
                         {formatPrice(order.totals.total.amountMinor / 100)}
@@ -169,8 +308,8 @@ function Account() {
               </table>
             </div>
           )}
-        </div>
-      </section>
-    </>
+        </section>
+      </div>
+    </AccountLayout>
   );
 }
