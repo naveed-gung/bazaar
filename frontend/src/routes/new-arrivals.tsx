@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { PageHero } from "@/components/page-hero";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ProductCard } from "@/components/product-card";
 import { Reveal } from "@/components/motion";
 import { EmptyState, ProductGridSkeleton } from "@/components/ui";
@@ -28,18 +28,37 @@ function NewArrivals() {
 
   return (
     <>
-      <PageHero
-        eyebrow="New Arrivals"
-        title="Just Landed"
-        copy="The latest devices to pass our review process — new hardware, new firmware, same guarantee."
-      />
-      <section className="mx-auto max-w-[1600px] px-6 py-16 lg:px-10 lg:py-24">
-        {catalog.error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {catalog.error.message}
+      {/* 01 — New arrivals header */}
+      <section className="shell pt-10 pb-12 lg:pt-14 lg:pb-16">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "New Arrivals" }]} />
+        <div className="rule-strong mt-8" />
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <div className="max-w-3xl">
+            <span className="eyebrow">01 — New Arrivals</span>
+            <h1 className="headline mt-4 text-[clamp(2.5rem,6vw,4.5rem)]">Just Landed</h1>
+          </div>
+          <p className="measure max-w-md pb-2 text-sm leading-relaxed text-muted-foreground">
+            The latest devices to pass our review process — new hardware, new firmware, same
+            guarantee.
           </p>
+        </div>
+      </section>
+
+      {/* 02 — This week's arrivals */}
+      <section className="shell pb-20 lg:pb-28">
+        <div className="rule-strong" />
+        <span className="eyebrow mt-6">02 — This Week</span>
+
+        {catalog.error ? (
+          <div className="panel mt-8 p-7">
+            <p role="alert" className="text-sm text-destructive">
+              {catalog.error.message}
+            </p>
+          </div>
         ) : catalog.isPending ? (
-          <ProductGridSkeleton count={8} />
+          <div className="mt-10">
+            <ProductGridSkeleton count={8} />
+          </div>
         ) : list.length === 0 ? (
           <EmptyState
             icon={<Sparkles className="h-6 w-6" />}
@@ -50,12 +69,15 @@ function NewArrivals() {
                 Browse all products
               </Link>
             }
+            className="mt-8"
           />
         ) : (
           <>
-            <p className="text-sm text-muted-foreground" aria-live="polite">
-              <span className="tabular font-semibold text-foreground">{list.length}</span> new{" "}
-              {list.length === 1 ? "arrival" : "arrivals"}
+            <p className="mt-8 flex items-baseline gap-3" aria-live="polite">
+              <span className="price tabular text-5xl leading-none font-bold">{list.length}</span>
+              <span className="text-xs font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                new {list.length === 1 ? "arrival" : "arrivals"}
+              </span>
             </p>
             <div className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-10">
               {list.map((p, i) => (
