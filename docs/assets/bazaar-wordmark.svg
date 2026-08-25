@@ -1,17 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title description">
-  <title id="title">Bazaar</title>
-  <desc id="description">Bazaar commerce platform wordmark with product orbit marks</desc>
-  <rect width="1200" height="300" rx="36" fill="#f8fafc"/>
-  <rect x="32" y="32" width="236" height="236" rx="54" fill="#111827"/>
-  <path d="M94 88h71c37 0 59 17 59 45 0 17-9 31-25 38 21 7 32 22 32 43 0 31-24 50-64 50H94V88Zm68 56c14 0 22-6 22-17s-8-17-22-17h-29v34h29Zm4 58c16 0 25-7 25-19 0-13-9-19-25-19h-33v38h33Z" fill="#f8fafc"/>
-  <circle cx="221" cy="84" r="13" fill="#1473e6"/>
-  <text x="330" y="170" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="800" letter-spacing="-5">Bazaar</text>
-  <circle cx="733" cy="151" r="11" fill="#1473e6"/>
-  <text x="334" y="222" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="600" letter-spacing="3">MODERN COMMERCE · SERVER AUTHORITY</text>
-  <g fill="none" stroke="#1473e6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M936 103h129l-13 84H958l-22-117h-31"/>
-    <circle cx="971" cy="217" r="13"/>
-    <circle cx="1035" cy="217" r="13"/>
-    <path d="M1092 92h46v46h-46zM1115 80v70M1080 115h70" opacity=".45"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 170" role="img" aria-labelledby="bwm-title">
+  <title id="bwm-title">Bazaar — Swiss Signal wordmark</title>
+  <!-- SWISS SIGNAL lockup: expanded-black uppercase ink type, one signal-red
+       full stop, hairline baseline rule. Matches frontend tokens
+       (#111111 ink · #C42B1C signal red · #F5F5F3 paper). -->
+  <g font-family="Archivo, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="800" letter-spacing="-3">
+    <text x="16" y="118" font-size="128" fill="#111111">BAZAAR<tspan fill="#C42B1C">.</tspan></text>
   </g>
+  <rect x="20" y="140" width="150" height="5" fill="#C42B1C"/>
 </svg>
