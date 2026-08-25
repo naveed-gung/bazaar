@@ -17,7 +17,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { ShopAssistant } from "@/components/shop-assistant";
 import { ToastViewport } from "@/components/toast";
 import { ConfirmDialogHost } from "@/components/confirm-dialog";
-import { WelcomeScreen } from "@/components/welcome-screen";
+import {
+  RouteTransitionCover,
+  WelcomeScreen,
+} from "@/components/welcome-screen";
 
 function NotFoundComponent() {
   return (
@@ -190,12 +193,12 @@ function RootComponent() {
           </main>
           <SiteFooter />
           <ShopAssistant />
+          {/* SSR-47 — full splash on document load; short cover on every
+              page-to-page navigation (owner directive). */}
+          <WelcomeScreen />
+          <RouteTransitionCover />
           <ToastViewport />
           <ConfirmDialogHost />
-          {/* SSR-32 — static SSR'd splash: ships in the payload, hydrates
-              identically, tears down post-hydration only (timers + one-shot
-              skip listeners + scroll unlock live in its own effect). */}
-          <WelcomeScreen />
         </div>
       </StoreProvider>
     </QueryClientProvider>
