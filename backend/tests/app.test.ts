@@ -57,8 +57,10 @@ describe("API shell", () => {
     try {
       await db.collection("users").insertOne({ firebaseUid: uid, email: `${uid}@example.test`, displayName: "Security Test", roles: ["client"], createdAt: new Date() });
       await db.collection("sessions").insertOne({ tokenHash, firebaseUid: uid, email: `${uid}@example.test`, displayName: "Security Test", roles: ["admin"], expiresAt: new Date(Date.now() + 60_000), purgeAt: new Date(Date.now() + 60_000), createdAt: new Date() });
+      // RBAC-03 replaced the single ADMIN_REQUIRED gate with per-endpoint PERMISSION_DENIED;
+      // the behavioural guarantee under test is unchanged: stale session roles grant nothing.
       const response = await request(app).get("/api/v1/admin/dashboard").set("cookie", `bazaar_session=${token}`).expect(403);
-      expect(response.body.code).toBe("ADMIN_REQUIRED");
+      expect(response.body.code).toBe("PERMISSION_DENIED");
       const user = await db.collection("users").findOne({ firebaseUid: uid });
       expect(user?.["roles"]).toEqual(["client"]);
     } finally {
