@@ -1,37 +1,42 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/breadcrumbs";
 
+/**
+ * Swiss page header (SF-12): breadcrumb trail over a 3px ink rule, numbered
+ * eyebrow, expanded-black uppercase title, optional lede copy and right-aligned
+ * actions on one baseline — hard left throughout. The `.shell` container and
+ * the hairline bottom border are fixed; everything else flows.
+ */
 export function PageHero({
   eyebrow,
   title,
   copy,
   actions,
+  crumbs,
   children,
 }: {
   eyebrow: string;
   title: string;
   copy?: string;
   actions?: ReactNode;
+  /** Defaults to Home › {eyebrow}. */
+  crumbs?: BreadcrumbItem[];
   children?: ReactNode;
 }) {
+  const trail = crumbs ?? [{ label: "Home", to: "/" }, { label: eyebrow }];
   return (
     <section className="border-b border-border bg-surface">
-      <div className="mx-auto max-w-[1600px] px-6 py-16 lg:px-10 lg:py-24">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs">
-          <Link to="/" className="text-muted-foreground hover:text-foreground">
-            Home
-          </Link>
-          <ChevronRight className="h-3 w-3 text-muted-foreground/60" aria-hidden="true" />
-          <span className="font-medium text-foreground">{eyebrow}</span>
-        </nav>
-        <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+      <div className="shell py-12 lg:py-16">
+        <Breadcrumbs items={trail} />
+        <hr className="rule-strong mt-6" />
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
           <div className="max-w-3xl">
-            <h1 className="text-[clamp(2.25rem,5vw,3.75rem)] font-extrabold leading-[1.05] tracking-tight">
-              {title}
-            </h1>
+            <span className="eyebrow">{eyebrow}</span>
+            {/* `.headline` supplies the expanded-black setting; the clamp keeps
+                inner pages off landing-page display scale. */}
+            <h1 className="headline mt-5 text-[clamp(2.25rem,5vw,4rem)]">{title}</h1>
             {copy && (
-              <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground lg:text-lg">
+              <p className="measure mt-6 text-base leading-relaxed text-muted-foreground lg:text-lg">
                 {copy}
               </p>
             )}
