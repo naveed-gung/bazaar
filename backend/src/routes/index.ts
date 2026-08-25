@@ -10,6 +10,7 @@ import { accountRouter } from "./account.js";
 import { adminRouter } from "./admin.js";
 import { afterSalesRouter } from "./after-sales.js";
 import { mediaRouter } from "./media.js";
+import { rbacRouter } from "./rbac.js";
 
 export const apiRouter = Router();
 
@@ -22,6 +23,9 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/me", accountRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/media", mediaRouter);
+// Role & user-role management. Same "/admin" prefix as adminRouter so the app-level admin
+// rate limit applies; unmatched paths fall through from adminRouter to this router.
+apiRouter.use("/admin", rbacRouter);
 apiRouter.use("/catalog", catalogRouter);
 apiRouter.use("/cart", cartRouter);
 apiRouter.use("/orders", orderRouter);
