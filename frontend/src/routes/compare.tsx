@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Scale, ShoppingBag, Trash2, X } from "lucide-react";
-import { PageHero } from "@/components/page-hero";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { SpecTiles, specIcon } from "@/components/spec-sheet";
 import { AvailabilityTag, EmptyState, Pill, Rating, Skeleton } from "@/components/ui";
 import { api, fromApiProduct, type CatalogProduct } from "@/lib/api";
@@ -55,18 +55,36 @@ function Compare() {
 
   return (
     <>
-      <PageHero
-        eyebrow="Compare"
-        title="Product comparison"
-        copy="Compare up to four products using live catalog specifications and prices."
-      />
-      <section className="mx-auto max-w-[1600px] px-6 py-16 lg:px-10 lg:py-24">
-        {comparison.isPending ? (
-          <CompareSkeleton />
-        ) : comparison.error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {comparison.error.message}
+      {/* 01 — Compare header */}
+      <section className="shell pt-10 pb-12 lg:pt-14 lg:pb-16">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Compare" }]} />
+        <div className="rule-strong mt-8" />
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <div className="max-w-3xl">
+            <span className="eyebrow">01 — Compare</span>
+            <h1 className="headline mt-4 text-[clamp(2.5rem,6vw,4.5rem)]">Product Comparison</h1>
+          </div>
+          <p className="measure max-w-md pb-2 text-sm leading-relaxed text-muted-foreground">
+            Compare up to four products using live catalog specifications and prices.
           </p>
+        </div>
+      </section>
+
+      {/* 02 — The matrix */}
+      <section className="shell pb-20 lg:pb-28">
+        <div className="rule-strong" />
+        <span className="eyebrow mt-6">02 — Matrix</span>
+
+        {comparison.isPending ? (
+          <div className="mt-10">
+            <CompareSkeleton />
+          </div>
+        ) : comparison.error ? (
+          <div className="panel mt-8 p-7">
+            <p role="alert" className="text-sm text-destructive">
+              {comparison.error.message}
+            </p>
+          </div>
         ) : !products.length ? (
           <EmptyState
             icon={<Scale className="h-6 w-6" />}
@@ -77,10 +95,11 @@ function Compare() {
                 Browse products
               </Link>
             }
+            className="mt-8"
           />
         ) : (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
               <p className="text-sm text-muted-foreground">
                 <span className="tabular font-semibold text-foreground">{products.length}</span> of{" "}
                 {COMPARE_LIMIT} slots used
@@ -115,7 +134,7 @@ function Compare() {
             </div>
 
             {/* Desktop: one matrix, sticky labels, hairline rows. */}
-            <div className="mt-8 hidden overflow-x-auto rounded-3xl border border-border md:block">
+            <div className="mt-8 hidden overflow-x-auto border border-border md:block">
               <table className="spec-matrix min-w-205">
                 <caption className="sr-only">
                   Specification comparison for {products.map((p) => p.name).join(", ")}
@@ -234,7 +253,7 @@ function CompareHeader({
           alt=""
           width={240}
           height={240}
-          className="aspect-square w-full max-w-40 rounded-2xl border border-border object-cover"
+          className="aspect-square w-full max-w-40 border border-border object-cover"
         />
       </Link>
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -276,14 +295,14 @@ function CompareSkeleton() {
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="panel p-5">
-            <Skeleton className="aspect-square w-full max-w-40 rounded-2xl" />
+            <Skeleton className="aspect-square w-full max-w-40" />
             <Skeleton className="mt-4 h-4 w-4/5" />
             <Skeleton className="mt-3 h-6 w-24" />
-            <Skeleton className="mt-4 h-9 w-full rounded-xl" />
+            <Skeleton className="mt-4 h-9 w-full" />
           </div>
         ))}
       </div>
-      <Skeleton className="mt-8 h-64 w-full rounded-3xl" />
+      <Skeleton className="mt-8 h-64 w-full" />
     </div>
   );
 }
