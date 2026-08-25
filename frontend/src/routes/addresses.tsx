@@ -1,9 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { MapPin, Trash2 } from "lucide-react";
-import { PageHero } from "@/components/page-hero";
+import { AccountLayout } from "@/routes/account";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { api } from "@/lib/api";
+
 type Address = {
   id: string;
   label: string;
@@ -14,6 +15,7 @@ type Address = {
   postalCode: string;
   country: string;
 };
+
 export const Route = createFileRoute("/addresses")({
   head: () => ({
     meta: [
@@ -58,18 +60,18 @@ function Addresses() {
     await client.invalidateQueries({ queryKey: ["addresses"] });
   }
   return (
-    <>
-      <PageHero
-        eyebrow="Account"
-        title="Addresses"
-        copy="Manage saved delivery addresses for your signed-in account."
-      />
-      <section className="mx-auto grid max-w-275 gap-8 px-6 py-16 lg:grid-cols-2">
-        <div className="space-y-4">
+    <AccountLayout
+      active="/addresses"
+      title="Addresses"
+      copy="Manage saved delivery addresses for your signed-in account."
+    >
+      <div className="grid items-start gap-10 lg:grid-cols-12">
+        {/* Saved addresses — hairline-divided rows, not cards. */}
+        <div className="lg:col-span-7">
           {query.isPending ? (
             <div className="space-y-4" aria-busy="true">
               {Array.from({ length: 2 }).map((_, index) => (
-                <Skeleton key={index} className="h-48 w-full rounded-2xl" />
+                <Skeleton key={index} className="h-40 w-full" />
               ))}
             </div>
           ) : query.error ? (
@@ -83,35 +85,46 @@ function Addresses() {
               copy="Add one on the right and checkout can reuse it on every future order."
             />
           ) : (
-            query.data.map((address) => (
-              <article key={address.id} className="panel p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <h2 className="font-bold">{address.label}</h2>
-                  <button
-                    type="button"
-                    onClick={() => void remove(address.id)}
-                    className="btn btn-ghost btn-sm text-destructive"
-                    aria-label={`Remove address ${address.label}`}
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    Remove
-                  </button>
-                </div>
-                <address className="mt-3 text-sm not-italic leading-6 text-muted-foreground">
-                  {address.fullName}
-                  <br />
-                  {address.address1}
-                  <br />
-                  {address.city}, {address.state} {address.postalCode}
-                  <br />
-                  {address.country}
-                </address>
-              </article>
-            ))
+            <ul className="divide-y divide-border border-y border-border">
+              {query.data.map((address) => (
+                <li key={address.id} className="py-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <h2 className="text-xs font-bold uppercase tracking-[0.14em]">
+                      {address.label}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => void remove(address.id)}
+                      className="btn btn-ghost btn-sm text-destructive"
+                      aria-label={`Remove address ${address.label}`}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      Remove
+                    </button>
+                  </div>
+                  <address className="mt-3 text-sm not-italic leading-6 text-muted-foreground">
+                    {address.fullName}
+                    <br />
+                    {address.address1}
+                    <br />
+                    {address.city}, {address.state} {address.postalCode}
+                    <br />
+                    {address.country}
+                  </address>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-        <form onSubmit={add} className="panel grid h-fit gap-5 p-7 sm:grid-cols-2 lg:p-9">
-          <h2 className="text-lg font-bold tracking-tight sm:col-span-2">Add an address</h2>
+
+        {/* Add-an-address form — explicit labels, autocomplete tokens and the
+            required marker are part of the a11y contract; `add` captures
+            currentTarget before awaiting so reset always hits the live node. */}
+        <form onSubmit={add} className="panel grid h-fit gap-5 p-7 sm:grid-cols-2 lg:col-span-5">
+          <h2 className="text-xs font-bold uppercase tracking-[0.14em] sm:col-span-2">
+            Add an address
+          </h2>
+          <div className="rule sm:col-span-2" />
           {FIELDS.map((field) => (
             <label
               key={field.name}
@@ -136,7 +149,7 @@ function Addresses() {
             <button className="btn btn-primary">Add address</button>
           </div>
         </form>
-      </section>
-    </>
+      </div>
+    </AccountLayout>
   );
 }
