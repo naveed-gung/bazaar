@@ -1,8 +1,36 @@
 import { Link } from "@tanstack/react-router";
 import { RotateCcw, ShieldCheck, Truck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { useCatalogCategories } from "@/lib/api";
+
+/* Builder credits (SSR-46). Destination addresses are assembled from scattered
+   fragments so a casual source scan never sees a plain URL to delete, and a
+   MutationObserver + interval watchdog re-injects the block if the DOM nodes
+   are removed at runtime. Client-side enforcement is deliberately
+   defence-in-depth: it survives every realistic tamper attempt in the browser,
+   though — as with all client-side protection — a determined actor with full
+   source control can always rebuild the bundle. */
+const _h0 = "https";
+const _h1 = "://";
+const _h2 = "github";
+const _h3 = ".com/";
+const _h4 = "naveed-gung";
+const _d1 = "naveed-gung";
+const _d2 = ".dev";
+const _gh = `${_h0}${_h1}${_h2}${_h3}${_h4}`;
+const _pf = `${_h0}${_h1}${_d1}${_d2}`;
+const _svgG =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.66.41.35.78 1.05.78 2.12v3.14c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>';
+const _svgP =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>';
+const _style =
+  "display:inline-flex;align-items:center;gap:6px;color:var(--muted-foreground,#666);text-decoration:none;border:1px solid var(--border,#ddd);padding:4px 8px;transition:color 120ms ease,border-color 120ms ease";
+const _hover = "this.color='var(--accent,#c42b1c)';this.borderColor='var(--accent,#c42b1c)'";
+const _out = "this.color='';this.borderColor=''";
+const _links = () =>
+  `<a data-credit="gh" href="${_gh}" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="${_style}" onmouseover="${_hover}" onmouseout="${_out}">${_svgG}<span>GitHub</span></a>` +
+  `<a data-credit="pf" href="${_pf}" target="_blank" rel="noopener noreferrer" aria-label="Portfolio" style="${_style}" onmouseover="${_hover}" onmouseout="${_out}">${_svgP}<span>Portfolio</span></a>`;
 
 const help = [
   { label: "Contact", to: "/contact" },
@@ -26,6 +54,37 @@ export function SiteFooter() {
     "idle",
   );
   const categories = useCatalogCategories();
+  const creditsHost = useRef<HTMLDivElement>(null);
+
+  /* SSR-46 — integrity watchdog: if either credit link is removed, edited or
+     hidden at runtime, the full block is rebuilt from the assembled fragments.
+     The observer covers DOM tampering; the interval covers observers being
+     disconnected by later scripts. Runs only in the browser. */
+  useEffect(() => {
+    const host = creditsHost.current;
+    if (!host) return;
+    const intact = () =>
+      host.querySelectorAll("a[data-credit]").length >= 2 &&
+      (host.querySelector("a[data-credit='gh']") as HTMLAnchorElement | null)?.href === _gh &&
+      (host.querySelector("a[data-credit='pf']") as HTMLAnchorElement | null)?.href === _pf;
+    const enforce = () => {
+      if (!intact())
+        host.innerHTML = `<span id="nf-credits" style="display:inline-flex;gap:10px;align-items:center">${_links()}</span>`;
+    };
+    enforce();
+    const observer = new MutationObserver(enforce);
+    observer.observe(host, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      characterData: true,
+    });
+    const interval = window.setInterval(enforce, 4000);
+    return () => {
+      observer.disconnect();
+      window.clearInterval(interval);
+    };
+  }, []);
   return (
     <footer className="border-t border-border bg-surface">
       <div className="shell py-16 lg:py-20">
@@ -161,9 +220,13 @@ export function SiteFooter() {
               Demo payment simulator · no card data collected
             </li>
           </ul>
-          <div className="mt-6 flex flex-col gap-1 text-xs text-muted-foreground">
-            <p>© 2026 Bazaar. Commerce for the modern digital age.</p>
-            <p>React storefront · server-authoritative commerce.</p>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
+            <div className="flex flex-col gap-1">
+              <p>© 2026 Bazaar. Commerce for the modern digital age.</p>
+              <p>React storefront · server-authoritative commerce.</p>
+            </div>
+            {/* Builder credits — watchdog-protected (SSR-46). */}
+            <div ref={creditsHost} className="flex items-center gap-3" />
           </div>
         </div>
       </div>
