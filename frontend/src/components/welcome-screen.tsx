@@ -41,7 +41,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
 
 const SPLASH_CSS = `
-#bw{position:fixed;inset:0;z-index:90;display:flex;align-items:center;background:var(--foreground,#111111);color:var(--background,#f5f5f3);font-family:Archivo,'Instrument Sans',Arial,sans-serif;animation:bw-cover 1600ms linear both,bw-failsafe 1900ms linear both}
+#bw{position:fixed;inset:0;z-index:90;display:flex;align-items:center;background:var(--foreground,#111111);color:var(--background,#f5f5f3);font-family:Archivo,'Instrument Sans',Arial,sans-serif;animation:bw-cover 900ms linear both,bw-failsafe 1150ms linear both}
 @media (prefers-reduced-motion:reduce){#bw,.bw-mark,.bw-rule,.bw-label{animation-duration:1ms!important;animation-delay:0ms!important}}
 #bw.bw-exit{animation:bw-exit 300ms ease-out both}
 .bw-shell{padding:0 clamp(24px,6vw,96px)}
@@ -50,14 +50,18 @@ const SPLASH_CSS = `
 .bw-rule{display:block;width:min(512px,60vw);height:1px;margin-top:20px;background:var(--accent,#c42b1c);transform-origin:left center;animation:bw-sweep 900ms cubic-bezier(.22,1,.36,1) both}
 .bw-label{margin:16px 0 0;font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;opacity:.7;animation:bw-rise 480ms 120ms cubic-bezier(.22,1,.36,1) both}
 @keyframes bw-cover{from{opacity:1}to{opacity:1}}
-@keyframes bw-failsafe{0%,84%{opacity:1}100%{opacity:0;visibility:hidden}}
+@keyframes bw-failsafe{0%,78%{opacity:1}100%{opacity:0;visibility:hidden}}
 @keyframes bw-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes bw-sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes bw-exit{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-18px)}}
 `;
 
-const HOLD_MS = 1600;
-const EXIT_MS = 300;
+/* SSR-47 rev2 — the owner reported the full-length splash made both local dev
+   and production feel like the site hangs. Time-to-content is halved: 900 ms
+   hold + 250 ms exit keeps the brand moment while more than halving the
+   interaction delay. */
+const HOLD_MS = 900;
+const EXIT_MS = 250;
 /** EXIT + slack — the unmount lands after the exit transition has finished. */
 const TEARDOWN_MS = EXIT_MS + 100;
 
@@ -174,7 +178,7 @@ export function WelcomeScreen() {
    visitors never see it. */
 
 const COVER_CSS = `
-#bwt{position:fixed;inset:0;z-index:89;display:flex;align-items:center;background:var(--foreground,#111111);color:var(--background,#f5f5f3);font-family:Archivo,'Instrument Sans',Arial,sans-serif;animation:bwt-in 140ms ease-out both,bwt-out 220ms ease-in 400ms both}
+#bwt{position:fixed;inset:0;z-index:89;display:flex;align-items:center;background:var(--foreground,#111111);color:var(--background,#f5f5f3);font-family:Archivo,'Instrument Sans',Arial,sans-serif;animation:bwt-in 100ms ease-out both,bwt-out 160ms ease-in 260ms both}
 #bwt .bw-shell{padding:0 clamp(24px,6vw,96px)}
 #bwt .bw-mark{margin:0;border:1px solid var(--background,#f5f5f3);padding:8px 16px;font-size:clamp(28px,5vw,48px);line-height:1;font-weight:800;letter-spacing:-.02em}
 #bwt .bw-mark span{color:var(--accent,#c42b1c)}
@@ -205,7 +209,7 @@ export function RouteTransitionCover() {
     }
     if (reduced) return;
     setVisible(true);
-    const timer = window.setTimeout(() => setVisible(false), 640);
+    const timer = window.setTimeout(() => setVisible(false), 440);
     return () => window.clearTimeout(timer);
   }, [pathname]);
 
