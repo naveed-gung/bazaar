@@ -8,6 +8,12 @@
 # there, so `vite build` failed and deploys stopped shipping — which is also
 # why earlier hydration hotfixes appeared to "not work" on production. Pin the
 # LTS line the toolchain supports.
+#
+# INFRA-04: `.nvmrc` now carries the same "20" and is what GitHub Actions reads
+# (node-version-file), so CI, the Actions deploy fallback and Netlify's builders
+# agree. Netlify reads .nvmrc too; NODE_VERSION is kept because an explicit
+# netlify.toml value wins over the file and makes the pin visible where the
+# build is configured. CHANGE BOTH TOGETHER or the split-brain comes back.
 [build.environment]
   NODE_VERSION = "20"
 
@@ -28,8 +34,32 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    # INFRA-05: the site is HTTPS-only on Netlify, so pin it. No `preload` — that
+    # is a one-way submission to the browser preload list and an owner decision.
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    # Clickjacking: nothing here is meant to be framed. Deliberately NOT setting
+    # Cross-Origin-Opener-Policy — `same-origin` breaks Firebase
+    # signInWithPopup's handle back to the opener.
+    X-Frame-Options = "DENY"
 
+# Vite emits content-hashed filenames under /assets, so these are the only
+# responses that can honestly claim `immutable`. Without this rule Netlify's
+# default (`max-age=0, must-revalidate` + ETag) forces a conditional request for
+# every chunk on every navigation.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# INFRA-05: product imagery lives at STABLE, UNHASHED paths (/catalog/foo.jpg),
+# so `immutable` was a trap — replacing an image could never propagate to anyone
+# who had already loaded the old one, for a year. Cache hard but revalidatable.
 [[headers]]
   for = "/catalog/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
