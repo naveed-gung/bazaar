@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { RotateCcw, TriangleAlert } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { StoreProvider } from "@/lib/store";
@@ -17,7 +17,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ShopAssistant } from "@/components/shop-assistant";
 import { ToastViewport } from "@/components/toast";
 import { ConfirmDialogHost } from "@/components/confirm-dialog";
-import { RouteTransitionCover, WelcomeScreen } from "@/components/welcome-screen";
+import { RouteTransitionCover } from "@/components/welcome-screen";
 
 function NotFoundComponent() {
   return (
@@ -171,8 +171,8 @@ function RootShell({ children }: { children: ReactNode }) {
             <body> (body's only child at that moment was this very script), so
             its appendChild placed #bw-host BETWEEN the script and the app root
             div — inside React's hydration path — and hydration failed on every
-            cold load. The splash is now the static SSR'd <WelcomeScreen />
-            mounted in RootComponent below; see welcome-screen.tsx. */}
+            cold load. SSR-65 retired the splash entirely (it was unreachable);
+            only <RouteTransitionCover /> remains. See welcome-screen.tsx. */}
         {children}
         <Scripts />
       </body>
@@ -199,9 +199,9 @@ function RootComponent() {
           </main>
           <SiteFooter />
           <ShopAssistant />
-          {/* SSR-47 — full splash on document load; short cover on every
-              page-to-page navigation (owner directive). */}
-          <WelcomeScreen />
+          {/* SSR-65 — short ink cover on every page-to-page navigation. The
+              full-document splash that used to sit here was unreachable code
+              and is gone; see welcome-screen.tsx. */}
           <RouteTransitionCover />
           <ToastViewport />
           <ConfirmDialogHost />
