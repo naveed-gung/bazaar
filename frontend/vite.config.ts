@@ -14,7 +14,10 @@ export default defineConfig({
   },
   server: {
     host: "127.0.0.1",
+    // TASK-08 — strictPort: a silent fallback to 8081 breaks the backend's
+    // origin allowlist (WEB_ORIGIN pins 8080) and every API call 403s.
     port: 8080,
+    strictPort: true,
     proxy: {
       "/api": {
         target: "http://127.0.0.1:8787",
