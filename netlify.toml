@@ -4,7 +4,7 @@
   # npm workspaces. Dropping the lockfile on the build box lets Linux resolve
   # its own platform binding; local dev and the committed lockfile are
   # unaffected. Versions stay pinned by the ranges in package.json.
-  command = "rm -f package-lock.json && npm install && npm run build --workspace frontend"
+  command = "node -e \"require('fs').rmSync('package-lock.json',{force:true})\" && npm install && npm run build --workspace frontend"
   publish = "frontend/dist/client"
   functions = "netlify/functions"
 
