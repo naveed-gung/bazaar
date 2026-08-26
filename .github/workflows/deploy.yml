@@ -6,15 +6,14 @@
 # until/unless that switch is made.
 #
 # Behavior: when NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID repo secrets are absent,
-# the job emits a warning annotation and SUCCEEDS gracefully (every real step is
-# gated on the guard output) instead of failing the push.
+# the guard emits a notice annotation and the job SUCCEEDS gracefully (every
+# real step is gated on the guard output) instead of failing the push.
 
 name: Deploy (Netlify)
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,39 +26,37 @@ jobs:
   deploy:
     name: Deploy frontend to Netlify production
     runs-on: ubuntu-latest
-    # The secrets context is not usable directly in job-level `if:`; mapping
-    # presence to plain env vars is the standard workaround.
-    env:
-      NETLIFY_AUTH_TOKEN_PRESENT: ${{ secrets.NETLIFY_AUTH_TOKEN != '' }}
-      NETLIFY_SITE_ID_PRESENT: ${{ secrets.NETLIFY_SITE_ID != '' }}
     steps:
       - name: "Guard: require Netlify secrets"
         id: guard
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
-          if [ "${NETLIFY_AUTH_TOKEN_PRESENT}" != "true" ] || [ "${NETLIFY_SITE_ID_PRESENT}" != "true" ]; then
-            echo "::warning::NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID not configured — skipping deploy (HUMAN-GATE: add both repo secrets)"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+          if [ -n "$NETLIFY_AUTH_TOKEN" ] && [ -n "$NETLIFY_SITE_ID" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID secrets are not set — skipping Netlify deploy. Add repository secrets to enable auto-deploy."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Checkout
-        if: steps.guard.outputs.skip == 'false'
+        if: steps.guard.outputs.enabled == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node
-        if: steps.guard.outputs.skip == 'false'
+        if: steps.guard.outputs.enabled == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
-        if: steps.guard.outputs.skip == 'false'
+        if: steps.guard.outputs.enabled == 'true'
         run: npm ci
 
       - name: Deploy to Netlify production
-        if: steps.guard.outputs.skip == 'false'
+        if: steps.guard.outputs.enabled == 'true'
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
