@@ -1,17 +1,21 @@
 # CI — static checks + backend tests against an ephemeral MongoDB replica set.
 #
 # Design notes:
-# - The `test` job uses an ephemeral mongo:7 service container as the PRIMARY path:
-#   deterministic, zero secrets. Its Docker healthcheck both pings AND self-initiates
-#   the single-node replica set (rs0) if not yet initiated, so the job never needs an
-#   extra init step or any external tooling.
+# - The `test` job uses an ephemeral mongo:7 service container started as a
+#   single-node replica set (--replSet rs0). Transactions require an INITIATED
+#   replica set, so an explicit init step runs BEFORE anything touches the DB.
+# - Env contract mirrors backend/src/config.ts: MONGODB_URI is the only required
+#   var; MONGODB_DB_NAME is pinned to a throwaway database so CI never touches
+#   anything else. All FIREBASE_* vars default to "" and are NOT required:
+#   Firebase Admin initializes lazily and degrades to null auth, which every
+#   test/route handles.
 #
-# ALTERNATIVE (Atlas-secrets path): if the owner prefers testing against real Atlas,
-# delete the `services:` block below and set a repository secret MONGODB_URI pointing
-# at the Atlas cluster (e.g. mongodb+srv://user:pass@host/bazaar_test?retryWrites=true),
-# then expose it via job-level `env: MONGODB_URI: ${{ secrets.MONGODB_URI }}`.
-# Keep the same TASK-05 retry-once test step unchanged — it mitigates the documented
-# MongoNetworkError / hook-timeout infra flake class regardless of which backend is used.
+# ALTERNATIVE (Atlas-secrets path): delete the `services:` block + init step
+# below, set a repository secret MONGODB_URI pointing at the Atlas cluster
+# (e.g. mongodb+srv://user:pass@host/bazaar_test?retryWrites=true), and expose it
+# via job-level `env: MONGODB_URI: ${{ secrets.MONGODB_URI }}`. Keep the same
+# TASK-05 retry-once test steps unchanged — they mitigate the documented
+# MongoNetworkError / hook-timeout infra flake class regardless of backend.
 
 name: CI
 
@@ -25,8 +29,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   static:
@@ -57,7 +61,7 @@ jobs:
       - name: Upload frontend build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-client-dist
           path: frontend/dist/client
           if-no-files-found: error
           retention-days: 7
@@ -69,8 +73,6 @@ jobs:
       # Mirrors backend/src/config.ts: MONGODB_URI is the only required var;
       # MONGODB_DB_NAME defaults to "bazaar" but is pinned here so CI never
       # touches anything outside this throwaway database.
-      # All FIREBASE_* vars default to "" and are NOT required: Firebase Admin
-      # initializes lazily and degrades to null auth, which every test/route handles.
       MONGODB_URI: mongodb://127.0.0.1:27017/bazaar_test?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: bazaar_test
     services:
@@ -81,11 +83,10 @@ jobs:
         options: >-
           --replSet rs0
           --bind_ip_all
-          --health-cmd "mongosh --quiet --eval 'try { if (rs.status().ok !== 1) { throw new Error('pending') } } catch (e) { try { rs.initiate({ _id: 'rs0', members: [ { _id: 0, host: 'localhost:27017' } ] }) } catch (ignored) {} } let attempts = 0; while (rs.status().ok !== 1 && attempts < 150) { sleep(200); attempts += 1 } if (rs.status().ok !== 1) { quit(1) }'"
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
           --health-interval 10s
-          --health-timeout 10s
+          --health-timeout 5s
           --health-retries 10
-          --health-start-period 20s
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,6 +100,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Transactions require an INITIATED replica set: mongod runs with
+      # --replSet rs0 but stays NOT_INITIALIZED until rs.initiate() succeeds.
+      # Idempotent: re-initiating an initialized set just errors harmlessly;
+      # the loop exits only once rs.status() reports a healthy PRIMARY.
+      - name: Init single-node replica set (rs0)
+        run: |
+          MONGO_ID="${{ job.services.mongo.id }}"
+          ready=0
+          for attempt in $(seq 1 30); do
+            docker exec "$MONGO_ID" mongosh --quiet --eval 'try { rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]}) } catch (e) { print(e.message) }' >/dev/null 2>&1 || true
+            if docker exec "$MONGO_ID" mongosh --quiet --eval 'try { if (rs.status().ok === 1) { quit(0) } } catch (e) {} quit(1)'; then
+              echo "::notice::replica set rs0 reached PRIMARY"
+              ready=1
+              break
+            fi
+            echo "waiting for PRIMARY (attempt ${attempt}/30)"
+            sleep 2
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::replica set rs0 failed to reach PRIMARY"
+            exit 1
+          fi
+
       # Inspection finding: most test files seed their own fixtures, but
       # backend/tests/catalog.test.ts ("search suggestions", prefix "nov") requires the
       # seeded catalogue products, so a fresh database MUST be bootstrapped and seeded first.
@@ -110,16 +134,11 @@ jobs:
         run: npm run db:seed
 
       # TASK-05 mitigation: the suite intermittently hits MongoNetworkError /
-      # hook-timeout infra flakes with ZERO assertion failures; an immediate retry passes.
-      # Retry exactly once, then fail hard on the second attempt.
-      - name: Run backend tests (TASK-05 retry-once)
-        run: |
-          attempt=1
-          until npm test; do
-            if [ "$attempt" -ge 2 ]; then
-              echo "::error::Backend tests failed twice — treating as a real failure."
-              exit 1
-            fi
-            echo "::warning::TASK-05 infra flake class detected; retrying once"
-            attempt=$((attempt + 1))
-          done
+      # hook-timeout infra flakes with ZERO assertion failures; an immediate
+      # retry passes. Retry exactly once — the job fails only if BOTH attempts fail.
+      - name: Run backend tests
+        run: npm test
+
+      - name: Run backend tests (retry once — TASK-05 infra-flake mitigation)
+        if: failure()
+        run: npm test
