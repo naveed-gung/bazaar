@@ -1,0 +1,125 @@
+# CI — static checks + backend tests against an ephemeral MongoDB replica set.
+#
+# Design notes:
+# - The `test` job uses an ephemeral mongo:7 service container as the PRIMARY path:
+#   deterministic, zero secrets. Its Docker healthcheck both pings AND self-initiates
+#   the single-node replica set (rs0) if not yet initiated, so the job never needs an
+#   extra init step or any external tooling.
+#
+# ALTERNATIVE (Atlas-secrets path): if the owner prefers testing against real Atlas,
+# delete the `services:` block below and set a repository secret MONGODB_URI pointing
+# at the Atlas cluster (e.g. mongodb+srv://user:pass@host/bazaar_test?retryWrites=true),
+# then expose it via job-level `env: MONGODB_URI: ${{ secrets.MONGODB_URI }}`.
+# Keep the same TASK-05 retry-once test step unchanged — it mitigates the documented
+# MongoNetworkError / hook-timeout infra flake class regardless of which backend is used.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Static checks & frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/client
+          if-no-files-found: error
+          retention-days: 7
+
+  test:
+    name: Backend tests (ephemeral MongoDB)
+    runs-on: ubuntu-latest
+    env:
+      # Mirrors backend/src/config.ts: MONGODB_URI is the only required var;
+      # MONGODB_DB_NAME defaults to "bazaar" but is pinned here so CI never
+      # touches anything outside this throwaway database.
+      # All FIREBASE_* vars default to "" and are NOT required: Firebase Admin
+      # initializes lazily and degrades to null auth, which every test/route handles.
+      MONGODB_URI: mongodb://127.0.0.1:27017/bazaar_test?replicaSet=rs0&directConnection=true
+      MONGODB_DB_NAME: bazaar_test
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --replSet rs0
+          --bind_ip_all
+          --health-cmd "mongosh --quiet --eval 'try { if (rs.status().ok !== 1) { throw new Error('pending') } } catch (e) { try { rs.initiate({ _id: 'rs0', members: [ { _id: 0, host: 'localhost:27017' } ] }) } catch (ignored) {} } let attempts = 0; while (rs.status().ok !== 1 && attempts < 150) { sleep(200); attempts += 1 } if (rs.status().ok !== 1) { quit(1) }'"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 10
+          --health-start-period 20s
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Inspection finding: most test files seed their own fixtures, but
+      # backend/tests/catalog.test.ts ("search suggestions", prefix "nov") requires the
+      # seeded catalogue products, so a fresh database MUST be bootstrapped and seeded first.
+      # Both scripts are idempotent and close their DB connections on completion.
+      - name: Bootstrap ephemeral database
+        run: npm run db:bootstrap
+
+      - name: Seed ephemeral database
+        run: npm run db:seed
+
+      # TASK-05 mitigation: the suite intermittently hits MongoNetworkError /
+      # hook-timeout infra flakes with ZERO assertion failures; an immediate retry passes.
+      # Retry exactly once, then fail hard on the second attempt.
+      - name: Run backend tests (TASK-05 retry-once)
+        run: |
+          attempt=1
+          until npm test; do
+            if [ "$attempt" -ge 2 ]; then
+              echo "::error::Backend tests failed twice — treating as a real failure."
+              exit 1
+            fi
+            echo "::warning::TASK-05 infra flake class detected; retrying once"
+            attempt=$((attempt + 1))
+          done
