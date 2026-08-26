@@ -1,19 +1,53 @@
-# Deploy (Netlify) — Actions-driven CLI deploy fallback.
+# Deploy (Netlify) — CI-GATED production deploy.
 #
-# NOTE: the preferred long-term deployment path is Netlify's Git integration
-# (connect the repo in the Netlify UI). That is a HUMAN-GATE step handled
-# elsewhere; this workflow exists so production deploys still work from CI
-# until/unless that switch is made.
+# INFRA-04 rewrite. What was wrong with the previous version:
 #
-# Behavior: when NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID repo secrets are absent,
-# the guard emits a notice annotation and the job SUCCEEDS gracefully (every
-# real step is gated on the guard output) instead of failing the push.
+#   1. It triggered on `push: branches: [main]` with NO dependency on CI, so a
+#      push raced its own quality gates: a commit that fails typecheck/lint/
+#      tests could reach production before CI even finished reporting. Now the
+#      job runs on `workflow_run` and only when CI concluded `success`.
+#   2. It hardcoded `node-version: "24"` while netlify.toml pinned
+#      NODE_VERSION=20 — the deploy built on a runtime Netlify itself cannot
+#      build on (Node 24 does not install rolldown's linux binding). Node now
+#      comes from `.nvmrc`, the same file Netlify reads.
+#   3. `npx netlify-cli@latest` is unpinned: the tool that ships production
+#      could change between two deploys of the same commit. Pinned below.
+#      26.2.0 is the newest line whose engines still allow Node 20 (27+ requires
+#      >=22.13.0, which would silently build production on the wrong runtime
+#      because `netlify build` uses the ambient Node, NOT netlify.toml's pin).
+#   4. `--filter @bazaar/frontend` scoped the deploy to the frontend workspace.
+#      The root netlify.toml is what declares `functions = "netlify/functions"`,
+#      and that directory is NOT inside frontend/ — so the filtered deploy could
+#      ship the site without the API function behind /api/*. Removed.
+#
+# DEPLOY OWNERSHIP — read before enabling. A site can be deployed by Netlify's
+# own Git integration OR by this workflow. Running both means two builds per
+# push, two deploy IDs, and a last-writer-wins race for which one ends up live.
+# This workflow therefore stays inert unless the repository variable
+# DEPLOY_VIA_ACTIONS is set to "true" (Settings → Variables → Actions), and it
+# also needs the NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID secrets. Absent any of
+# them the job SUCCEEDS with a notice instead of failing the push.
+#
+# RECOMMENDED: leave DEPLOY_VIA_ACTIONS unset and use Netlify's Git integration
+# (it gives deploy previews per PR, atomic rollback, and build logs in the
+# Netlify UI). Use this workflow only when the repo cannot be Git-connected.
+# HUMAN-GATE either way: connecting the repo, adding secrets, and setting the
+# variable are owner actions.
 
 name: Deploy (Netlify)
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
+  # Manual escape hatch: deploy an already-green commit without a new push.
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (defaults to main)"
+        required: false
+        default: "main"
 
 permissions:
   contents: read
@@ -24,40 +58,62 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy frontend to Netlify production
+    name: Deploy to Netlify production
     runs-on: ubuntu-latest
+    # workflow_run fires for FAILED runs too — gate on the conclusion, or the
+    # gate is decorative. workflow_dispatch has no run to inspect.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
-      - name: "Guard: require Netlify secrets"
+      - name: "Guard: deploy ownership + Netlify credentials"
         id: guard
         env:
+          DEPLOY_VIA_ACTIONS: ${{ vars.DEPLOY_VIA_ACTIONS }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
-          if [ -n "$NETLIFY_AUTH_TOKEN" ] && [ -n "$NETLIFY_SITE_ID" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID secrets are not set — skipping Netlify deploy. Add repository secrets to enable auto-deploy."
+          if [ "$DEPLOY_VIA_ACTIONS" != "true" ]; then
+            echo "::notice::DEPLOY_VIA_ACTIONS is not \"true\" — Netlify's Git integration is treated as the deploy owner and this workflow is a no-op. Set the repository variable to hand deploys to Actions."
             echo "enabled=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "::error::DEPLOY_VIA_ACTIONS=true but NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID are missing. Deploys are OFF and Git integration is disowned — add the secrets or unset the variable."
+            exit 1
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # workflow_run checks out the DEFAULT branch by default, not the commit
+      # that passed CI. Pin the ref explicitly so the deploy ships exactly the
+      # tree CI validated.
       - name: Checkout
         if: steps.guard.outputs.enabled == 'true'
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event.workflow_run.head_sha }}
 
       - name: Setup Node
         if: steps.guard.outputs.enabled == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
         if: steps.guard.outputs.enabled == 'true'
         run: npm ci
 
+      # `--build` runs Netlify's own build pipeline (so the TanStack Start
+      # server function the @netlify/vite-plugin emits is produced and shipped);
+      # a bare `--dir` deploy would publish the static client only and break SSR.
       - name: Deploy to Netlify production
         if: steps.guard.outputs.enabled == 'true'
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        run: npx netlify-cli@latest deploy --build --prod --filter @bazaar/frontend
+        run: |
+          SHA="${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}"
+          npx --yes netlify-cli@26.2.0 deploy \
+            --build \
+            --prod \
+            --message "gha ${GITHUB_RUN_ID} · ${SHA}"
