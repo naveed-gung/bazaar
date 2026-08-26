@@ -48,22 +48,31 @@ function useAccountGuard() {
   const auth = useQuery({
     queryKey: ["auth-status"],
     queryFn: () => api<AuthStatus>("/auth/status"),
+    /* SSR-68 — race-proof the bounce. Right after signup, this cache still
+       holds the pre-signup GUEST response and is considered fresh; bouncing on
+       it stranded freshly authenticated users on /login with a redirect chain
+       that grew on every cycle. Now: always refetch on mount, and treat a
+       refetch-in-flight over a stale guest snapshot as still deciding. */
+    staleTime: 0,
+    refetchOnMount: "always",
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const pending = auth.isPending;
+  const deciding = auth.isPending || auth.isFetching;
   const authenticated = auth.data?.authenticated === true;
 
   useEffect(() => {
-    if (!pending && !authenticated) {
-      void navigate({
-        to: "/login",
-        search: { redirect: `${location.pathname}${location.searchStr}` },
-      });
+    if (!deciding && !authenticated) {
+      // Chain-breaker: never carry a /login?redirect=… URL forward — if the
+      // guard somehow fires from the login page itself, default to /account.
+      const target = location.pathname.startsWith("/login")
+        ? "/account"
+        : `${location.pathname}${location.searchStr}`;
+      void navigate({ to: "/login", search: { redirect: target } });
     }
-  }, [pending, authenticated, navigate, location.pathname, location.searchStr]);
+  }, [deciding, authenticated, navigate, location.pathname, location.searchStr]);
 
-  return { pending, authenticated };
+  return { pending: deciding, authenticated };
 }
 
 /**

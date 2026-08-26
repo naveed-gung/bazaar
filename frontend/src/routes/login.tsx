@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   createUserWithEmailAndPassword,
@@ -97,6 +98,9 @@ function Login() {
   // SSR-28 — route-scoped navigate: resolution of to/search can never be
   // ambiguous regardless of where this component mounts in the tree.
   const navigate = Route.useNavigate();
+  // SSR-68 — establish() invalidates the auth-status cache through this client
+  // so the account guard never reads its stale pre-signup guest snapshot.
+  const queryClient = useQueryClient();
   const { redirect, mode } = Route.useSearch();
   // SSR-39 — the rail container drifts subtly with scroll (useScrollDrift:
   // rAF-throttled, ±24px clamp, transform-only, reduced-motion off-switch,
@@ -128,6 +132,11 @@ function Login() {
   ) {
     const idToken = await user.getIdToken(true);
     await api("/auth/session", { method: "POST", body: JSON.stringify({ idToken }) });
+    /* SSR-68 — refresh the auth-status cache BEFORE navigating on. Without
+       this, the account guard reads its stale pre-signup guest snapshot and
+       bounces the freshly authenticated user back to /login with a redirect
+       chain that grows on every cycle. */
+    await queryClient.invalidateQueries({ queryKey: ["auth-status"] });
     if (marketingConsent !== undefined) {
       // Owner directive: signup consent persists server-side on the account profile.
       // Non-fatal by design — a failed write must never block sign-in.
