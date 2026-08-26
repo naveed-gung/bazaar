@@ -10,6 +10,13 @@
 #   Firebase Admin initializes lazily and degrades to null auth, which every
 #   test/route handles.
 #
+# - RUNTIME: every job resolves Node from `.nvmrc` (20). Netlify reads the same
+#   file, and netlify.toml pins NODE_VERSION=20 explicitly on top of it, so CI,
+#   the Actions deploy fallback and Netlify's own builders all run ONE version.
+#   Before INFRA-04 the workflows hardcoded "24" while netlify.toml pinned "20"
+#   — the exact split that let a green CI ship a build Netlify could not produce
+#   (Node 24 does not install rolldown's linux binding).
+#
 # ALTERNATIVE (Atlas-secrets path): delete the `services:` block + init step
 # below, set a repository secret MONGODB_URI pointing at the Atlas cluster
 # (e.g. mongodb+srv://user:pass@host/bazaar_test?retryWrites=true), and expose it
@@ -43,7 +50,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
@@ -94,7 +101,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
