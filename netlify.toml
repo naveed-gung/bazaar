@@ -1,8 +1,10 @@
 [build]
   # npm bug 4828: a lockfile generated on Windows omits the Linux rolldown
-  # binding, so the first build on Netlify/CI cannot resolve it. Installing the
-  # pinned binding by name bypasses the broken optional-deps resolution.
-  command = "npm install @rolldown/binding-linux-x64-gnu@1.2.1 --no-save --force && npm run build --workspace frontend"
+  # binding, and neither named installs nor --force reliably bypass it inside
+  # npm workspaces. Dropping the lockfile on the build box lets Linux resolve
+  # its own platform binding; local dev and the committed lockfile are
+  # unaffected. Versions stay pinned by the ranges in package.json.
+  command = "rm -f package-lock.json && npm install && npm run build --workspace frontend"
   publish = "frontend/dist/client"
   functions = "netlify/functions"
 

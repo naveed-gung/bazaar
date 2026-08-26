@@ -54,12 +54,9 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
-
-      # npm bug 4828: a Windows-generated lockfile omits the Linux rolldown
-      # binding, so `vite build` fails on ubuntu. Named install bypasses it.
-      - name: Install linux rolldown binding
-        run: npm install @rolldown/binding-linux-x64-gnu@1.2.1 --no-save --force
+        # npm bug 4828: a Windows-generated lockfile omits the Linux rolldown
+        # binding, so `vite build` fails on ubuntu. Fresh resolve on Linux.
+        run: rm -f package-lock.json && npm install
 
       - name: Typecheck
         run: npm run typecheck
