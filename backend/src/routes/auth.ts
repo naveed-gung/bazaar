@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { firebaseAuth } from "../auth/firebase.js";
+import { resolveUserIdentity } from "../auth/identity.js";
 import { config } from "../config.js";
 import { AppError } from "../errors.js";
 import { asyncHandler } from "../lib/http.js";
@@ -49,12 +50,15 @@ authRouter.post("/session", asyncHandler(async (req, res) => {
   const familyId = randomBytes(24).toString("base64url");
   const bootstrapRoles = decoded["role"] === "admin" || decoded.email?.toLowerCase() === config.bootstrapAdminEmail.toLowerCase() ? ["owner"] : ["customer"];
   const db = await getDb();
-  const user = await db.collection("users").findOneAndUpdate(
-    { firebaseUid: decoded.uid },
-    { $set: { email: decoded.email?.toLowerCase(), displayName: decoded.name, lastSeenAt: new Date() }, $setOnInsert: { roles: bootstrapRoles, createdAt: new Date() } },
-    { upsert: true, returnDocument: "after" },
-  );
-  const roles = Array.isArray(user?.["roles"]) ? user.roles as string[] : ["customer"];
+  /* SSR-66 — identity reconciliation replaces the blind firebaseUid upsert.
+     The old code INSERTED A SECOND DOCUMENT whenever Firebase minted a new UID
+     for an email Mongo already knew (deleted-and-recreated Auth user), landing
+     the person on an empty customer account with their roles, orders, cart and
+     addresses orphaned behind the dead UID. resolveUserIdentity adopts the
+     existing document by email, repoints everything it owns, holds authority
+     back behind email_verified, and audits the adoption. */
+  const resolution = await resolveUserIdentity(db, decoded, bootstrapRoles);
+  const roles = resolution.roles;
   const now = new Date();
   const absoluteExpiresAt = new Date(now.getTime() + refreshAbsoluteLifetime);
   await db.collection("sessions").insertOne({ tokenHash: hash(sessionCookie), refreshTokenHash: hash(refreshCookie), csrfHash: hash(csrf), familyId, firebaseUid: decoded.uid, email: decoded.email?.toLowerCase(), displayName: decoded.name, roles, userAgent: req.header("user-agent")?.slice(0, 300), ipHash: hash(req.ip ?? "unknown"), createdAt: now, lastSeenAt: now, expiresAt: new Date(now.getTime() + accessLifetime), refreshExpiresAt: new Date(now.getTime() + refreshIdleLifetime), absoluteExpiresAt, purgeAt: absoluteExpiresAt });
