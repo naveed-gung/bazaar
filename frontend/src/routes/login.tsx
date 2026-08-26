@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   createUserWithEmailAndPassword,
@@ -10,7 +10,7 @@ import type { Auth } from "@firebase/auth";
 import { Check, LoaderCircle } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Skeleton } from "@/components/ui";
-import { useScrollDrift } from "@/components/motion";
+import { Reveal, Stagger, useScrollDrift } from "@/components/motion";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { browserAuth, googleProvider } from "@/lib/firebase";
@@ -56,21 +56,18 @@ const accountStatements = [
   },
 ];
 
-/** SSR-37 — scoped rail entrance styles (styles.css is foundation-exclusive).
-    PURE CSS KEYFRAMES ONLY: each statement row fades up 480 ms ease-out with
-    incremental delays set inline (0/90/180 ms); the signal-red rule sweeps via
-    scaleX. No IntersectionObserver, no timers — the animation always plays,
-    above the fold and beneath the welcome splash alike, and the mode-keyed
-    container restarts it deterministically on every remount. Reduced motion
-    collapses every duration via the scoped media query. */
-const RAIL_CSS = `
-.login-rail-eyebrow{animation:bz-rail-rise 480ms ease-out both}
-.login-rail-rule{display:block;width:72px;height:2px;margin-top:14px;background:var(--accent,#c42b1c);transform-origin:left center;animation:bz-rail-sweep 640ms cubic-bezier(.22,1,.36,1) 90ms both}
-.login-rail-row{animation:bz-rail-rise 480ms ease-out both}
-@keyframes bz-rail-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@keyframes bz-rail-sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-@media (prefers-reduced-motion:reduce){.login-rail-eyebrow,.login-rail-rule,.login-rail-row{animation-duration:1ms!important;animation-delay:0ms!important}}
-`;
+/** SSR-65 — per-row delay for the rail entrance.
+
+    Stagger's 40 ms default is right for home's product grids, where six to
+    eight cards enter at once and a longer step would drag. The rail has only
+    four elements, it plays in the column OPPOSITE the button that triggers it,
+    and the sign-up panel is growing taller at the same moment — so at 40 ms the
+    whole cascade finished in 280 ms and read as "nothing happened" (measured,
+    not assumed: rows hit opacity 1.00 by t+280ms). 110 ms spreads the same
+    per-row motion over ~570 ms, which reads as a sequence instead of a blink.
+    The motion itself is still home's shared <Reveal>: 240 ms, 20px rise, one
+    token, one easing — only the spacing between rows differs. */
+const RAIL_STAGGER_MS = 110;
 
 /** Square Swiss checkbox pair used by section 03 — Preferences. The visible
     box is a sibling of a sr-only input so keyboard focus rings still land. */
@@ -103,16 +100,26 @@ function Login() {
   const { redirect, mode } = Route.useSearch();
   // SSR-39 — the rail container drifts subtly with scroll (useScrollDrift:
   // rAF-throttled, ±24px clamp, transform-only, reduced-motion off-switch,
-  // hydration-safe because the transform lands after mount). SSR-37 — no boot
-  // state, no timer, no observer: the rail's entrance is pure CSS (RAIL_CSS)
-  // driven by the mode-keyed container below, so replay is a deterministic
-  // remount and the splash window is irrelevant. The two motions compose: the
-  // entrance keyframes animate the ROWS while the drift translates the whole
-  // CONTAINER, so neither touches the other's transform.
+  // hydration-safe because the transform lands after mount). SSR-62 — the
+  // entrance is now home's shared <Reveal>/<Stagger> primitives (see the rail
+  // comment below); the drift still translates the whole CONTAINER while
+  // Reveal transforms the ROWS, so neither touches the other's transform.
   const rail = useScrollDrift();
   // SSR-24 — derived from the URL, not local state: every heading,
   // autoComplete token, submit branch and panel below reads this one boolean.
   const register = mode === "register";
+  /* SSR-62 (owner request): the rail entrance must fire ONLY when the visitor
+     switches login → sign-up, because the sign-up form is the long one and the
+     rail is what balances it. It must NOT fire on arrival.
+
+     `modeAtEntry` is captured once per mount, so `railAnimates` is a PURE render
+     value — no effect, no extra render, and therefore no frame where static rows
+     paint before the animation takes over. Arriving on sign-in and switching to
+     sign-up animates; switching back to sign-in renders instantly; switching to
+     sign-up again animates once more (the key below remounts the subtree). A
+     direct ?mode=register deep link counts as "arrival", so it stays static. */
+  const modeAtEntry = useRef(register);
+  const railAnimates = register !== modeAtEntry.current;
   const [auth, setAuth] = useState<Auth | null>();
   useEffect(() => setAuth(browserAuth()), []);
   async function establish(
@@ -235,33 +242,61 @@ function Login() {
       <section className="shell pb-20 lg:pb-28">
         <div className="rule-strong" />
         <div className="mt-10 grid gap-12 lg:grid-cols-12 lg:gap-16">
-          {/* LEFT — numbered statements over rules. SSR-37: the entrance is
-              PURE CSS KEYFRAMES scoped in this component (RAIL_CSS) — no
-              IntersectionObserver, no timers, no boot key. CSS animations play
-              unconditionally: above the fold, under the welcome splash,
-              everywhere; the mode-keyed container remounts on route entry AND
-              on every login↔signup switch, which restarts the keyframes
-              deterministically (SSR-28 replay behaviour preserved without any
-              observer). Visual language mirrors home's rails: fade-up rows at
-              home's stagger rhythm (0/90/180 ms) plus the red rule sweeping
-              via scaleX. Rows are plain DIVs (deliberately NO <ul>). */}
+          {/* LEFT — numbered statements over rules. SSR-62 (owner request): the
+              entrance is now the SAME primitives home's "03 — Featured" and
+              "04 — Deals" rails use — <Reveal> for the header block, <Stagger>
+              over the rows at the system's default 40 ms step. This replaces
+              SSR-37's component-scoped CSS keyframes (RAIL_CSS), which are
+              deleted along with the <style> tag that injected them.
+
+              Why the swap is safe now, given SSR-37 removed an observer on
+              purpose: that decision was forced by the welcome splash, an opaque
+              full-viewport cover that ate the entrance window for above-the-fold
+              content. The splash has not rendered since the SSR-47 client-only
+              rewrite (SSR-59 — its mount effect bails on a null ref), so nothing
+              covers the rail any more. Reveal also handles the above-the-fold
+              case correctly on its own: IntersectionObserver fires its first
+              callback for an element already in view, so an animated rail plays
+              immediately rather than waiting for a scroll.
+
+              WHEN it plays is gated by `railAnimates` (see above): only a
+              login → sign-up switch animates. On arrival — and on the way back
+              to sign-in — the same rows render WITHOUT the Reveal/Stagger
+              wrappers, so they never carry `.reveal` and never start at
+              opacity 0. That is why the gate is a render-time value and not an
+              effect: an effect would paint one static frame first and flash.
+              Replay across repeated switches still comes from the mode-keyed
+              container below, which remounts and resets each Reveal's `shown`
+              state (SSR-28 behaviour, now without any component-local CSS).
+
+              Reduced motion is now handled by the GLOBAL prefers-reduced-motion
+              block in styles.css (`.reveal { opacity: 1; transform: none }`)
+              instead of a per-component media query.
+
+              Rows stay plain DIVs (deliberately NO <ul>). */}
           <aside
             ref={rail.ref}
             style={rail.style}
             aria-label="Why an account"
             className="order-2 lg:order-1 lg:col-span-5"
           >
-            <style dangerouslySetInnerHTML={{ __html: RAIL_CSS }} />
             <div key={register ? "register" : "signin"}>
-              <span className="eyebrow login-rail-eyebrow">The Case</span>
-              <span className="login-rail-rule" aria-hidden="true" />
-              <div className="mt-8">
-                {accountStatements.map((statement, index) => (
+              {/* Header block. The 72×2px red rule is a STATIC element: SSR-37's
+                  scaleX sweep lived in RAIL_CSS, and home's rails carry a plain
+                  rule. When the rail animates, Reveal fades the whole block —
+                  eyebrow and rule together. */}
+              {(() => {
+                const header = (
+                  <>
+                    <span className="eyebrow">The Case</span>
+                    <span aria-hidden="true" className="mt-3.5 block h-[2px] w-[72px] bg-accent" />
+                  </>
+                );
+                const rows = accountStatements.map((statement, index) => (
                   <div
                     key={statement.title}
-                    style={{ animationDelay: `${index * 90}ms` }}
                     className={cn(
-                      "login-rail-row border-t border-border py-6",
+                      "border-t border-border py-6",
                       index === accountStatements.length - 1 && "border-b",
                     )}
                   >
@@ -272,8 +307,21 @@ function Login() {
                       {statement.body}
                     </p>
                   </div>
-                ))}
-              </div>
+                ));
+                return railAnimates ? (
+                  <>
+                    <Reveal>{header}</Reveal>
+                    <Stagger className="mt-8" step={RAIL_STAGGER_MS}>
+                      {rows}
+                    </Stagger>
+                  </>
+                ) : (
+                  <>
+                    <div>{header}</div>
+                    <div className="mt-8">{rows}</div>
+                  </>
+                );
+              })()}
             </div>
             <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
               Preferences below are saved to your account and follow you across every device.
