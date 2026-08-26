@@ -25,8 +25,13 @@ const _svgP =
   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>';
 const _style =
   "display:inline-flex;align-items:center;gap:6px;color:var(--muted-foreground,#666);text-decoration:none;border:1px solid var(--border,#ddd);padding:4px 8px;transition:color 120ms ease,border-color 120ms ease";
-const _hover = "this.color='var(--accent,#c42b1c)';this.borderColor='var(--accent,#c42b1c)'";
-const _out = "this.color='';this.borderColor=''";
+/* SSR-65 — these two were no-ops for their whole life: they assigned
+   `this.color` / `this.borderColor`, which are not properties of
+   HTMLAnchorElement, so each mouseover silently created an expando and the link
+   never changed colour. The write has to go through `this.style`. */
+const _hover =
+  "this.style.color='var(--accent,#c42b1c)';this.style.borderColor='var(--accent,#c42b1c)'";
+const _out = "this.style.color='';this.style.borderColor=''";
 const _links = () =>
   `<a data-credit="gh" href="${_gh}" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="${_style}" onmouseover="${_hover}" onmouseout="${_out}">${_svgG}<span>GitHub</span></a>` +
   `<a data-credit="pf" href="${_pf}" target="_blank" rel="noopener noreferrer" aria-label="Portfolio" style="${_style}" onmouseover="${_hover}" onmouseout="${_out}">${_svgP}<span>Portfolio</span></a>`;
@@ -58,27 +63,72 @@ export function SiteFooter() {
   /* SSR-46 — integrity watchdog: if either credit link is removed, edited or
      hidden at runtime, the full block is rebuilt from the assembled fragments.
      The observer covers DOM tampering; the interval covers observers being
-     disconnected by later scripts. Runs only in the browser. */
+     disconnected by later scripts. Runs only in the browser.
+
+     SSR-58 — THIS WATCHDOG FROZE THE WHOLE SITE (local AND production). Two
+     defects compounded:
+
+     1. `intact()` compared the LIVE `HTMLAnchorElement.href` against the raw
+        `_pf` string. The `.href` getter returns the SERIALIZED URL, and the URL
+        serializer appends the empty path's "/" - so `_pf` (no trailing slash) never
+        equalled `pf.href` (trailing slash added) and `intact()` was permanently false.
+     2. `enforce` rewrote `host.innerHTML` and was ALSO the MutationObserver
+        callback, with the observer live during the write. Every rebuild queued
+        its own mutation records, so enforce re-entered forever. Observer
+        callbacks are delivered as MICROTASKS, which starve the task queue
+        completely: no paint, no timers, no fetch resolution, no input. That is
+        the "site hangs" report — the tab was pegged in this loop before React
+        could ever settle.
+
+     Fixes: compare the literal `href` ATTRIBUTE (normalisation-proof), and make
+     the rebuild structurally non-reentrant — the observer is disconnected
+     around the write (disconnect() also drops queued records) and a
+     per-interval-window rebuild budget is a hard circuit breaker even if a
+     future check can never be satisfied. */
   useEffect(() => {
     const host = creditsHost.current;
     if (!host) return;
-    const intact = () =>
-      host.querySelectorAll("a[data-credit]").length >= 2 &&
-      (host.querySelector("a[data-credit='gh']") as HTMLAnchorElement | null)?.href === _gh &&
-      (host.querySelector("a[data-credit='pf']") as HTMLAnchorElement | null)?.href === _pf;
-    const enforce = () => {
-      if (!intact())
-        host.innerHTML = `<span id="nf-credits" style="display:inline-flex;gap:10px;align-items:center">${_links()}</span>`;
+    /** Attribute comparison, NOT `.href`: the property getter normalises
+        ("https://x.dev" → "https://x.dev/") and would never match. */
+    const intact = () => {
+      const gh = host.querySelector("a[data-credit='gh']");
+      const pf = host.querySelector("a[data-credit='pf']");
+      return (
+        host.querySelectorAll("a[data-credit]").length >= 2 &&
+        gh?.getAttribute("href") === _gh &&
+        pf?.getAttribute("href") === _pf
+      );
     };
-    enforce();
-    const observer = new MutationObserver(enforce);
-    observer.observe(host, {
+
+    const OBSERVE: MutationObserverInit = {
       childList: true,
       subtree: true,
       attributes: true,
       characterData: true,
-    });
-    const interval = window.setInterval(enforce, 4000);
+    };
+    /** Rebuilds allowed per interval window. A rebuild that cannot satisfy
+        `intact()` therefore costs 2 writes, never an unbounded loop. */
+    const REBUILD_BUDGET = 2;
+    let budget = REBUILD_BUDGET;
+
+    const enforce = () => {
+      if (intact()) return;
+      if (budget <= 0) return;
+      budget -= 1;
+      // Detach BEFORE writing: disconnect() also discards the records this
+      // write is about to queue, so the callback cannot re-enter itself.
+      observer.disconnect();
+      host.innerHTML = `<span id="nf-credits" style="display:inline-flex;gap:10px;align-items:center">${_links()}</span>`;
+      observer.observe(host, OBSERVE);
+    };
+
+    const observer = new MutationObserver(enforce);
+    enforce();
+    observer.observe(host, OBSERVE);
+    const interval = window.setInterval(() => {
+      budget = REBUILD_BUDGET;
+      enforce();
+    }, 4000);
     return () => {
       observer.disconnect();
       window.clearInterval(interval);
