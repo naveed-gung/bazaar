@@ -1,10 +1,10 @@
 import { Children, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**
- * Motion primitives. SWISS SIGNAL removed parallax from the design language,
- * so `useParallax` is now a neutralised stub: the exported signature and
- * return shape are unchanged (callers keep compiling), the ref still attaches,
- * and `offset` is permanently 0 — no scroll listeners, no transforms.
+ * Motion primitives: <Reveal>, <Stagger>, useScrollDrift and the index-row
+ * text-roll class. SWISS SIGNAL removed parallax from the design language, and
+ * SSR-65 deleted the `useParallax` no-op stub that outlived it — the last
+ * caller had already gone, so it was dead code keeping a dead concept alive.
  */
 
 /** Fades children up into view once, when scrolled into the viewport. A quick
@@ -73,13 +73,6 @@ export function Reveal({
     transition into an instant colour swap. */
 export const INDEX_ROW_ROLL =
   "transition-transform duration-200 ease-out group-hover:-translate-y-full group-focus-visible:-translate-y-full";
-
-/** Former scroll-linked parallax offset. Kept as a no-op so remaining imports
-    stay valid; always returns a stable ref and a zero offset. */
-export function useParallax(_strength = 0.18) {
-  const ref = useRef<HTMLDivElement>(null);
-  return { ref, offset: 0 };
-}
 
 /** Stable style payload handed to every useScrollDrift consumer — a transform
     hint only, so the identity never changes and nothing re-renders. */
