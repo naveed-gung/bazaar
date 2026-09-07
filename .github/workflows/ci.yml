@@ -84,18 +84,6 @@ jobs:
       # touches anything outside this throwaway database.
       MONGODB_URI: mongodb://127.0.0.1:27017/bazaar_test?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: bazaar_test
-    services:
-      mongo:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --replSet rs0
-          --bind_ip_all
-          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -107,7 +95,6 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
         run: rm -f package-lock.json && npm install
 
       # Start single-node MongoDB container with replica set enabled for transaction support
@@ -121,11 +108,8 @@ jobs:
       # the loop exits only once rs.status() reports a healthy PRIMARY.
       - name: Init single-node replica set (rs0)
         run: |
-          MONGO_ID="${{ job.services.mongo.id }}"
           ready=0
           for attempt in $(seq 1 30); do
-            docker exec "$MONGO_ID" mongosh --quiet --eval 'try { rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]}) } catch (e) { print(e.message) }' >/dev/null 2>&1 || true
-            if docker exec "$MONGO_ID" mongosh --quiet --eval 'try { if (rs.status().ok === 1) { quit(0) } } catch (e) {} quit(1)'; then
             docker exec mongo mongosh --quiet --eval 'try { rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]}) } catch (e) { print(e.message) }' >/dev/null 2>&1 || true
             if docker exec mongo mongosh --quiet --eval 'try { if (rs.status().ok === 1) { quit(0) } } catch (e) {} quit(1)'; then
               echo "::notice::replica set rs0 reached PRIMARY"
@@ -159,6 +143,5 @@ jobs:
         run: npm test
 
       - name: Run backend tests (retry once — TASK-05 infra-flake mitigation)
-        if: failure()
         if: steps.test-run-1.outcome == 'failure'
         run: npm test
