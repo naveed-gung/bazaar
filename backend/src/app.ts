@@ -54,7 +54,7 @@ export function createApp() {
         callback(null, !origin || config.webOrigins.includes(origin)),
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["content-type", "x-request-id", "x-csrf-token", "idempotency-key"],
+      allowedHeaders: ["content-type", "x-request-id", "x-csrf-token", "idempotency-key", "authorization"],
     }),
   );
   app.use(express.json({ limit: "2mb" }));
@@ -63,6 +63,7 @@ export function createApp() {
   app.use(enforceCsrf);
   app.use("/api/v1/auth/session", rateLimit({ name: "auth-session", limit: 10, windowMs: 15 * 60_000 }));
   app.use("/api/v1/auth/refresh", rateLimit({ name: "auth-refresh", limit: 30, windowMs: 15 * 60_000 }));
+  app.use("/api/v1/assistant/catalog", rateLimit({ name: "assistant-catalog", limit: 60, windowMs: 60_000 }));
   app.use("/api/v1/catalog/products", rateLimit({ name: "catalog-search", limit: 60, windowMs: 60_000 }));
   app.use("/api/v1/cart", rateLimit({ name: "cart", limit: 120, windowMs: 60_000, principal: true, methods: ["POST", "PATCH", "PUT", "DELETE"] }));
   app.use("/api/v1/favorites", rateLimit({ name: "favorites", limit: 120, windowMs: 60_000, principal: true, methods: ["POST", "PATCH", "PUT", "DELETE"] }));

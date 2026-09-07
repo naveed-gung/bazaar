@@ -11,6 +11,8 @@ import { adminRouter } from "./admin.js";
 import { afterSalesRouter } from "./after-sales.js";
 import { mediaRouter } from "./media.js";
 import { rbacRouter } from "./rbac.js";
+import { assistantCatalogRouter } from "./assistant-catalog.js";
+import { assistantChatRouter } from "./assistant-chat.js";
 
 export const apiRouter = Router();
 
@@ -19,6 +21,8 @@ apiRouter.get("/ready", asyncHandler(async (_req, res) => {
   const database = await checkDatabase();
   res.status(database ? 200 : 503).json({ data: { status: database ? "ready" : "degraded", dependencies: { database } } });
 }));
+apiRouter.use("/assistant/catalog", assistantCatalogRouter);
+apiRouter.use("/assistant", assistantChatRouter);
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/me", accountRouter);
 apiRouter.use("/admin", adminRouter);

@@ -28,6 +28,12 @@
   included_files = ["backend/src/**", "packages/shared/src/**"]
 
 [[redirects]]
+  from = "/p/*"
+  to = "/product/:splat"
+  status = 301
+  force = false
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200

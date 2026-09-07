@@ -35,6 +35,14 @@ const schema = Joi.object({
   RESEND_API_KEY: Joi.string().allow("").default(""),
   TAX_RATE: Joi.number().min(0).max(1).default(0.08),
   LOG_LEVEL: Joi.string().valid("fatal", "error", "warn", "info", "debug", "trace").default("info"),
+  BAZAAR_BOT_TOKEN: Joi.string().allow("").default(""),
+  BAZAAR_PUBLIC_DOMAIN: Joi.string().allow("").default("bazaa1.netlify.app"),
+  LOOM_API_URL: Joi.string().allow("").default(""),
+  LOOM_API_KEY: Joi.string().allow("").default(""),
+  DIFY_API_URL: Joi.string().allow("").default(""),
+  DIFY_API_KEY: Joi.string().allow("").default(""),
+  TELEGRAM_BOT_TOKEN: Joi.string().allow("").default(""),
+  TELEGRAM_WEBHOOK_SECRET: Joi.string().allow("").default(""),
 }).unknown(true);
 
 const runtimeEnv = {
@@ -79,4 +87,10 @@ export const config = Object.freeze({
   taxRate: Number(env["TAX_RATE"]),
   logLevel: env["LOG_LEVEL"]!,
   isProduction: env["NODE_ENV"] === "production",
+  bazaarBotToken: env["BAZAAR_BOT_TOKEN"] || (env["NODE_ENV"] === "test" ? "test-bot-token-secret" : ""),
+  bazaarPublicDomain: (env["BAZAAR_PUBLIC_DOMAIN"] || "bazaa1.netlify.app").replace(/^https?:\/\//, "").replace(/\/+$/, ""),
+  loomApiUrl: (env["LOOM_API_URL"] || env["DIFY_API_URL"] || "").replace(/\/+$/, ""),
+  loomApiKey: env["LOOM_API_KEY"] || env["DIFY_API_KEY"] || "",
+  telegramBotToken: env["TELEGRAM_BOT_TOKEN"] || "",
+  telegramWebhookSecret: env["TELEGRAM_WEBHOOK_SECRET"] || "",
 });
