@@ -24,8 +24,8 @@ beforeAll(async () => {
   await db.collection("products").insertOne({
     _id: inStockProdId,
     slug: PROD_IN_STOCK_SLUG,
-    name: "Loom Test ANC Headphones",
-    brand: "LoomBrand",
+    name: "Test ANC Headphones",
+    brand: "BazaarAudio",
     category: "Audio Equipment",
     categorySlug: TEST_CATEGORY,
     priceMinor: 12900,
@@ -80,8 +80,8 @@ beforeAll(async () => {
   await db.collection("products").insertOne({
     _id: outStockProdId,
     slug: PROD_OUT_STOCK_SLUG,
-    name: "Loom Test Soldout Earbuds",
-    brand: "LoomBrand",
+    name: "Test Soldout Earbuds",
+    brand: "BazaarAudio",
     category: "Audio Equipment",
     categorySlug: TEST_CATEGORY,
     priceMinor: 5900,
@@ -138,7 +138,7 @@ afterAll(async () => {
   ]);
 });
 
-describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia Tool Contract", () => {
+describe("Assistant Catalog API (/api/v1/assistant/catalog) — Assistant Tool Contract", () => {
   describe("Authentication", () => {
     it("rejects requests missing the Authorization header with 401", async () => {
       const res = await request(app).get("/api/v1/assistant/catalog/search");
@@ -192,7 +192,7 @@ describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia To
       expect(inStockItem).toMatchObject({
         id: inStockProdId.toHexString(),
         slug: PROD_IN_STOCK_SLUG,
-        name: "Loom Test ANC Headphones",
+        name: "Test ANC Headphones",
         category: TEST_CATEGORY,
         priceMinor: 12900,
         currency: "USD",
@@ -275,7 +275,7 @@ describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia To
       expect(res.body).toMatchObject({
         id: inStockProdId.toHexString(),
         slug: PROD_IN_STOCK_SLUG,
-        name: "Loom Test ANC Headphones",
+        name: "Test ANC Headphones",
         category: TEST_CATEGORY,
         priceMinor: 12900,
         currency: "USD",

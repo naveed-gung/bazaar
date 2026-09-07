@@ -5,7 +5,7 @@ import { config } from "../src/config.js";
 
 const app = createApp();
 
-describe("Assistant Chat SSE Proxy (/api/v1/assistant/chat) — Loom by Auvia", () => {
+describe("Assistant Chat SSE Proxy (/api/v1/assistant/chat)", () => {
   it("rejects an empty message with 422", async () => {
     const res = await request(app)
       .post("/api/v1/assistant/chat")

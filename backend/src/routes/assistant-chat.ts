@@ -7,10 +7,10 @@ export const assistantChatRouter = Router();
 
 /**
  * POST /api/v1/assistant/chat
- * Same-origin streaming proxy to Loom by Auvia.
+ * Same-origin streaming proxy to the upstream shopping assistant.
  *
  * Security:
- * - LOOM_API_KEY is kept strictly server-side.
+ * - ASSISTANT_API_KEY is kept strictly server-side.
  * - User identity is server-authoritative via ownerKey(req) (guest or user session).
  * - Multi-turn conversation_id is passed back and forth securely.
  */
@@ -51,13 +51,13 @@ assistantChatRouter.post(
     res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders?.();
 
-    // If Loom by Auvia credentials are not yet configured, provide a graceful mock SSE stream
-    if (!config.loomApiUrl || !config.loomApiKey) {
+    // If assistant credentials are not yet configured, provide a graceful mock SSE stream
+    if (!config.assistantApiUrl || !config.assistantApiKey) {
       const fallbackMsg =
-        "The Bazaar shopping assistant is powered by Loom by Auvia. Once your LOOM_API_KEY and LOOM_API_URL are set, I can search live inventory, compare prices, and answer questions across our catalogue!";
+        "The Bazaar shopping assistant is currently in standby. Once ASSISTANT_API_KEY and ASSISTANT_API_URL are set, I can search live inventory, compare prices, and answer questions across our catalogue!";
 
-      res.write(`data: ${JSON.stringify({ event: "message", answer: fallbackMsg, conversation_id: conversationId || "loom-standby" })}\n\n`);
-      res.write(`data: ${JSON.stringify({ event: "message_end", conversation_id: conversationId || "loom-standby" })}\n\n`);
+      res.write(`data: ${JSON.stringify({ event: "message", answer: fallbackMsg, conversation_id: conversationId || "assistant-standby" })}\n\n`);
+      res.write(`data: ${JSON.stringify({ event: "message_end", conversation_id: conversationId || "assistant-standby" })}\n\n`);
       res.end();
       return;
     }
@@ -71,12 +71,12 @@ assistantChatRouter.post(
     });
 
     try {
-      const loomEndpoint = `${config.loomApiUrl}/chat-messages`;
-      const response = await fetch(loomEndpoint, {
+      const assistantEndpoint = `${config.assistantApiUrl}/chat-messages`;
+      const response = await fetch(assistantEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${config.loomApiKey}`,
+          Authorization: `Bearer ${config.assistantApiKey}`,
         },
         body: JSON.stringify({
           inputs: {},
@@ -92,7 +92,7 @@ assistantChatRouter.post(
 
       if (!response.ok) {
         const errorBody = await response.text().catch(() => "");
-        logger.error({ status: response.status, body: errorBody }, "Loom by Auvia chat upstream returned error");
+        logger.error({ status: response.status, body: errorBody }, "Assistant chat upstream returned error");
         res.write(
           `data: ${JSON.stringify({
             event: "message",
@@ -124,7 +124,7 @@ assistantChatRouter.post(
       res.end();
     } catch (err) {
       clearTimeout(timeout);
-      logger.error({ err }, "Error relaying chat to Loom by Auvia");
+      logger.error({ err }, "Error relaying chat to assistant upstream");
       if (!res.writableEnded) {
         res.write(
           `data: ${JSON.stringify({

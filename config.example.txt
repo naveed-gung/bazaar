@@ -22,10 +22,10 @@ VITE_FIREBASE_AUTH_DOMAIN=<project>.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=<firebase-project-id>
 VITE_FIREBASE_APP_ID=<public-browser-app-id>
 
-# Assistant & Loom by Auvia Chatbot
+# Shopping Assistant Chatbot & Bridge
 BAZAAR_BOT_TOKEN=<generate-secure-random-token-for-bearer-auth>
 BAZAAR_PUBLIC_DOMAIN=bazaa1.netlify.app
-LOOM_API_URL=https://api.loom.auvia.example/v1
-LOOM_API_KEY=<loom-api-key-from-auvia>
+ASSISTANT_API_URL=https://api.assistant.example/v1
+ASSISTANT_API_KEY=<assistant-api-key>
 TELEGRAM_BOT_TOKEN=<telegram-bot-token>
 TELEGRAM_WEBHOOK_SECRET=<telegram-webhook-secret>

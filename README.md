@@ -227,7 +227,7 @@ Never commit `.env*`, Atlas credentials, Firebase Admin JSON, private keys or pr
 
 <h2><img src="docs/assets/readme-icons/features.svg" width="26" alt="" /> AI Shopping Assistant & Telegram Bridge</h2>
 
-Bazaar integrates a catalog-only shopping assistant powered by **Loom by Auvia** (or an external Dify agent) across two transports:
+Bazaar integrates a catalog-only shopping assistant across two transports:
 1. **Storefront widget**: floating Swiss conversational UI streaming SSE tokens directly from `/api/v1/assistant/chat`.
 2. **Telegram bot bridge**: webhook at `POST /api/v1/assistant/telegram` receiving chat updates, maintaining per-chat conversation history in MongoDB (`assistantConversations`), and chunking responses within Telegram's 4096-character limit.
 
@@ -237,8 +237,8 @@ Bazaar integrates a catalog-only shopping assistant powered by **Loom by Auvia**
 | --- | --- | --- |
 | `BAZAAR_BOT_TOKEN` | Server | Bearer token secret for external tools calling `/api/v1/assistant/catalog/*`. |
 | `BAZAAR_PUBLIC_DOMAIN` | Server | Canonical public storefront domain (e.g. `bazaa1.netlify.app`) used for product links. |
-| `LOOM_API_URL` / `DIFY_API_URL` | Server | Upstream agent endpoint base (e.g. `https://api.loom.auvia.example/v1`). |
-| `LOOM_API_KEY` / `DIFY_API_KEY` | Server | Upstream agent API key (strictly kept server-side). |
+| `ASSISTANT_API_URL` | Server | Upstream assistant endpoint base (e.g. `https://api.assistant.example/v1`). |
+| `ASSISTANT_API_KEY` | Server | Upstream assistant API key (strictly kept server-side). |
 | `TELEGRAM_BOT_TOKEN` | Server | Telegram bot token from @BotFather. |
 | `TELEGRAM_WEBHOOK_SECRET` | Server | Shared secret token configured with Telegram's webhook. |
 
@@ -247,7 +247,7 @@ Bazaar integrates a catalog-only shopping assistant powered by **Loom by Auvia**
 - **Catalog-only surface**: The assistant bot identity has access strictly to public, read-only catalog data (`GET /api/v1/assistant/catalog/search` and `GET /api/v1/assistant/catalog/product`). It has zero access to user accounts, orders, checkout, media writes, or admin/RBAC endpoints.
 - **Constant-time bearer authentication**: All calls to `/api/v1/assistant/catalog/*` require `Authorization: Bearer <BAZAAR_BOT_TOKEN>`, verified using `timingSafeEqual` to prevent timing attacks.
 - **CSRF and Origin exemption rationale**:
-  - `GET /api/v1/assistant/catalog/*` are read-only public queries exempted from CSRF and Origin checks so external agent tools (Loom/Dify) can invoke them.
+  - `GET /api/v1/assistant/catalog/*` are read-only public queries exempted from CSRF and Origin checks so external agent tools can invoke them.
   - `POST /api/v1/assistant/telegram` receives server-to-server webhook deliveries directly from Telegram servers (which do not send browser `Origin` headers or session CSRF tokens). Authenticity is validated using constant-time verification of the `X-Telegram-Bot-Api-Secret-Token` header.
 
 ### Telegram webhook setup

@@ -72,8 +72,10 @@ function FormattedAssistantMessage({ text }: { text: string }) {
 }
 
 /**
- * Conversational shopping assistant powered by Loom by Auvia.
- * Swiss editorial aesthetic: crisp borders, structured typography, zero clutter.
+ * Conversational shopping assistant.
+ *
+ * Features:
+ * - Floating launcher at bottom-right with focus management and keyboard accessible controls.
  */
 export function ShopAssistant() {
   const [open, setOpen] = useState(false);
@@ -247,7 +249,7 @@ export function ShopAssistant() {
                   Bazaar Assistant
                 </h2>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Powered by Loom by Auvia
+                  Live Catalogue &amp; Stock Guide
                 </p>
               </div>
             </div>

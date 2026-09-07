@@ -161,17 +161,17 @@ assistantTelegramRouter.post(
     let answer = "";
     let nextConversationId = conversationId;
 
-    if (!config.loomApiUrl || !config.loomApiKey) {
+    if (!config.assistantApiUrl || !config.assistantApiKey) {
       answer =
-        "The Bazaar shopping assistant is powered by Loom by Auvia. Once LOOM_API_KEY and LOOM_API_URL are set, I can search live inventory, compare prices, and answer questions across our catalogue!";
+        "The Bazaar shopping assistant is currently in standby. Once ASSISTANT_API_KEY and ASSISTANT_API_URL are set, I can search live inventory, compare prices, and answer questions across our catalogue!";
     } else {
       try {
-        const loomEndpoint = `${config.loomApiUrl}/chat-messages`;
-        const response = await fetch(loomEndpoint, {
+        const assistantEndpoint = `${config.assistantApiUrl}/chat-messages`;
+        const response = await fetch(assistantEndpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${config.loomApiKey}`,
+            Authorization: `Bearer ${config.assistantApiKey}`,
           },
           body: JSON.stringify({
             inputs: {},
@@ -184,7 +184,7 @@ assistantTelegramRouter.post(
 
         if (!response.ok) {
           const errorBody = await response.text().catch(() => "");
-          logger.error({ status: response.status, body: errorBody }, "Loom upstream error in Telegram relay");
+          logger.error({ status: response.status, body: errorBody }, "Assistant upstream error in Telegram relay");
           answer = "Assistant temporarily unavailable. Please try again shortly.";
         } else {
           const contentType = response.headers.get("content-type") || "";
@@ -214,7 +214,7 @@ assistantTelegramRouter.post(
           }
         }
       } catch (err) {
-        logger.error({ err }, "Failed contacting Loom upstream from Telegram relay");
+        logger.error({ err }, "Failed contacting assistant upstream from Telegram relay");
         answer = "An error occurred while contacting the assistant. Please try again.";
       }
     }

@@ -17,7 +17,7 @@ function escapeRegex(value: string): string {
 }
 
 /**
- * Bearer token authentication middleware for Loom by Auvia assistant bot tools.
+ * Bearer token authentication middleware for assistant bot tools.
  * Uses constant-time comparison to prevent timing attacks.
  */
 export function verifyAssistantBotAuth(req: Request, res: Response, next: NextFunction): void {

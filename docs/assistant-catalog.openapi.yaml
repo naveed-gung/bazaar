@@ -3,7 +3,7 @@ info:
   title: Bazaar Assistant Catalog API
   description: >-
     Read-only, bot-facing catalog and live availability API for the Bazaar
-    shopping assistant. Used by Loom by Auvia to query real-time
+    shopping assistant. Used by external assistant tools to query real-time
     pricing, sellable inventory, and product details.
   version: 1.0.0
 servers:
