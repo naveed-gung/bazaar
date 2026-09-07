@@ -3,9 +3,10 @@ import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { ObjectId } from "mongodb";
 import { createApp } from "../src/app.js";
 import { getDb } from "../src/database/client.js";
+import { config } from "../src/config.js";
 
 const app = createApp();
-const TEST_TOKEN = "test-bot-token-secret";
+const TEST_TOKEN = config.bazaarBotToken || "test-bot-token-secret";
 const suffix = Math.random().toString(36).slice(2, 10);
 
 const TEST_CATEGORY = `bot-audio-${suffix}`;
@@ -129,7 +130,9 @@ afterAll(async () => {
     .toArray();
 
   await Promise.all([
-    db.collection("inventory").deleteMany({ variantId: { $in: variants.map((v) => v._id) } }),
+    db
+      .collection("inventory")
+      .deleteMany({ variantId: { $in: variants.map((v) => v._id) } }),
     db.collection("variants").deleteMany({ productId: { $in: prodIds } }),
     db.collection("products").deleteMany({ _id: { $in: prodIds } }),
   ]);
@@ -143,7 +146,9 @@ describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia To
       expect(res.body).toEqual({
         error: {
           code: "unauthorized",
-          message: expect.stringContaining("Missing or malformed Authorization header"),
+          message: expect.stringContaining(
+            "Missing or malformed Authorization header",
+          ),
         },
       });
     });
@@ -199,7 +204,9 @@ describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia To
 
     it("respects inStockOnly=true by filtering out products with 0 available stock", async () => {
       const res = await request(app)
-        .get(`/api/v1/assistant/catalog/search?category=${TEST_CATEGORY}&inStockOnly=true`)
+        .get(
+          `/api/v1/assistant/catalog/search?category=${TEST_CATEGORY}&inStockOnly=true`,
+        )
         .set("Authorization", `Bearer ${TEST_TOKEN}`);
 
       expect(res.status).toBe(200);
@@ -279,7 +286,9 @@ describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia To
       expect(Array.isArray(res.body.variants)).toBe(true);
       expect(res.body.variants).toHaveLength(2);
 
-      const var1 = res.body.variants.find((v: { name: string }) => v.name === "Matte Black");
+      const var1 = res.body.variants.find(
+        (v: { name: string }) => v.name === "Matte Black",
+      );
       expect(var1).toMatchObject({
         name: "Matte Black",
         priceMinor: 12900,
@@ -289,7 +298,9 @@ describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia To
         options: { Colour: "Matte Black" },
       });
 
-      const var2 = res.body.variants.find((v: { name: string }) => v.name === "Silver");
+      const var2 = res.body.variants.find(
+        (v: { name: string }) => v.name === "Silver",
+      );
       expect(var2).toMatchObject({
         name: "Silver",
         priceMinor: 13900,
@@ -302,7 +313,9 @@ describe("Assistant Catalog API (/api/v1/assistant/catalog) — Loom by Auvia To
 
     it("returns complete product detail by MongoDB ObjectId", async () => {
       const res = await request(app)
-        .get(`/api/v1/assistant/catalog/product?id=${inStockProdId.toHexString()}`)
+        .get(
+          `/api/v1/assistant/catalog/product?id=${inStockProdId.toHexString()}`,
+        )
         .set("Authorization", `Bearer ${TEST_TOKEN}`);
 
       expect(res.status).toBe(200);
