@@ -1,0 +1,293 @@
+openapi: 3.0.3
+info:
+  title: Bazaar Assistant Catalog API
+  description: >-
+    Read-only, bot-facing catalog and live availability API for the Bazaar
+    shopping assistant. Used by the external Dify app to query real-time
+    pricing, sellable inventory, and product details.
+  version: 1.0.0
+servers:
+  - url: /api/v1/assistant/catalog
+    description: Assistant Catalog Base Path
+
+paths:
+  /search:
+    get:
+      summary: Search catalog products
+      description: >-
+        Searches published products with live inventory availability and
+        server-authoritative pricing.
+      operationId: searchCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Search keywords matching name, brand, or description
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: category
+          in: query
+          description: Category slug (e.g. audio, desk, accessories)
+          required: false
+          schema:
+            type: string
+            maxLength: 60
+        - name: inStockOnly
+          in: query
+          description: Filter for products that currently have sellable stock
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          description: Maximum number of products to return (capped at 10)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+      responses:
+        '200':
+          description: Search results matching the criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - results
+                  - asOf
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResultItem'
+                  asOf:
+                    type: string
+                    format: date-time
+                    description: ISO-8601 UTC timestamp of the authoritative snapshot
+        '401':
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /product:
+    get:
+      summary: Get product details with variants
+      description: >-
+        Retrieves a single published product by ID or slug, including all active
+        variants with live inventory and server-authoritative pricing.
+      operationId: getProduct
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          description: Product ID (MongoDB ObjectId) or product slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product found with variant breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '401':
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ServiceToken
+      description: Enter the BAZAAR_BOT_TOKEN secret value.
+
+  schemas:
+    SearchResultItem:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - category
+        - priceMinor
+        - currency
+        - inStock
+        - availableQty
+        - url
+      properties:
+        id:
+          type: string
+          description: Unique product ID
+          example: prod_123
+        slug:
+          type: string
+          description: URL-friendly product slug
+          example: acme-headphones
+        name:
+          type: string
+          description: Product display name
+          example: Acme ANC Headphones
+        category:
+          type: string
+          description: Category slug
+          example: audio
+        priceMinor:
+          type: integer
+          description: Server-authoritative price in integer minor units (e.g. cents)
+          example: 12900
+        currency:
+          type: string
+          description: Currency code
+          example: USD
+        inStock:
+          type: boolean
+          description: True if availableQty is greater than 0
+          example: true
+        availableQty:
+          type: integer
+          description: Sellable on-hand inventory excluding reserved checkout holds
+          example: 14
+        url:
+          type: string
+          format: uri
+          description: Canonical product URL
+          example: https://bazaar.example.com/p/acme-headphones
+
+    ProductVariantItem:
+      type: object
+      required:
+        - id
+        - sku
+        - priceMinor
+        - currency
+        - inStock
+        - availableQty
+      properties:
+        id:
+          type: string
+          description: Unique variant ID
+          example: var_456
+        sku:
+          type: string
+          description: Stock keeping unit
+          example: ACME-ANC-BLK
+        name:
+          type: string
+          description: Variant name or option descriptor
+          example: Matte Black
+        options:
+          type: object
+          additionalProperties:
+            type: string
+          description: Option key-value pairs (e.g. Colour: Black)
+        priceMinor:
+          type: integer
+          description: Variant price in integer minor units
+          example: 12900
+        currency:
+          type: string
+          description: Currency code
+          example: USD
+        inStock:
+          type: boolean
+          description: True if variant has available stock
+          example: true
+        availableQty:
+          type: integer
+          description: Sellable on-hand quantity for this variant
+          example: 8
+
+    ProductDetail:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - category
+        - priceMinor
+        - currency
+        - inStock
+        - availableQty
+        - url
+        - variants
+        - asOf
+      properties:
+        id:
+          type: string
+          example: prod_123
+        slug:
+          type: string
+          example: acme-headphones
+        name:
+          type: string
+          example: Acme ANC Headphones
+        category:
+          type: string
+          example: audio
+        priceMinor:
+          type: integer
+          example: 12900
+        currency:
+          type: string
+          example: USD
+        inStock:
+          type: boolean
+          example: true
+        availableQty:
+          type: integer
+          example: 14
+        url:
+          type: string
+          format: uri
+          example: https://bazaar.example.com/p/acme-headphones
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariantItem'
+        asOf:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              example: not_found
+            message:
+              type: string
+              example: Product not found.

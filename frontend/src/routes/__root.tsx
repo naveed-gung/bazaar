@@ -137,42 +137,15 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Inline, parser-blocking, PRE-hydration: (1) the theme flip and
-            (2) SSR-56 rev2 — Netlify injects THREE foreign artifacts into
-            <head> at serve time: the ai-legible HTML comment ("This site is
-            hosted on Netlify…"), <meta name="hosting-provider">, and
-            <meta name="netlify-deploy">. React 19 hydrates the React-managed
-            head strictly; any unexpected element or comment sitting before
-            its own head children aborts hydration with #418 and strips every
-            event handler (the tree is regenerated client-side and hangs).
-            The rev1 hotfix removed only netlify-deploy and #418 persisted —
-            the live-HTML inventory plus an owner incognito test (extensions
-            disabled, still failing) isolated the surviving hosting-provider
-            meta and the leading comment as the remaining mismatch surface.
-            All three are stripped here, before the hydration bundle executes.
-            The splash itself is client-only (welcome-screen.tsx) and ships no
-            markup in this payload. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: [
-              "try{document.documentElement.classList.toggle('dark',localStorage.getItem('bazaar.theme')==='dark')}catch(e){}",
-              'try{document.head.querySelectorAll(\'meta[name="netlify-deploy"],meta[name="hosting-provider"]\').forEach(function(m){m.remove()})}catch(e){}',
-              "try{var h=document.head,i,n;for(i=h.childNodes.length-1;i>=0;i--){n=h.childNodes[i];if(n.nodeType===8&&/hosted on Netlify|netlify\\.new/i.test(n.textContent||''))n.remove()}}catch(e){}",
-            ].join(""),
-          }}
-        />
         <HeadContent />
       </head>
-      {/* E2 — extensions (e.g. ColorZilla) mutate <body> attributes before
-          React hydrates; suppress the documented extension-only warning. */}
       <body suppressHydrationWarning>
-        {/* SSR-32 — NO imperative splash scripts remain in <body>. The old
-            body-start injection executed while the parser was still INSIDE
-            <body> (body's only child at that moment was this very script), so
-            its appendChild placed #bw-host BETWEEN the script and the app root
-            div — inside React's hydration path — and hydration failed on every
-            cold load. SSR-65 retired the splash entirely (it was unreachable);
-            only <RouteTransitionCover /> remains. See welcome-screen.tsx. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{document.documentElement.classList.toggle('dark',localStorage.getItem('bazaar.theme')==='dark')}catch(e){}",
+          }}
+        />
         {children}
         <Scripts />
       </body>

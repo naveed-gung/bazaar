@@ -28,6 +28,8 @@ test-results/
 
 # Local artifacts
 *.log
+deploy*.json
+live*.html
 .DS_Store
 Thumbs.db
 .vscode/
@@ -37,3 +39,4 @@ Thumbs.db
 docs/agent/
 plans/
 CLAUDE.md
+chatbot.md
