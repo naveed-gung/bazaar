@@ -43,6 +43,7 @@ jobs:
   static:
     name: Static checks & frontend build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,12 +79,20 @@ jobs:
   test:
     name: Backend tests (ephemeral MongoDB)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       # Mirrors backend/src/config.ts: MONGODB_URI is the only required var;
       # MONGODB_DB_NAME defaults to "bazaar" but is pinned here so CI never
       # touches anything outside this throwaway database.
       MONGODB_URI: mongodb://127.0.0.1:27017/bazaar_test?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: bazaar_test
+      BOOTSTRAP_ADMIN_EMAIL: admin@bazaar.dev
+      BOOTSTRAP_ADMIN_UID: ci-admin-uid
+      BOOTSTRAP_CLIENT_EMAIL: client@bazaar.dev
+      BOOTSTRAP_CLIENT_UID: ci-client-uid
+      BAZAAR_BOT_TOKEN: ci-bot-token-secret
+      TELEGRAM_WEBHOOK_SECRET: ci-telegram-secret
+      CI: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

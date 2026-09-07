@@ -655,14 +655,27 @@ const STAFF_ACCOUNTS = [
 ];
 
 async function seedAccounts(db: Db, now: Date): Promise<void> {
+  const adminUid = config.bootstrapAdminUid || (config.isProduction ? "" : "dev-owner-uid");
+  const adminEmail = config.bootstrapAdminEmail || (config.isProduction ? "" : "admin@bazaar.dev");
+  const clientUid = config.bootstrapClientUid || (config.isProduction ? "" : "dev-customer-uid");
+  const clientEmail = config.bootstrapClientEmail || (config.isProduction ? "" : "client@bazaar.dev");
+
   const accounts = [
     { firebaseUid: config.bootstrapAdminUid, email: config.bootstrapAdminEmail, displayName: "Bazaar Admin", roles: ["owner"] },
     { firebaseUid: config.bootstrapClientUid, email: config.bootstrapClientEmail, displayName: "Bazaar Client", roles: ["customer"] },
+    { firebaseUid: adminUid, email: adminEmail, displayName: "Bazaar Admin", roles: ["owner"] },
+    { firebaseUid: clientUid, email: clientEmail, displayName: "Bazaar Client", roles: ["customer"] },
     ...STAFF_ACCOUNTS,
     ...SHOPPER_ACCOUNTS.map((shopper) => ({ ...shopper, roles: ["customer"] })),
   ];
   for (const account of accounts) {
     if (!account.firebaseUid || !account.email) throw new Error("Bootstrap Firebase UID and email pairs are required.");
+    if (!account.firebaseUid || !account.email) {
+      if (config.isProduction) {
+        throw new Error("Bootstrap Firebase UID and email pairs are required.");
+      }
+      continue;
+    }
     await db.collection("users").updateOne(
       { firebaseUid: account.firebaseUid },
       { $set: { email: account.email, displayName: account.displayName, roles: [...account.roles], updatedAt: now }, $setOnInsert: { createdAt: now } },
@@ -887,3 +900,12 @@ void main().catch((error) => {
   logger.fatal({ err: error }, "catalog seed failed");
   process.exitCode = 1;
 });
+void main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch(async (error) => {
+    logger.fatal({ err: error }, "catalog seed failed");
+    await closeDatabase().catch(() => {});
+    process.exit(1);
+  });
