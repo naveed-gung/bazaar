@@ -91,6 +91,6 @@ export const config = Object.freeze({
   bazaarPublicDomain: (env["BAZAAR_PUBLIC_DOMAIN"] || "bazaa1.netlify.app").replace(/^https?:\/\//, "").replace(/\/+$/, ""),
   loomApiUrl: (env["LOOM_API_URL"] || env["DIFY_API_URL"] || "").replace(/\/+$/, ""),
   loomApiKey: env["LOOM_API_KEY"] || env["DIFY_API_KEY"] || "",
-  telegramBotToken: env["TELEGRAM_BOT_TOKEN"] || "",
-  telegramWebhookSecret: env["TELEGRAM_WEBHOOK_SECRET"] || "",
+  telegramBotToken: env["TELEGRAM_BOT_TOKEN"] || (env["NODE_ENV"] === "test" ? "test-telegram-bot-token" : ""),
+  telegramWebhookSecret: env["TELEGRAM_WEBHOOK_SECRET"] || (env["NODE_ENV"] === "test" ? "test-telegram-secret-token" : ""),
 });

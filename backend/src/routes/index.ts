@@ -13,6 +13,7 @@ import { mediaRouter } from "./media.js";
 import { rbacRouter } from "./rbac.js";
 import { assistantCatalogRouter } from "./assistant-catalog.js";
 import { assistantChatRouter } from "./assistant-chat.js";
+import { assistantTelegramRouter } from "./assistant-telegram.js";
 
 export const apiRouter = Router();
 
@@ -23,6 +24,7 @@ apiRouter.get("/ready", asyncHandler(async (_req, res) => {
 }));
 apiRouter.use("/assistant/catalog", assistantCatalogRouter);
 apiRouter.use("/assistant", assistantChatRouter);
+apiRouter.use("/assistant", assistantTelegramRouter);
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/me", accountRouter);
 apiRouter.use("/admin", adminRouter);

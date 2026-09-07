@@ -205,7 +205,7 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: Option key-value pairs (e.g. Colour: Black)
+          description: "Option key-value pairs (e.g. Colour: Black)"
         priceMinor:
           type: integer
           description: Variant price in integer minor units

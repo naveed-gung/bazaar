@@ -108,6 +108,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        run: rm -f package-lock.json && npm install
+
+      # Start single-node MongoDB container with replica set enabled for transaction support
+      - name: Start MongoDB replica set container
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:7 mongod --replSet rs0 --bind_ip_all
 
       # Transactions require an INITIATED replica set: mongod runs with
       # --replSet rs0 but stays NOT_INITIALIZED until rs.initiate() succeeds.
@@ -120,6 +126,8 @@ jobs:
           for attempt in $(seq 1 30); do
             docker exec "$MONGO_ID" mongosh --quiet --eval 'try { rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]}) } catch (e) { print(e.message) }' >/dev/null 2>&1 || true
             if docker exec "$MONGO_ID" mongosh --quiet --eval 'try { if (rs.status().ok === 1) { quit(0) } } catch (e) {} quit(1)'; then
+            docker exec mongo mongosh --quiet --eval 'try { rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]}) } catch (e) { print(e.message) }' >/dev/null 2>&1 || true
+            if docker exec mongo mongosh --quiet --eval 'try { if (rs.status().ok === 1) { quit(0) } } catch (e) {} quit(1)'; then
               echo "::notice::replica set rs0 reached PRIMARY"
               ready=1
               break
@@ -146,8 +154,11 @@ jobs:
       # hook-timeout infra flakes with ZERO assertion failures; an immediate
       # retry passes. Retry exactly once — the job fails only if BOTH attempts fail.
       - name: Run backend tests
+        id: test-run-1
+        continue-on-error: true
         run: npm test
 
       - name: Run backend tests (retry once — TASK-05 infra-flake mitigation)
         if: failure()
+        if: steps.test-run-1.outcome == 'failure'
         run: npm test

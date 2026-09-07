@@ -3,9 +3,10 @@ import { AppError } from "../errors.js";
 import { config } from "../config.js";
 
 const safeMethods = new Set(["GET", "HEAD", "OPTIONS"]);
+const exemptPaths = new Set(["/api/v1/assistant/telegram"]);
 
 export function enforceOrigin(req: Request, _res: Response, next: NextFunction): void {
-  if (safeMethods.has(req.method)) {
+  if (safeMethods.has(req.method) || exemptPaths.has(req.path)) {
     next();
     return;
   }

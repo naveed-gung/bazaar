@@ -55,6 +55,7 @@ export const databaseManifest: CollectionManifest[] = [
   // No consumer exists or is planned, so the { state, scheduledFor } index earned nothing.
   { name: "rateLimits", indexes: [{ key: { key: 1, windowStart: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }] },
   { name: "roles", indexes: [{ key: { key: 1 }, unique: true }] },
+  { name: "assistantConversations", indexes: [{ key: { chatId: 1 }, unique: true }, { key: { updatedAt: -1 } }] },
 ];
 
 export async function applyDatabaseManifest(db: Db): Promise<void> {

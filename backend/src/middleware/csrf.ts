@@ -5,7 +5,15 @@ import { AppError } from "../errors.js";
 const safeMethods = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export function enforceCsrf(req: Request, _res: Response, next: NextFunction): void {
-  if (safeMethods.has(req.method) || req.principal.type !== "user" || req.path === "/api/v1/auth/session") { next(); return; }
+  if (
+    safeMethods.has(req.method) ||
+    req.principal.type !== "user" ||
+    req.path === "/api/v1/auth/session" ||
+    req.path === "/api/v1/assistant/telegram"
+  ) {
+    next();
+    return;
+  }
   const cookie = req.cookies?.["bazaar_csrf"] as string | undefined;
   const header = req.header("x-csrf-token");
   const cookieHash = cookie ? createHash("sha256").update(cookie).digest("hex") : "";
