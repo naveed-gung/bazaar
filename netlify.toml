@@ -21,6 +21,10 @@
 # build is configured. CHANGE BOTH TOGETHER or the split-brain comes back.
 [build.environment]
   NODE_VERSION = "20"
+  # Not secrets: MONGODB_DB_NAME is the literal "bazaar" (also the package name)
+  # and WEB_ORIGIN is the public site URL, so the secrets scanner false-positives
+  # on every file that names the project. MONGODB_URI and keys stay scanned.
+  SECRETS_SCAN_OMIT_KEYS = "MONGODB_DB_NAME,WEB_ORIGIN"
 
 [functions]
   node_bundler = "esbuild"
