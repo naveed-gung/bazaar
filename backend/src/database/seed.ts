@@ -896,10 +896,6 @@ async function main() {
   await closeDatabase();
 }
 
-void main().catch((error) => {
-  logger.fatal({ err: error }, "catalog seed failed");
-  process.exitCode = 1;
-});
 void main()
   .then(() => {
     process.exit(0);

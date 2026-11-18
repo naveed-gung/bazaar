@@ -24,10 +24,6 @@ async function main() {
   }
 }
 
-void main().catch((error) => {
-  logger.fatal({ err: error }, "database bootstrap failed");
-  process.exitCode = 1;
-});
 void main()
   .then(() => {
     process.exit(0);

@@ -18,8 +18,8 @@
  * `useState(() => ...)` initial phase), and the owner has already reported that
  * a full-length cover makes the site feel like it is hanging.
  *
- * What REMAINS below is live and does work: a short ink cover replayed on every
- * page-to-page navigation. It owns no ref and no scroll lock — visibility is
+ * What REMAINS below is live and does work: a short ink cover played on the
+ * initial load (SSR-66) and replayed on every page-to-page navigation. It owns no ref and no scroll lock — visibility is
  * plain state driven by the router pathname — which is exactly why it survived
  * the same refactor that killed the splash.
  */
@@ -32,11 +32,10 @@ import { useLocation } from "@tanstack/react-router";
    when a user goes from page to page as well as on full loads. This companion
    component watches the router pathname and replays a SHORT cover (fade-in
    140 ms, hold ~380 ms, fade-out 220 ms — pure CSS timeline, JS only flips
-   visibility) on every pathname change AFTER the first render. The very first
-   render is skipped because the full-length <WelcomeScreen /> above already
-   owns the initial document load. Client-side remounts/toggles happen strictly
-   post-hydration, so there is no SSR divergence surface at all. Reduced-motion
-   visitors never see it. */
+   visibility) on every pathname change. SSR-66 — it also plays on the initial
+   document load (owner: the welcome screen must show on first visit): it is
+   server-rendered visible, so the pure-CSS fade runs from first paint and
+   ends hidden even if hydration is slow. Reduced-motion visitors never see it. */
 
 const COVER_CSS = `
 #bwt{position:fixed;inset:0;z-index:89;display:flex;align-items:center;background:var(--foreground,#111111);color:var(--background,#f5f5f3);font-family:Archivo,'Instrument Sans',Arial,sans-serif;animation:bwt-in 100ms ease-out both,bwt-out 160ms ease-in 260ms both}
@@ -52,24 +51,25 @@ const COVER_CSS = `
 
 export function RouteTransitionCover() {
   const pathname = useLocation().pathname;
-  // The first pathname value belongs to the initial document load, which
-  // <WelcomeScreen /> already covers — so the very first effect run is a no-op.
-  const seenInitial = useRef(false);
-  const [visible, setVisible] = useState(false);
+  // Initial document load: the cover is SSR'd visible (same initial state on
+  // server and client, so no hydration mismatch) and its CSS timeline plays from
+  // first paint. Later pathname changes replay it client-side.
+  const initialLoad = useRef(true);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (!seenInitial.current) {
-      seenInitial.current = true;
-      return;
+    if (initialLoad.current) {
+      initialLoad.current = false;
+    } else {
+      let reduced = false;
+      try {
+        reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      } catch {
+        /* matchMedia unavailable — default to showing the cover */
+      }
+      if (reduced) return;
+      setVisible(true);
     }
-    let reduced = false;
-    try {
-      reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    } catch {
-      /* matchMedia unavailable — default to showing the cover */
-    }
-    if (reduced) return;
-    setVisible(true);
     const timer = window.setTimeout(() => setVisible(false), 440);
     return () => window.clearTimeout(timer);
   }, [pathname]);
